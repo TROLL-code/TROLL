@@ -1,0 +1,37 @@
+/*####################################################################
+ ###  TROLL
+ ###  Individual-based forest dynamics simulator
+ ###    Version 1: Jerome Chave
+ ###    Version 2.1 & 2.2: Isabelle Marechaux & Jerome Chave
+ ###    Version 2.3 onwards: Isabelle Marechaux, Fabian Fischer, Jerome Chave
+ ###
+ ###  History:
+ ###    version 0.1 --- JC - 22 Sep 97
+ ###    version 0.2 --- JC - 06 Oct 97
+ ###    version 0.3 --- JC - 11-14 Nov 97
+ ###    version 1.0 --- JC - stable version Chave, Ecological Modelling (1999)
+ ###    version 1.1 --- JC - 02-30 Sep 98
+ ###    version 1.2 --- JC - 22 Jan 00
+ ###    version 1.3 --- JC - 28 Sep 01 stable version Chave, American Naturalist (2001)
+ ###
+ ###    version 2.0 --- JC - 23 Mar 11 (physiology-based version, translation of comments into English)
+ ###    version 2.01 --- IM - oct-nov 13
+ ###    version 2.02 --- IM - apr-may 2015
+ ###    version 2.03 --- IM - jul 2015
+ ###    version 2.04 --- IM - jul 2015 (monthly timestep)
+ ###    version 2.1  --- IM - dec 2015 (undef/defined alternative versions)
+ ###    version 2.11 --- IM - jan 2016 timestep better used
+ ###    version 2.12 --- JC - jan 2016 porting to GitHub for social coding, check of the MPI routines and update, new header for code, trivia: reindentation (orphan lines removed)
+ ###    version 2.2  --- IM - may 2016 core changes in: daily coupling with environment; respiration; treefall module; leaf pool dynamics
+ ###    version 2.3  --- FF - oct-nov 2016: bug fixing (including UpdateSeed() bug), general reworking of code, changes in CalcLAI(), initialisation from data, toolbox with alternative fine flux calculation (cf. end of script)
+ ###    version 2.3.0 --- IM & JC - janv-feb 2017: new tree size threshold to maturity (dbhmature), changes in input file structure, corrections of temperature dependencies in GPPleaf. Code acceleration (use of lookup tables instead of functions in the calculations of the Fluxh() and GPPleaf() routines; faster whole-tree GPP calculation. This results in an increase in speed of a factor 4.
+ ###    version 2.3.1 --- IM & JC - feb-mar 2017: introduces the dispersal cell, or dcell concept (square subplot of linear size length_dcell)
+ 
+ 
+ ###    code acceleration FASTGPP concept improved.
+ ###    DCELL: GNU scientific library is needed -- on osx, type "brew install gsl"
+ ###    DCELL: Compile command (osx/linux):
+ ###                    g++ -O3 -Wall -o troll main_xx.cpp -lgsl -lgslcblas -lm
+ ###    DCELL: Code profiling (unix): g++ -O3 -Wall -o troll main_xx.cpp -lgsl -lgslcblas -lm -g -pg
+ ###
+ ####################################################################*/
