@@ -1,4 +1,6 @@
 *
 !*.cpp
 !*.md
+!example/*.txt
+!.gitignore
 
