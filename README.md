@@ -12,7 +12,7 @@ The following command line can be used to compile the code:
 g++ -O3 -Wall -o TROLLv4_exe main_TROLLv4.cpp -I GSL_PATH/include -L GSL_PATH/lib -lgsl -lgslcblas -lm
 ```
 
-`GSL_PATH` must piont to your local GNU Scientific Library (GSL) installation, see https://www.gnu.org/software/gsl/
+`GSL_PATH` must point to your local GNU Scientific Library (GSL) installation, see https://www.gnu.org/software/gsl/
 
 ## Get started
 
@@ -42,6 +42,6 @@ Please use issues for any question regarding TROLL.
 
 * Jérôme Chave, CNRS, jerome.chave@univ-tlse3.fr
 * Isabelle Maréchaux, INRAE, isabelle.marechaux@inrae.fr
-* Fabian Fischer, TUM, f.j,fischer@tum.de
+* Fabian Fischer, TUM, f.j.fischer@tum.de
 * Sylvain Schmitt, CIRAD, sylvain.schmitt@cirad.fr
 
