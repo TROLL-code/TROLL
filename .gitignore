@@ -3,4 +3,5 @@
 !*.md
 !example/*.txt
 !.gitignore
-
+!CMakeLists.txt
+!build/
