@@ -8,13 +8,17 @@ TROLL 4.0 is an individual- and trait-based model of forest dynamics. A full des
 
 ## Installation
 
+Required:
+- CMake Build System, see https://cmake.org
+- GNU Scientific Library (GSL) installation, see https://www.gnu.org/software/gsl/
+
 The following command line can be used to compile the code:
 
 ```
-g++ -O3 -Wall -o TROLLv4_exe main_TROLLv4.cpp -I GSL_PATH/include -L GSL_PATH/lib -lgsl -lgslcblas -lm
+cd build/
+cmake ..
+make
 ```
-
-`GSL_PATH` must point to your local GNU Scientific Library (GSL) installation, see https://www.gnu.org/software/gsl/
 
 ## Get started
 
