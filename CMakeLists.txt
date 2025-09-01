@@ -14,7 +14,12 @@ MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(TROLL mainTROLL4.0.cpp)
+add_executable(${PROJECT_NAME} src/troll.cpp)
 
-target_compile_options(TROLL PRIVATE -O3 -Wall)
-target_link_libraries(TROLL PRIVATE GSL::gsl GSL::gslcblas)
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include  # Public headers
+)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -O3 -Wall)
+target_link_libraries(${PROJECT_NAME} PRIVATE GSL::gsl GSL::gslcblas)
