@@ -1,7 +1,3 @@
-*
-!*.cpp
-!*.md
-!example/*.txt
-!.gitignore
-!CMakeLists.txt
-!build/
+git.log
+build/*
+.vscode
