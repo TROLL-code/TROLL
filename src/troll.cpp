@@ -1,6 +1,6 @@
 #include "troll.hpp"
 #include "constants.hpp"
-
+#include "config.hpp"
 
 //#############################################
 // Species constructor
@@ -3521,32 +3521,32 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 if(*argv[argn] == '-'){
                     switch(*(argv[argn]+1)){
                         case 'i':
-                            bufi = argv[argn]+2;
+                            Config::bufi = argv[argn]+2;
                             break;
                         case 'd':                       // new v.3.0; initialisation of daytime variation in a separate file ('d' for daytime variation)
-                            bufi_daytimevar = argv[argn]+2;
+                            Config::bufi_daytimevar = argv[argn]+2;
                             break;
                         case 'm':                       // new v.2.4; initialisation of climate parameters from separate file ('m' for meterology)
-                            bufi_climate = argv[argn]+2;
+                            Config::bufi_climate = argv[argn]+2;
                             break;
                         case 'p':                       // new v.3.0; initialisation of soil parameters from separate file ('p' for pedology)
-                            bufi_soil = argv[argn]+2;
+                            Config::bufi_soil = argv[argn]+2;
                             break;
                         case 's':                       // new v.3.0; initialisation of species parameters from separate file
-                            bufi_species = argv[argn]+2;
+                            Config::bufi_species = argv[argn]+2;
                             break;
                         case 'o':
-                            buf = argv[argn]+2;
+                            Config::buf = argv[argn]+2;
                             break;
                         case 'f':                      // new v.2.3: initialisation from field, 'f' for "forest", "field data"
-                            bufi_data = argv[argn]+2;
+                            Config::bufi_data = argv[argn]+2;
                             _FromInventory = 1;        // new v.3.1: automatic recognition of whether data sheet is provided or not
                             break;
                         case 'w':                      // new v.2.3: initialisation from field, 'f' for "forest", "field data"
-                            bufi_dataSWC = argv[argn]+2;
+                            Config::bufi_dataSWC = argv[argn]+2;
                             break;
                         case 'l':
-                            bufi_pointcloud = argv[argn]+2;  // new v.3.1.6: output of simulated point clouds for TROLL-created stands
+                            Config::bufi_pointcloud = argv[argn]+2;  // new v.3.1.6: output of simulated point clouds for TROLL-created stands
                             _OUTPUT_pointcloud = 1;
                             break;
                         case 'n':
@@ -3558,20 +3558,20 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             
             // input files
-            sprintf(inputfile,"%s",bufi);
-            sprintf(inputfile_daytimevar,"%s",bufi_daytimevar);
-            sprintf(inputfile_climate,"%s",bufi_climate);
-            sprintf(inputfile_soil,"%s",bufi_soil);
-            sprintf(inputfile_species,"%s",bufi_species);
+            sprintf(Config::inputfile,"%s",Config::bufi);
+            sprintf(Config::inputfile_daytimevar,"%s",Config::bufi_daytimevar);
+            sprintf(Config::inputfile_climate,"%s",Config::bufi_climate);
+            sprintf(Config::inputfile_soil,"%s",Config::bufi_soil);
+            sprintf(Config::inputfile_species,"%s",Config::bufi_species);
             
             if(_OUTPUT_pointcloud){
-                sprintf(inputfile_pointcloud,"%s",bufi_pointcloud); // v.3.1.6
+                sprintf(Config::inputfile_pointcloud,"%s",Config::bufi_pointcloud); // v.3.1.6
             }
             
             if(_FromInventory){
-                sprintf(inputfile_inventory,"%s",bufi_data);
+                sprintf(Config::inputfile_inventory,"%s",Config::bufi_data);
 #ifdef WATER
-                sprintf(inputfile_SWC,"%s",bufi_dataSWC);
+                sprintf(Config::inputfile_SWC,"%s",Config::bufi_dataSWC);
 #endif
             }
             
@@ -3594,8 +3594,8 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             gsl_rng_set(gslrand, seed);
             
             cout << "On proc #" << easympi_rank << " seed: " << seed << endl;
-            sprintf(outputinfo,"%s_%i_info.txt",buf, easympi_rank);
-            output_info.open(outputinfo, ios::out);
+            sprintf(Config::outputinfo,"%s_%i_info.txt",Config::buf, easympi_rank);
+            output_info.open(Config::outputinfo, ios::out);
             if(!output_info) cerr<< "ERROR with info file"<< endl;
             
             Initialise();           // Read global parameters
@@ -4022,7 +4022,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! - !!!: TO IMPLEMENT: automatic stop of program under error to avoid running empty simulations on cluster etc.
         //! - !!!: TO IMPLEMENT: separate error messages (i.e. no input file provided, empty input file, etc.)
         void ReadInputGeneral(){
-            fstream In(inputfile, ios::in);
+            fstream In(Config::inputfile, ios::in);
             if(In){
 #ifdef WATER
                 string parameter_names[71] = {"cols","rows","HEIGHT","length_dcell","nbiter","NV","NH","nbout","p_nonvert","SWtoPPFD","klight","absorptance_leaves","theta","phi","g1","g0", "pheno_a0", "pheno_b0", "pheno_delta", "vC","DBH0","H0","CR_min","CR_a","CR_b","CD_a","CD_b","CD0","shape_crown","dens","fallocwood","falloccanopy","Cseedrain","nbs0","sigma_height","sigma_CR","sigma_CD","sigma_P","sigma_N","sigma_LMA","sigma_wsg","sigma_dbhmax","sigma_leafarea","sigma_tlp","corr_CR_height","corr_N_P","corr_N_LMA","corr_P_LMA","leafdem_resolution","p_tfsecondary","hurt_decay","crown_gap_fraction","m","m1","Cair","PRESS","_LL_parameterization","_LA_regulation","_sapwood","_seedsadditional","_SOIL_LAYER_WEIGHT","_WATER_RETENTION_CURVE","_NONRANDOM", "_GPPcrown","_BASICTREEFALL","_SEEDTRADEOFF","_NDD","_CROWN_MM","_OUTPUT_extended","_OUTPUT_inventory", "extent_visual"};
@@ -4033,12 +4033,12 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
 #endif
                 vector<string> parameter_values(nb_parameters,"");
                 
-                cout << endl << "Reading in file: " << inputfile << endl;
-                In.getline(buffer,256,'\n');
+                cout << endl << "Reading in file: " << Config::inputfile << endl;
+                In.getline(Config::buffer,256,'\n');
                 string parameter_name, parameter_value;
                 
                 while (In >> parameter_name >> parameter_value){
-                    In.getline(buffer,256,'\n');
+                    In.getline(Config::buffer,256,'\n');
                     for(int i = 0; i < nb_parameters; i++){
                         if(parameter_name == parameter_names[i]) parameter_values[i] = parameter_value;
                     }
@@ -4138,8 +4138,8 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         
         //! Global function: This function reads inputs from the species input file
         void ReadInputSpecies(){
-            cout << endl << "Reading in file: " << inputfile_species << endl;
-            fstream InSpecies(inputfile_species, ios::in);
+            cout << endl << "Reading in file: " << Config::inputfile_species << endl;
+            fstream InSpecies(Config::inputfile_species, ios::in);
             if(InSpecies){
                 // possible parameters to initialise vector<string> parameter_names{"s_name","s_LMA","s_Nmass","s_Pmass","s_wsg","s_dbhmax","s_hmax","s_ah","s_seedmass","s_regionalfreq","s_tlp","s_leafarea"};
                 //        int nb_parameters = int(parameter_names.size()); only works from C++11 onwards
@@ -4236,12 +4236,12 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! Global function: This function reads inputs from the environmental daily variation input file
         void ReadInputDailyvar(){
             // currently very simple reading in, only basic error checking
-            cout << endl << "Reading in file: " << inputfile_daytimevar << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_daytimevar << endl;
             
-            fstream InDaily(inputfile_daytimevar, ios::in);
+            fstream InDaily(Config::inputfile_daytimevar, ios::in);
             
             if (InDaily) {
-                InDaily.getline(buffer,256,'\n'); // read in header
+                InDaily.getline(Config::buffer,256,'\n'); // read in header
                 
                 // we go through all lines in the input file
                 nbsteps_varday = 0;
@@ -4359,14 +4359,14 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! Global function: This function reads inputs from the environmental variation input file
         //! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=iter and not iterperyear) and change iterperyear by nbiter here.
         void ReadInputClimate(){
-            cout << endl << "Reading in file: " << inputfile_climate << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_climate << endl;
             
-            fstream InClim(inputfile_climate, ios::in);
+            fstream InClim(Config::inputfile_climate, ios::in);
             
             if(InClim){
                 // we go through all lines in the input file
                 nbdays=0;
-                InClim.getline(buffer,256,'\n');
+                InClim.getline(Config::buffer,256,'\n');
                 //cout << "Header line: " << buffer << endl;
                 
                 string line;
@@ -4415,12 +4415,12 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! Global function: This function reads inputs from the environmental daily variation input file
         void ReadInputDailyvar(){
             // currently very simple reading in, only basic error checking
-            cout << endl << "Reading in file: " << inputfile_daytimevar << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_daytimevar << endl;
             
-            fstream InDaily(inputfile_daytimevar, ios::in);
+            fstream InDaily(Config::inputfile_daytimevar, ios::in);
             
             if (InDaily) {
-                InDaily.getline(buffer,256,'\n'); // read in header
+                InDaily.getline(Config::buffer,256,'\n'); // read in header
                 
                 // we go through all lines in the input file
                 nbsteps_varday = 0;
@@ -4469,14 +4469,14 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! Global function: This function reads inputs from the environmental variation input file
         //! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=iter and not iterperyear) and change iterperyear by nbiter here.
         void ReadInputClimate(){
-            cout << endl << "Reading in file: " << inputfile_climate << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_climate << endl;
             
-            fstream InClim(inputfile_climate, ios::in);
+            fstream InClim(Config::inputfile_climate, ios::in);
             
             if(InClim){
                 // we go through all lines in the input file
                 iterperyear = 0;
-                InClim.getline(buffer,256,'\n');
+                InClim.getline(Config::buffer,256,'\n');
                 //cout << "Header line: " << buffer << endl;
                 
                 string line;
@@ -4552,11 +4552,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! - in v.3.0, all soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
         //! - Sat_SWC and Res_SWC are here computed according Tomasella & Hodnett 1998 from soil texture information (see Table 2 in Marthews et al. 2014)
         void ReadInputSoil(){
-            cout << endl << "Reading in file: " << inputfile_soil << endl;
-            fstream InSoil(inputfile_soil, ios::in);
+            cout << endl << "Reading in file: " << Config::inputfile_soil << endl;
+            fstream InSoil(Config::inputfile_soil, ios::in);
             
             if(InSoil){
-                InSoil.getline(buffer,256,'\n');
+                InSoil.getline(Config::buffer,256,'\n');
                 vector<float> layer_thickness, proportion_Silt, proportion_Clay, proportion_Sand; // in m, %, %,%
                 vector<float> SOC, DBD, pH, CEC; //soil organic content, provided in %; dry bulk density, in g cm-3; pH; cation exchange capacity, in cmol kg-1
                 SOC.reserve(20);
@@ -5053,27 +5053,27 @@ if (_WATER_RETENTION_CURVE==1) {
             void InitialiseOutputStreams(){
                 char nnn[200];
                 if(!mpi_rank) {
-                    sprintf(nnn,"%s_%i_sumstats.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_sumstats.txt",Config::buf, easympi_rank);
                     output_basic[0].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_initial_pattern.txt",buf, easympi_rank); // previously "state" output, but not used anymore, overwritten for initial pattern
+                    sprintf(nnn,"%s_%i_initial_pattern.txt",Config::buf, easympi_rank); // previously "state" output, but not used anymore, overwritten for initial pattern
                     output_basic[1].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_final_pattern.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_final_pattern.txt",Config::buf, easympi_rank);
                     output_basic[2].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_final_SWC3D.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_final_SWC3D.txt",Config::buf, easympi_rank);
                     output_basic[3].open(nnn, ios::out);
                     
                     // write headers for files
                     output_basic[0] << "iter\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
                     // headers for initial and final patterns are written automatically
                     
-                    sprintf(nnn,"%s_%i_sumstats_species.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_sumstats_species.txt",Config::buf, easympi_rank);
                     output_extended[0].open(nnn, ios::out);
                     output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
                     
 #ifdef MIP_Lichstein
-                    sprintf(nnn,"%s_%i_MIP_eco.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_MIP_eco.txt",Config::buf, easympi_rank);
                     output_MIP_eco.open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_MIP_ind.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_MIP_ind.txt",Config::buf, easympi_rank);
                     output_MIP_ind.open(nnn, ios::out);
                     
                     output_MIP_eco << "YEAR\tMONTH\tDAY\tGPP\tNPP\tET\tLAI\tLFLIT\tSW1\tSW2\tSW3\tSW4" << endl;
@@ -5081,23 +5081,23 @@ if (_WATER_RETENTION_CURVE==1) {
 #endif
                     
                     if(_OUTPUT_extended){
-                        sprintf(nnn,"%s_%i_sumstats_species.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_sumstats_species.txt",Config::buf, easympi_rank);
                         output_extended[0].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_ppfd0.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_ppfd0.txt",Config::buf, easympi_rank);
                         output_extended[1].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_death.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_death.txt",Config::buf, easympi_rank);
                         output_extended[2].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_death_snapshots.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_death_snapshots.txt",Config::buf, easympi_rank);
                         output_extended[3].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_deathrate.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_deathrate.txt",Config::buf, easympi_rank);
                         output_extended[4].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_sdd.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_sdd.txt",Config::buf, easympi_rank);
                         output_extended[5].open(nnn,ios::out);
-                        sprintf(nnn,"%s_%i_vertd.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_vertd.txt",Config::buf, easympi_rank);
                         output_extended[6].open(nnn,ios::out);
-                        sprintf(nnn,"%s_%i_LAI.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_LAI.txt",Config::buf, easympi_rank);
                         output_extended[7].open(nnn, ios::out);
-                        sprintf(nnn,"%s_%i_CHM.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_CHM.txt",Config::buf, easympi_rank);
                         output_extended[8].open(nnn, ios::out);
                         
                         // write headers
@@ -5111,7 +5111,7 @@ if (_WATER_RETENTION_CURVE==1) {
                         output_extended[6] << "iter\th\tfreq" << endl;
                         
                         if(extent_visual > 0){
-                            sprintf(nnn,"%s_%i_visual_field.txt",buf, easympi_rank);
+                            sprintf(nnn,"%s_%i_visual_field.txt",Config::buf, easympi_rank);
                             output_visual[0].open(nnn, ios::out);
 #ifdef CHM_SPIKEFREE
                             output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl; // header
@@ -5119,7 +5119,7 @@ if (_WATER_RETENTION_CURVE==1) {
                             output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "LAI" << endl; // header
 #endif
                             
-                            sprintf(nnn,"%s_%i_visual_slice.txt",buf, easympi_rank);
+                            sprintf(nnn,"%s_%i_visual_slice.txt",Config::buf, easympi_rank);
                             output_visual[1].open(nnn, ios::out);
                             output_visual[1] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "sp_lab" << "\t" << "ratio_height_Ct" << "\t" << "ratio_NPP_GPP" << endl; // header
                         }
@@ -5127,94 +5127,94 @@ if (_WATER_RETENTION_CURVE==1) {
                     
                     // v.3.1.6 output for point cloud
                     if(_OUTPUT_pointcloud){
-                        sprintf(nnn,"%s_%i.las",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i.las",Config::buf, easympi_rank);
                         output_pointcloud.open(nnn, ios::out | ios::binary);
                         output_pointcloud.imbue(locale::classic()); // justification here: https://stackoverflow.com/questions/14750496/sending-integer-to-fstream-as-little-endian; locale regulates how streams print and read values (i.e. commas vs. points for decimals, etc.); setting it to classic to ensure portability, but not entirely sure how important this is in practice for binary files
                         
                     }
                     
 #ifdef Output_ABC
-                    sprintf(nnn,"%s_%i_abc_traitconservation.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_traitconservation.txt",Config::buf, easympi_rank);
                     output_abc[0].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_ground.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_ground.txt",Config::buf, easympi_rank);
                     output_abc[1].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_chm.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_chm.txt",Config::buf, easympi_rank);
                     output_abc[2].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_chmALS.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_chmALS.txt",Config::buf, easympi_rank);
                     output_abc[3].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_transmittance.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_transmittance.txt",Config::buf, easympi_rank);
                     output_abc[4].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_transmittanceALS.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_transmittanceALS.txt",Config::buf, easympi_rank);
                     output_abc[5].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_species.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_species.txt",Config::buf, easympi_rank);
                     output_abc[6].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_species10.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_species10.txt",Config::buf, easympi_rank);
                     output_abc[7].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_traits.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_traits.txt",Config::buf, easympi_rank);
                     output_abc[8].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_traits10.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_traits10.txt",Config::buf, easympi_rank);
                     output_abc[9].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_abc_biomass.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_abc_biomass.txt",Config::buf, easympi_rank);
                     output_abc[10].open(nnn, ios::out);
 #endif
                     
 #ifdef WATER
-                    //sprintf(nnn,"%s_%i_water_balance.txt",buf, easympi_rank);
+                    //sprintf(nnn,"%s_%i_water_balance.txt",Config::buf, easympi_rank);
                     //output_water[0].open(nnn, ios::out);
                     
-                    sprintf(nnn,"%s_%i_water_balance.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_water_balance.txt",Config::buf, easympi_rank);
                     output[11].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site1.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site1.txt",Config::buf, easympi_rank);
                     output[12].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site2.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site2.txt",Config::buf, easympi_rank);
                     output[13].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site3.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site3.txt",Config::buf, easympi_rank);
                     output[14].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site4.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site4.txt",Config::buf, easympi_rank);
                     output[15].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site5.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site5.txt",Config::buf, easympi_rank);
                     output[16].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_site6.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_site6.txt",Config::buf, easympi_rank);
                     output[17].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_state_begin.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_state_begin.txt",Config::buf, easympi_rank);
                     output[28].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_state_mid.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_state_mid.txt",Config::buf, easympi_rank);
                     output[29].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_state_end.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_state_end.txt",Config::buf, easympi_rank);
                     output[30].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWC_begin.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWC_begin.txt",Config::buf, easympi_rank);
                     output[1].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWC_mid.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWC_mid.txt",Config::buf, easympi_rank);
                     output[2].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWC_end.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWC_end.txt",Config::buf, easympi_rank);
                     output[3].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWP_begin.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWP_begin.txt",Config::buf, easympi_rank);
                     output[4].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWP_mid.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWP_mid.txt",Config::buf, easympi_rank);
                     output[5].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_SWP_end.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_SWP_end.txt",Config::buf, easympi_rank);
                     output[6].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_litterfall.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_litterfall.txt",Config::buf, easympi_rank);
                     output[7].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_waterfluxes_begin.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_waterfluxes_begin.txt",Config::buf, easympi_rank);
                     output[18].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_waterfluxes_mid.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_waterfluxes_mid.txt",Config::buf, easympi_rank);
                     output[19].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_waterfluxes_end.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_waterfluxes_end.txt",Config::buf, easympi_rank);
                     output[20].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_LAIdynamics.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_LAIdynamics.txt",Config::buf, easympi_rank);
                     output[21].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_LAIyoung.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_LAIyoung.txt",Config::buf, easympi_rank);
                     output[22].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_LAImature.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_LAImature.txt",Config::buf, easympi_rank);
                     output[23].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_LAIold.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_LAIold.txt",Config::buf, easympi_rank);
                     output[24].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_phi_root.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_phi_root.txt",Config::buf, easympi_rank);
                     output[31].open(nnn, ios::out);
-                    sprintf(nnn,"%s_%i_LAIprofile.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_LAIprofile.txt",Config::buf, easympi_rank);
                     output[32].open(nnn,ios::out);
-                    sprintf(nnn,"%s_%i_soilproperties.txt",buf, easympi_rank);
+                    sprintf(nnn,"%s_%i_soilproperties.txt",Config::buf, easympi_rank);
                     output[33].open(nnn,ios::out);
                     
                     // write headers
@@ -5337,18 +5337,18 @@ if (_WATER_RETENTION_CURVE==1) {
 #ifdef TRACK_INDIVIDUALS
                     if(_OUTPUT_extended){
                         // these are the "cases" of trees that are followed
-                        sprintf(nnn,"%s_%i_trees_fortracking.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_trees_fortracking.txt",Config::buf, easympi_rank);
                         output_track[0].open(nnn, ios::out);
                         output_track[0] << "site" << "\t" << "timeofyear_born" << "\t" << "col" << "\t" << "row" << "\t" << "species" << "\t" << "dbh" << "\t" << "cr" << "\t" << "height"  << "\t" << "agb" << "\t" << "multiplier_cr" << "\t" << "multiplier_height" << "\t" << "wsg" << "\t" << "Nmass" << "\t" << "Pmass" << "\t" << "LMA" << "\t" << "deviation_wsg" << "\t" << "multiplier_Nmass" << "\t" << "multiplier_Pmass" << "\t" << "multiplier_lma" << "\t" << "Vcmax" << "\t" << "Jmax" << "\t" << "Rdark" << "\t" << "LAImax" << "\t" << "leaflifespan" << endl;
                         
                         // these are the "activities" that are recorded for each tree
-                        sprintf(nnn,"%s_%i_trees_tracked.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_trees_tracked.txt",Config::buf, easympi_rank);
                         output_track[1].open(nnn, ios::out);
                         
                         output_track[1] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seeds" << "\t" << "seedstotal" << "\t" << "carbstarv" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "dbhgrowth" << "\t" << "height" << "\t" << "heightgrowth" << "\t" << "cr" << "\t" << "crgrowth" << "\t" << "agb" << "\t" << "agbgrowth" << "\t" << "GPP" << "\t" << "GPPsq" << "\t" << "NPP" << "\t" << "NPPsq" << "\t" << "Rday" << "\t" << "Rnight" << "\t" << "Rstem" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "carbstore_avg" << endl;
                         
                         // this is to get information on the dead trees > 10cm
-                        sprintf(nnn,"%s_%i_trees_aftertracking.txt",buf, easympi_rank);
+                        sprintf(nnn,"%s_%i_trees_aftertracking.txt",Config::buf, easympi_rank);
                         output_track[2].open(nnn, ios::out);
                         
                         output_track[2] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seedstotal" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "height" << "\t" << "cr" << "\t" << "agb" << "\t" << "GPP" << "\t" << "NPP" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "GPPsquared" << "\t" << "NPPsquared" << "\t" << "LAIabovesquared_avg" << "\t" << "LAIabovesquared_effavg" << endl;
@@ -5467,21 +5467,21 @@ if (_WATER_RETENTION_CURVE==1) {
         // added v.3.1.6
         
         void ReadInputPointcloud(){
-            cout << endl << "Reading in file: " << inputfile_pointcloud << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_pointcloud << endl;
             
-            fstream InPointcloud(inputfile_pointcloud, ios::in);
+            fstream InPointcloud(Config::inputfile_pointcloud, ios::in);
             
             if(InPointcloud){
                 string parameter_names[5] = {"mean_beam_pc","sd_beam_pc","klaser_pc","transmittance_laser","iter_pointcloud_generation"};
                 int nb_parameters = 5;
                 vector<string> parameter_values(nb_parameters,"");
                 
-                cout << endl << "Reading in file: " << inputfile << endl;
-                InPointcloud.getline(buffer,256,'\n');
+                cout << endl << "Reading in file: " << Config::inputfile << endl;
+                InPointcloud.getline(Config::buffer,256,'\n');
                 string parameter_name, parameter_value;
                 
                 while (InPointcloud >> parameter_name >> parameter_value){
-                    InPointcloud.getline(buffer,256,'\n');
+                    InPointcloud.getline(Config::buffer,256,'\n');
                     for(int i = 0; i < nb_parameters; i++){
                         if(parameter_name == parameter_names[i]) parameter_values[i] = parameter_value;
                     }
@@ -5501,9 +5501,9 @@ if (_WATER_RETENTION_CURVE==1) {
         // completely rewritten in v.3.1
         void ReadInputInventory(){
             
-            cout << endl << "Reading in file: " << inputfile_inventory << endl;
+            cout << endl << "Reading in file: " << Config::inputfile_inventory << endl;
             
-            fstream InInventory(inputfile_inventory, ios::in);
+            fstream InInventory(Config::inputfile_inventory, ios::in);
             
             if(InInventory){
                 // possible parameters to initialise
@@ -5707,9 +5707,10 @@ if (_WATER_RETENTION_CURVE==1) {
             
             InInventory.close();
             
-            cout << endl << "Reading in file: " << inputfile_SWC << endl;
+#ifdef WATER           
+            cout << endl << "Reading in file: " << Config::inputfile_SWC << endl;
             
-            fstream InSWC(inputfile_SWC, ios::in);
+            fstream InSWC(Config::inputfile_SWC, ios::in);
             
             if(InSWC){
                 
@@ -5736,7 +5737,7 @@ if (_WATER_RETENTION_CURVE==1) {
             }
             
             InSWC.close();
-            
+#endif            
             
             // compute soil_phi3D for RecruitTree function
             for (int d=0; d<nbdcells; d++) {

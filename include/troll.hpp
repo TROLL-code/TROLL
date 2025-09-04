@@ -58,8 +58,6 @@
 #include <typeinfo>
 #include <random>
 
-
-
 #ifdef MPI
 #include "mpi.h"
 #endif
@@ -73,13 +71,6 @@
 #include <gsl/gsl_errno.h>
 
 using namespace std;
-
-char buffer[256], inputfile[256], inputfile_daytimevar[256], inputfile_climate[256], inputfile_soil[256], outputinfo[256],inputfile_inventory[256], inputfile_pointcloud[256], *bufi(0), *bufi_daytimevar(0), *bufi_climate(0), *bufi_soil(0), *buf(0), *bufi_data(0), *bufi_pointcloud(0); //!< Global variable: character strings used to read file names, or other features
-#ifdef WATER
-char inputfile_SWC[256], *bufi_dataSWC(0);
-
-#endif
-char inputfile_species[256], *bufi_species(0); //!< Global variable: vector of input files
 
 // FILE OUTPUT STREAMS. Updated in v.3.1 to reduce number of streams and increase clarity
 fstream output_info;                //!< Global variable:  basic simulation information

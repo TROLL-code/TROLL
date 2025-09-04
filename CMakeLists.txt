@@ -14,7 +14,7 @@ MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(${PROJECT_NAME} src/troll.cpp)
+add_executable(${PROJECT_NAME} src/troll.cpp src/config.cpp)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
