@@ -72,30 +72,6 @@
 
 using namespace std;
 
-// FILE OUTPUT STREAMS. Updated in v.3.1 to reduce number of streams and increase clarity
-fstream output_info;                //!< Global variable:  basic simulation information
-fstream output_basic[4];            //!< Global variable:  default output streams, always used
-fstream output_extended[9];         //!< Global variable:  extended TROLL outputs, preserved from previous versions, might need further clean-up
-fstream output_visual[2];           //!< Global variable: outputs for visualization/gif creation, new in v.3.1.2
-fstream output_pointcloud;          //!< Global variable: optional las file output, new in v.3.1.6
-#ifdef MIP_Lichstein
-fstream output_MIP_eco;
-fstream output_MIP_ind;
-#endif
-
-#ifdef Output_ABC
-fstream output_abc[11];             //!< Global variable: output streams for Approximate Bayesian Computation
-#endif
-
-#ifdef WATER
-fstream output[40];//!< Global variable: output files
-//fstream output_water[10];           //!< Global variable: output streams for water module (in development), to be modified
-#endif
-
-#ifdef TRACK_INDIVIDUALS
-fstream output_track[3];            //!< Global variable: output streams for tracking of trees
-#endif
-
 // USER CONTROLS. Options that can be turned on (1) or off (0). This comes at computational cost: where routines have to be called frequently, if-conditioning should be done as far outside the loop as possible (e.g. for DAYTIMELIGHT outside voxel loops) .Options are set below, but inclusion in parameter sheet needed (for control from R)
 bool _NONRANDOM;     //!< User control: If _NONRANDOM == 1, the seeds for the random number generators will be kept fixed at 1, for bug fixing
 bool _GPPcrown;      //!< User control: This defines an option to compute only GPP from the topmost value of PPFD and GPP, instead of looping within the crown.

@@ -1315,7 +1315,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         }
         // if the water availabiliy in the root zone is below the lethal level, the tree dies, !!!: not that deterministic, right?
         if (phi_root < (t_phi_lethal)) dr+=1.0/timestep;
-        if (iter == int(nbiter-1)) output[26]<< t_wsg << "\t" << basal << "\t"  << dbh << "\t"  << dr   <<  "\n";
+        if (iter == int(nbiter-1)) Config::output[26]<< t_wsg << "\t" << basal << "\t"  << dbh << "\t"  << dr   <<  "\n";
         
         /*if (iter>=622 && dr*timestep>=0.8) {
             cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; S[t_sp_lab].s_phi_lethal=" << S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
@@ -2323,16 +2323,16 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         UpdateVolumeDensity();
         
 #ifdef WATER
-        if (iter == (nbiter-90)) OutputTreeStandard(output[28]);
-        if (iter == (nbiter-45)) OutputTreeStandard(output[29]);
-        if (iter == (nbiter-1)) OutputTreeStandard(output[30]);
+        if (iter == (nbiter-90)) OutputTreeStandard(Config::output[28]);
+        if (iter == (nbiter-45)) OutputTreeStandard(Config::output[29]);
+        if (iter == (nbiter-1)) OutputTreeStandard(Config::output[30]);
         
-        if (t_site==4) OutputTreeStandard(output[12]);
-        if (t_site==10380) OutputTreeStandard(output[13]);
-        if (t_site==100950) OutputTreeStandard(output[14]);
-        if (t_site==12090) OutputTreeStandard(output[15]);
-        if (t_site==120090) OutputTreeStandard(output[16]);
-        if (t_site==150667) OutputTreeStandard(output[17]);
+        if (t_site==4) OutputTreeStandard(Config::output[12]);
+        if (t_site==10380) OutputTreeStandard(Config::output[13]);
+        if (t_site==100950) OutputTreeStandard(Config::output[14]);
+        if (t_site==12090) OutputTreeStandard(Config::output[15]);
+        if (t_site==120090) OutputTreeStandard(Config::output[16]);
+        if (t_site==150667) OutputTreeStandard(Config::output[17]);
 #endif
     }
     
@@ -2752,10 +2752,10 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         if(t_timeofyear_born >= 0){
             float agb = 1000.0 * CalcAGB();
             if(t_dbh >= 0.1){
-                output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t"  <<  t_height - t_height_tracked << "\t" << t_CR << "\t"  <<  t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear  << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear<< "\t" << t_carbon_storage_avgyear << endl;
+                Config::output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t"  <<  t_height - t_height_tracked << "\t" << t_CR << "\t"  <<  t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear  << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear<< "\t" << t_carbon_storage_avgyear << endl;
             }
             
-            output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum  << "\t" << t_LAIeffsquared_cum << endl;
+            Config::output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum  << "\t" << t_LAIeffsquared_cum << endl;
         }
 #endif
         
@@ -2763,7 +2763,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         if (_FromInventory || (!_FromInventory && iter >=(nbiter-100*iterperyear))){
             if(t_dbh*LH >= 0.01 && t_inInventory == 1) {
                 float agb = 0.5 * CalcAGB(); // in kg C
-                output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+                Config::output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
                 t_inInventory=0;
             }
             
@@ -2791,9 +2791,9 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         }
         // New v.2.2. new outputs
         if(_OUTPUT_extended) {
-            if(iter == 2) output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
-            if(iter == int(nbiter/2)) output[24]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
-            if(iter == int(nbiter-1)) output[25]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
+            if(iter == 2) Config::output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
+            if(iter == int(nbiter/2)) Config::output[24]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
+            if(iter == int(nbiter-1)) Config::output[25]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
         }
         
         t_sp_lab = 0;
@@ -2977,7 +2977,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             if (iter%iterperyear==364 && (_FromInventory || (!_FromInventory && iter >=(nbiter-100*iterperyear)))){
                 if(t_dbh*LH >= 0.01) {
                     t_inInventory = 1;
-                    output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5*agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+                    Config::output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5*agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
                 }
                 
             }
@@ -3078,7 +3078,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             t_CR_tracked = t_CR;
             t_agb_tracked = 1000.0 * CalcAGB();
             
-            output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site%cols << "\t" << t_site/cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
+            Config::output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site%cols << "\t" << t_site/cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
         }
     }
 #endif
@@ -3374,11 +3374,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         int row_current = site/cols;
         int col_current = site%cols;
         if(row_current == row_slice && col_current >= mincol_visual && col_current < maxcol_visual){
-            output_visual[1] << iter << "\t" << row_current << "\t" << col_current << "\t" << height;
+            Config::output_visual[1] << iter << "\t" << row_current << "\t" << col_current << "\t" << height;
             for(int i = 0; i < output_statistics.size();i++){
-                output_visual[1] << "\t" << output_statistics[i];
+                Config::output_visual[1] << "\t" << output_statistics[i];
             } // we only output tree parts that fall in the current slice extent
-            output_visual[1] << endl;
+            Config::output_visual[1] << endl;
         }
     };
     
@@ -3595,8 +3595,8 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             cout << "On proc #" << easympi_rank << " seed: " << seed << endl;
             sprintf(Config::outputinfo,"%s_%i_info.txt",Config::buf, easympi_rank);
-            output_info.open(Config::outputinfo, ios::out);
-            if(!output_info) cerr<< "ERROR with info file"<< endl;
+            Config::output_info.open(Config::outputinfo, ios::out);
+            if(!Config::output_info) cerr<< "ERROR with info file"<< endl;
             
             Initialise();           // Read global parameters
             InitialiseOutputStreams();  // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
@@ -3641,22 +3641,22 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             //** Information in file info **
             //******************************
             if(!mpi_rank){
-                output_info << "\nTROLL simulator\n\n";
-                output_info << "\n   2D discrete network: horizontal step = " << LH
+                Config::output_info << "\nTROLL simulator\n\n";
+                Config::output_info << "\n   2D discrete network: horizontal step = " << LH
                 << " m, one tree per "<< LH*LH << " m^2 \n\n";
-                output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
-                output_info << "\n            + one species label \n\n";
-                output_info << " Number of sites      : "<<rows<<"x"<<cols<<"\n";
-                output_info << " Number of iterations : "<<nbiter<<"\n";
-                output_info << " Duration of timestep : "<<timestep<<" years\n";
-                output_info << " Number of Species    : "<<nbspp << "\n\n";
-                output_info.flush();
+                Config::output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
+                Config::output_info << "\n            + one species label \n\n";
+                Config::output_info << " Number of sites      : "<<rows<<"x"<<cols<<"\n";
+                Config::output_info << " Number of iterations : "<<nbiter<<"\n";
+                Config::output_info << " Duration of timestep : "<<timestep<<" years\n";
+                Config::output_info << " Number of Species    : "<<nbspp << "\n\n";
+                Config::output_info.flush();
             }
             
             // initial pattern, should be empty, unless an inventory has been provided
-            if(_OUTPUT_extended & !_OUTPUT_inventory) OutputSnapshot(output_basic[1], 1, 0.01);                  // Initial Pattern, for trees > 0.01m DBH
-            else if (_OUTPUT_inventory) OutputSnapshot(output_basic[1], 1, 0.001);
-            else OutputSnapshot(output_basic[1], 1, 0.1);                                   // Initial Pattern, for trees > 0.1m DBH
+            if(_OUTPUT_extended & !_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.01);                  // Initial Pattern, for trees > 0.01m DBH
+            else if (_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.001);
+            else OutputSnapshot(Config::output_basic[1], 1, 0.1);                                   // Initial Pattern, for trees > 0.1m DBH
 
             
             double start_time,stop_time, duration=0.0;           // for simulation duration
@@ -3674,7 +3674,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 }
                 
                 /*if(_OUTPUT_pointcloud > 0 && iter == iter_pointcloud_generation){
-                    ExportPointcloud(mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, output_pointcloud); // v.3.1.6
+                    ExportPointcloud(mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, Config::output_pointcloud); // v.3.1.6
                 }*/
                 
                 
@@ -3702,23 +3702,23 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             // final pattern
             if(_OUTPUT_extended & !_OUTPUT_inventory){
-                OutputSnapshot(output_basic[2], 1, 0.01);                 // Final Pattern, for trees > 0.01m DBH
+                OutputSnapshot(Config::output_basic[2], 1, 0.01);                 // Final Pattern, for trees > 0.01m DBH
             } else if (_OUTPUT_inventory){
-                OutputSnapshot(output_basic[2], 1, 0.001);
+                OutputSnapshot(Config::output_basic[2], 1, 0.001);
             } else {
-                OutputSnapshot(output_basic[2], 1, 0.1);                  // Final Pattern, for trees > 0.1m DBH
+                OutputSnapshot(Config::output_basic[2], 1, 0.1);                  // Final Pattern, for trees > 0.1m DBH
             }
             if(_OUTPUT_extended){
-                OutputLAI(output_extended[7]);
-                OutputCHM(output_extended[8]);
+                OutputLAI(Config::output_extended[7]);
+                OutputCHM(Config::output_extended[8]);
             }
             if (_OUTPUT_inventory) {
                 for (int d=0; d<nbdcells; d=d+1) {
-                    output_basic[3] << d ;
+                    Config::output_basic[3] << d ;
                     for (int l=0; l<nblayers_soil; l=l+1) {
-                         output_basic[3] << "\t" << SWC3D[l][d];
+                         Config::output_basic[3] << "\t" << SWC3D[l][d];
                     }
-                    output_basic[3] << endl;
+                    Config::output_basic[3] << endl;
                 }
             }
             
@@ -3733,11 +3733,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             if(!mpi_rank) {
                 cout << "\n";
 #ifdef MPI
-                output_info << "Number of processors : "<< mpi_size << "\n";
+                Config::output_info << "Number of processors : "<< mpi_size << "\n";
 #endif
-                output_info << "Average computation time : "<< durf/float(mpi_size) << " seconds.\n";
-                output_info << "End of simulation.\n";
-                output_info.flush();
+                Config::output_info << "Average computation time : "<< durf/float(mpi_size) << " seconds.\n";
+                Config::output_info << "End of simulation.\n";
+                Config::output_info.flush();
                 cout << "\nNumber of processors : "<< mpi_size << "\n";
                 cout << "Average computation time : "<< durf/float(mpi_size) << " seconds.\n";
                 cout << "End of simulation.\n";
@@ -5054,263 +5054,263 @@ if (_WATER_RETENTION_CURVE==1) {
                 char nnn[200];
                 if(!mpi_rank) {
                     sprintf(nnn,"%s_%i_sumstats.txt",Config::buf, easympi_rank);
-                    output_basic[0].open(nnn, ios::out);
+                    Config::output_basic[0].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_initial_pattern.txt",Config::buf, easympi_rank); // previously "state" output, but not used anymore, overwritten for initial pattern
-                    output_basic[1].open(nnn, ios::out);
+                    Config::output_basic[1].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_final_pattern.txt",Config::buf, easympi_rank);
-                    output_basic[2].open(nnn, ios::out);
+                    Config::output_basic[2].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_final_SWC3D.txt",Config::buf, easympi_rank);
-                    output_basic[3].open(nnn, ios::out);
+                    Config::output_basic[3].open(nnn, ios::out);
                     
                     // write headers for files
-                    output_basic[0] << "iter\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
+                    Config::output_basic[0] << "iter\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
                     // headers for initial and final patterns are written automatically
                     
                     sprintf(nnn,"%s_%i_sumstats_species.txt",Config::buf, easympi_rank);
-                    output_extended[0].open(nnn, ios::out);
-                    output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
+                    Config::output_extended[0].open(nnn, ios::out);
+                    Config::output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
                     
 #ifdef MIP_Lichstein
                     sprintf(nnn,"%s_%i_MIP_eco.txt",Config::buf, easympi_rank);
-                    output_MIP_eco.open(nnn, ios::out);
+                    Config::output_MIP_eco.open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_MIP_ind.txt",Config::buf, easympi_rank);
-                    output_MIP_ind.open(nnn, ios::out);
+                    Config::output_MIP_ind.open(nnn, ios::out);
                     
-                    output_MIP_eco << "YEAR\tMONTH\tDAY\tGPP\tNPP\tET\tLAI\tLFLIT\tSW1\tSW2\tSW3\tSW4" << endl;
-                    output_MIP_ind << "YEAR\tSP\tID\tNLIVE\tNDEAD\tDBH\tHT\tTB\tAGB\tWD\tSLA\tNMASS\tPMASS\tDBHMAX\tTLP\tLA"<< endl;
+                    Config::output_MIP_eco << "YEAR\tMONTH\tDAY\tGPP\tNPP\tET\tLAI\tLFLIT\tSW1\tSW2\tSW3\tSW4" << endl;
+                    Config::output_MIP_ind << "YEAR\tSP\tID\tNLIVE\tNDEAD\tDBH\tHT\tTB\tAGB\tWD\tSLA\tNMASS\tPMASS\tDBHMAX\tTLP\tLA"<< endl;
 #endif
                     
                     if(_OUTPUT_extended){
                         sprintf(nnn,"%s_%i_sumstats_species.txt",Config::buf, easympi_rank);
-                        output_extended[0].open(nnn, ios::out);
+                        Config::output_extended[0].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_ppfd0.txt",Config::buf, easympi_rank);
-                        output_extended[1].open(nnn, ios::out);
+                        Config::output_extended[1].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_death.txt",Config::buf, easympi_rank);
-                        output_extended[2].open(nnn, ios::out);
+                        Config::output_extended[2].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_death_snapshots.txt",Config::buf, easympi_rank);
-                        output_extended[3].open(nnn, ios::out);
+                        Config::output_extended[3].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_deathrate.txt",Config::buf, easympi_rank);
-                        output_extended[4].open(nnn, ios::out);
+                        Config::output_extended[4].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_sdd.txt",Config::buf, easympi_rank);
-                        output_extended[5].open(nnn,ios::out);
+                        Config::output_extended[5].open(nnn,ios::out);
                         sprintf(nnn,"%s_%i_vertd.txt",Config::buf, easympi_rank);
-                        output_extended[6].open(nnn,ios::out);
+                        Config::output_extended[6].open(nnn,ios::out);
                         sprintf(nnn,"%s_%i_LAI.txt",Config::buf, easympi_rank);
-                        output_extended[7].open(nnn, ios::out);
+                        Config::output_extended[7].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_CHM.txt",Config::buf, easympi_rank);
-                        output_extended[8].open(nnn, ios::out);
+                        Config::output_extended[8].open(nnn, ios::out);
                         
                         // write headers
-                        output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
-                        output_extended[1] << "iter\tvariable\tvalue\tresidual" << endl;
-                        if(_BASICTREEFALL) output_extended[2] << "iter\tnbdead_n1\tnbdead_n10\tnbTreefall1\tnbTreefall10" << endl;
-                        else output_extended[2] << "iter\tnbdead_n1\tnbdead_n10" << endl;
-                        output_extended[3] << "iter\tspecies\tage\tdbh\theight" << endl;
-                        output_extended[4] << "iter\twsg\tdbh\tbasal\tdr" <<  endl;
-                        output_extended[5] << "iter\td\tfreq" << endl;
-                        output_extended[6] << "iter\th\tfreq" << endl;
+                        Config::output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
+                        Config::output_extended[1] << "iter\tvariable\tvalue\tresidual" << endl;
+                        if(_BASICTREEFALL) Config::output_extended[2] << "iter\tnbdead_n1\tnbdead_n10\tnbTreefall1\tnbTreefall10" << endl;
+                        else Config::output_extended[2] << "iter\tnbdead_n1\tnbdead_n10" << endl;
+                        Config::output_extended[3] << "iter\tspecies\tage\tdbh\theight" << endl;
+                        Config::output_extended[4] << "iter\twsg\tdbh\tbasal\tdr" <<  endl;
+                        Config::output_extended[5] << "iter\td\tfreq" << endl;
+                        Config::output_extended[6] << "iter\th\tfreq" << endl;
                         
                         if(extent_visual > 0){
                             sprintf(nnn,"%s_%i_visual_field.txt",Config::buf, easympi_rank);
-                            output_visual[0].open(nnn, ios::out);
+                            Config::output_visual[0].open(nnn, ios::out);
 #ifdef CHM_SPIKEFREE
-                            output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl; // header
+                            Config::output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl; // header
 #else
-                            output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "LAI" << endl; // header
+                            Config::output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "LAI" << endl; // header
 #endif
                             
                             sprintf(nnn,"%s_%i_visual_slice.txt",Config::buf, easympi_rank);
-                            output_visual[1].open(nnn, ios::out);
-                            output_visual[1] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "sp_lab" << "\t" << "ratio_height_Ct" << "\t" << "ratio_NPP_GPP" << endl; // header
+                            Config::output_visual[1].open(nnn, ios::out);
+                            Config::output_visual[1] << "iter" << "\t" << "row" << "\t" << "col" << "\t"  << "height" << "\t" << "sp_lab" << "\t" << "ratio_height_Ct" << "\t" << "ratio_NPP_GPP" << endl; // header
                         }
                     }
                     
                     // v.3.1.6 output for point cloud
                     if(_OUTPUT_pointcloud){
                         sprintf(nnn,"%s_%i.las",Config::buf, easympi_rank);
-                        output_pointcloud.open(nnn, ios::out | ios::binary);
-                        output_pointcloud.imbue(locale::classic()); // justification here: https://stackoverflow.com/questions/14750496/sending-integer-to-fstream-as-little-endian; locale regulates how streams print and read values (i.e. commas vs. points for decimals, etc.); setting it to classic to ensure portability, but not entirely sure how important this is in practice for binary files
+                        Config::output_pointcloud.open(nnn, ios::out | ios::binary);
+                        Config::output_pointcloud.imbue(locale::classic()); // justification here: https://stackoverflow.com/questions/14750496/sending-integer-to-fstream-as-little-endian; locale regulates how streams print and read values (i.e. commas vs. points for decimals, etc.); setting it to classic to ensure portability, but not entirely sure how important this is in practice for binary files
                         
                     }
                     
 #ifdef Output_ABC
                     sprintf(nnn,"%s_%i_abc_traitconservation.txt",Config::buf, easympi_rank);
-                    output_abc[0].open(nnn, ios::out);
+                    Config::output_abc[0].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_ground.txt",Config::buf, easympi_rank);
-                    output_abc[1].open(nnn, ios::out);
+                    Config::output_abc[1].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_chm.txt",Config::buf, easympi_rank);
-                    output_abc[2].open(nnn, ios::out);
+                    Config::output_abc[2].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_chmALS.txt",Config::buf, easympi_rank);
-                    output_abc[3].open(nnn, ios::out);
+                    Config::output_abc[3].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_transmittance.txt",Config::buf, easympi_rank);
-                    output_abc[4].open(nnn, ios::out);
+                    Config::output_abc[4].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_transmittanceALS.txt",Config::buf, easympi_rank);
-                    output_abc[5].open(nnn, ios::out);
+                    Config::output_abc[5].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_species.txt",Config::buf, easympi_rank);
-                    output_abc[6].open(nnn, ios::out);
+                    Config::output_abc[6].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_species10.txt",Config::buf, easympi_rank);
-                    output_abc[7].open(nnn, ios::out);
+                    Config::output_abc[7].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_traits.txt",Config::buf, easympi_rank);
-                    output_abc[8].open(nnn, ios::out);
+                    Config::output_abc[8].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_traits10.txt",Config::buf, easympi_rank);
-                    output_abc[9].open(nnn, ios::out);
+                    Config::output_abc[9].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_abc_biomass.txt",Config::buf, easympi_rank);
-                    output_abc[10].open(nnn, ios::out);
+                    Config::output_abc[10].open(nnn, ios::out);
 #endif
                     
 #ifdef WATER
                     //sprintf(nnn,"%s_%i_water_balance.txt",Config::buf, easympi_rank);
-                    //output_water[0].open(nnn, ios::out);
+                    //Config::output_water[0].open(nnn, ios::out);
                     
                     sprintf(nnn,"%s_%i_water_balance.txt",Config::buf, easympi_rank);
-                    output[11].open(nnn, ios::out);
+                    Config::output[11].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site1.txt",Config::buf, easympi_rank);
-                    output[12].open(nnn, ios::out);
+                    Config::output[12].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site2.txt",Config::buf, easympi_rank);
-                    output[13].open(nnn, ios::out);
+                    Config::output[13].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site3.txt",Config::buf, easympi_rank);
-                    output[14].open(nnn, ios::out);
+                    Config::output[14].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site4.txt",Config::buf, easympi_rank);
-                    output[15].open(nnn, ios::out);
+                    Config::output[15].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site5.txt",Config::buf, easympi_rank);
-                    output[16].open(nnn, ios::out);
+                    Config::output[16].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_site6.txt",Config::buf, easympi_rank);
-                    output[17].open(nnn, ios::out);
+                    Config::output[17].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_state_begin.txt",Config::buf, easympi_rank);
-                    output[28].open(nnn, ios::out);
+                    Config::output[28].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_state_mid.txt",Config::buf, easympi_rank);
-                    output[29].open(nnn, ios::out);
+                    Config::output[29].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_state_end.txt",Config::buf, easympi_rank);
-                    output[30].open(nnn, ios::out);
+                    Config::output[30].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWC_begin.txt",Config::buf, easympi_rank);
-                    output[1].open(nnn, ios::out);
+                    Config::output[1].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWC_mid.txt",Config::buf, easympi_rank);
-                    output[2].open(nnn, ios::out);
+                    Config::output[2].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWC_end.txt",Config::buf, easympi_rank);
-                    output[3].open(nnn, ios::out);
+                    Config::output[3].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWP_begin.txt",Config::buf, easympi_rank);
-                    output[4].open(nnn, ios::out);
+                    Config::output[4].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWP_mid.txt",Config::buf, easympi_rank);
-                    output[5].open(nnn, ios::out);
+                    Config::output[5].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_SWP_end.txt",Config::buf, easympi_rank);
-                    output[6].open(nnn, ios::out);
+                    Config::output[6].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_litterfall.txt",Config::buf, easympi_rank);
-                    output[7].open(nnn, ios::out);
+                    Config::output[7].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_waterfluxes_begin.txt",Config::buf, easympi_rank);
-                    output[18].open(nnn, ios::out);
+                    Config::output[18].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_waterfluxes_mid.txt",Config::buf, easympi_rank);
-                    output[19].open(nnn, ios::out);
+                    Config::output[19].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_waterfluxes_end.txt",Config::buf, easympi_rank);
-                    output[20].open(nnn, ios::out);
+                    Config::output[20].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_LAIdynamics.txt",Config::buf, easympi_rank);
-                    output[21].open(nnn, ios::out);
+                    Config::output[21].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_LAIyoung.txt",Config::buf, easympi_rank);
-                    output[22].open(nnn, ios::out);
+                    Config::output[22].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_LAImature.txt",Config::buf, easympi_rank);
-                    output[23].open(nnn, ios::out);
+                    Config::output[23].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_LAIold.txt",Config::buf, easympi_rank);
-                    output[24].open(nnn, ios::out);
+                    Config::output[24].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_phi_root.txt",Config::buf, easympi_rank);
-                    output[31].open(nnn, ios::out);
+                    Config::output[31].open(nnn, ios::out);
                     sprintf(nnn,"%s_%i_LAIprofile.txt",Config::buf, easympi_rank);
-                    output[32].open(nnn,ios::out);
+                    Config::output[32].open(nnn,ios::out);
                     sprintf(nnn,"%s_%i_soilproperties.txt",Config::buf, easympi_rank);
-                    output[33].open(nnn,ios::out);
+                    Config::output[33].open(nnn,ios::out);
                     
                     // write headers
-                     output[21] << "iter\tLAI" << endl;
-                     output[22] << "iter";
-                     output[23] << "iter";
-                     output[24] << "iter";
+                     Config::output[21] << "iter\tLAI" << endl;
+                     Config::output[22] << "iter";
+                     Config::output[23] << "iter";
+                     Config::output[24] << "iter";
                      for (int l=0; l<HEIGHT+1; l++) {
-                         output[22] << "\t" << "h_" << l;
-                         output[23] << "\t" << "h_" << l;
-                         output[24] << "\t" << "h_" << l;
+                         Config::output[22] << "\t" << "h_" << l;
+                         Config::output[23] << "\t" << "h_" << l;
+                         Config::output[24] << "\t" << "h_" << l;
                      }
-                     output[22] << endl;
-                     output[23] << endl;
-                     output[24] << endl;
-                     output[31] << "iter\tabundance_weighted_phi_root\tabundance_weighted_phi_root_n10\tagb_weighted_phi_root" << endl;
-                     output[32] << "iter\theight\tLAI" << endl;
-                     output[1] << "layer";
-                     output[2] << "layer";
-                     output[3] << "layer";
-                     output[4] << "layer";
-                     output[5] << "layer";
-                     output[6] << "layer";
-                     output[18] << "variable";
-                     output[19] << "variable";
-                     output[20] << "variable";
+                     Config::output[22] << endl;
+                     Config::output[23] << endl;
+                     Config::output[24] << endl;
+                     Config::output[31] << "iter\tabundance_weighted_phi_root\tabundance_weighted_phi_root_n10\tagb_weighted_phi_root" << endl;
+                     Config::output[32] << "iter\theight\tLAI" << endl;
+                     Config::output[1] << "layer";
+                     Config::output[2] << "layer";
+                     Config::output[3] << "layer";
+                     Config::output[4] << "layer";
+                     Config::output[5] << "layer";
+                     Config::output[6] << "layer";
+                     Config::output[18] << "variable";
+                     Config::output[19] << "variable";
+                     Config::output[20] << "variable";
                      for (int d=0; d<nbdcells;d++) {
-                         output[1] << "\t" << "dcell_" << d;
-                         output[2] << "\t" << "dcell_" << d;
-                         output[3] << "\t" << "dcell_" << d;
-                         output[4] << "\t" << "dcell_" << d;
-                         output[5] << "\t" << "dcell_" << d;
-                         output[6] << "\t" << "dcell_" << d;
-                         output[18] << "\t" << "dcell_" << d;
-                         output[19] << "\t" << "dcell_" << d;
-                         output[20] << "\t" << "dcell_" << d;
+                         Config::output[1] << "\t" << "dcell_" << d;
+                         Config::output[2] << "\t" << "dcell_" << d;
+                         Config::output[3] << "\t" << "dcell_" << d;
+                         Config::output[4] << "\t" << "dcell_" << d;
+                         Config::output[5] << "\t" << "dcell_" << d;
+                         Config::output[6] << "\t" << "dcell_" << d;
+                         Config::output[18] << "\t" << "dcell_" << d;
+                         Config::output[19] << "\t" << "dcell_" << d;
+                         Config::output[20] << "\t" << "dcell_" << d;
                      }
-                     output[1] << endl;
-                     output[2] << endl;
-                     output[3] << endl;
-                     output[4] << endl;
-                     output[5] << endl;
-                     output[6] << endl;
-                     output[18] << endl;
-                     output[19] << endl;
-                     output[20] << endl;
-                     output[11] << "iter\tprecipitation\tinterception\tthroughfall\trunoff\tleak\tevaporation";
+                     Config::output[1] << endl;
+                     Config::output[2] << endl;
+                     Config::output[3] << endl;
+                     Config::output[4] << endl;
+                     Config::output[5] << endl;
+                     Config::output[6] << endl;
+                     Config::output[18] << endl;
+                     Config::output[19] << endl;
+                     Config::output[20] << endl;
+                     Config::output[11] << "iter\tprecipitation\tinterception\tthroughfall\trunoff\tleak\tevaporation";
                      for(int l=0; l<nblayers_soil; l++)
-                         output[11] << "\t" << "transpitation_" << l;
-                     output[11] << "\t" << "transpiration1016";
+                         Config::output[11] << "\t" << "transpitation_" << l;
+                     Config::output[11] << "\t" << "transpiration1016";
                      for(int l=0; l<nblayers_soil; l++)
-                         output[11]  << "\t" << "SWC_" << l;
+                         Config::output[11]  << "\t" << "SWC_" << l;
                      for(int l=0; l<nblayers_soil; l++)
-                         output[11]  << "\t" << "SWP_" << l;
-                     output[11] << endl;
+                         Config::output[11]  << "\t" << "SWP_" << l;
+                     Config::output[11] << endl;
                      string sites_headers = "iter\tsite\tsp_lab\theight\tdbh\tlitter\tage\tLA\tyougLA\tmatureLA\toldLA\tCR\tCD\tGPP\tNPP\tRstem\tRnight\tLAI3D_canopy\tLAI3D_base_crown\troot_depth\tphi_root\tWSFs\tWSFns\ttranspiration\tLAImax\tLAmax";
-                     output[12] << sites_headers;
-                     output[13] << sites_headers;
-                     output[14] << sites_headers;
-                     output[15] << sites_headers;
-                     output[16] << sites_headers;
-                     output[17] << sites_headers;
-                     output[28] << sites_headers;
-                     output[29] << sites_headers;
-                     output[30] << sites_headers;
+                     Config::output[12] << sites_headers;
+                     Config::output[13] << sites_headers;
+                     Config::output[14] << sites_headers;
+                     Config::output[15] << sites_headers;
+                     Config::output[16] << sites_headers;
+                     Config::output[17] << sites_headers;
+                     Config::output[28] << sites_headers;
+                     Config::output[29] << sites_headers;
+                     Config::output[30] << sites_headers;
                      for(int l=0; l<nblayers_soil; l++){
-                         output[12] << "\t" << "root_biomass_" << l;
-                         output[13] << "\t" << "root_biomass_" << l;
-                         output[14] << "\t" << "root_biomass_" << l;
-                         output[15] << "\t" << "root_biomass_" << l;
-                         output[16] << "\t" << "root_biomass_" << l;
-                         output[17] << "\t" << "root_biomass_" << l;
-                         output[28] << "\t" << "root_biomass_" << l;
-                         output[29] << "\t" << "root_biomass_" << l;
-                         output[30] << "\t" << "root_biomass_" << l;
+                         Config::output[12] << "\t" << "root_biomass_" << l;
+                         Config::output[13] << "\t" << "root_biomass_" << l;
+                         Config::output[14] << "\t" << "root_biomass_" << l;
+                         Config::output[15] << "\t" << "root_biomass_" << l;
+                         Config::output[16] << "\t" << "root_biomass_" << l;
+                         Config::output[17] << "\t" << "root_biomass_" << l;
+                         Config::output[28] << "\t" << "root_biomass_" << l;
+                         Config::output[29] << "\t" << "root_biomass_" << l;
+                         Config::output[30] << "\t" << "root_biomass_" << l;
                      }
                      for(int l=0; l<nblayers_soil; l++){
-                         output[12] << "\t" << "soil_layer_weight_" << l;
-                         output[13] << "\t" << "soil_layer_weight_" << l;
-                         output[14] << "\t" << "soil_layer_weight_" << l;
-                         output[15] << "\t" << "soil_layer_weight_" << l;
-                         output[16] << "\t" << "soil_layer_weight_" << l;
-                         output[17] << "\t" << "soil_layer_weight_" << l;
-                         output[28] << "\t" << "soil_layer_weight_" << l;
-                         output[29] << "\t" << "soil_layer_weight_" << l;
-                         output[30] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[12] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[13] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[14] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[15] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[16] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[17] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[28] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[29] << "\t" << "soil_layer_weight_" << l;
+                         Config::output[30] << "\t" << "soil_layer_weight_" << l;
                      }
-                     output[12] << endl;
-                     output[13] << endl;
-                     output[14] << endl;
-                     output[15] << endl;
-                     output[16] << endl;
-                     output[17] << endl;
-                     output[28] << endl;
-                     output[29] << endl;
-                     output[30] << endl;
+                     Config::output[12] << endl;
+                     Config::output[13] << endl;
+                     Config::output[14] << endl;
+                     Config::output[15] << endl;
+                     Config::output[16] << endl;
+                     Config::output[17] << endl;
+                     Config::output[28] << endl;
+                     Config::output[29] << endl;
+                     Config::output[30] << endl;
                     
 #endif
                     
@@ -5319,16 +5319,16 @@ if (_WATER_RETENTION_CURVE==1) {
                     
                     
 if (_WATER_RETENTION_CURVE==1) {
-                    output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "a_vgm" << "\t" << "m_vgm" << endl;
+                    Config::output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "a_vgm" << "\t" << "m_vgm" << endl;
                     for (int l=0; l<nblayers_soil; l++) {
-                    output[33] << l  << "\t" << layer_depth[l]  << "\t" << Sat_SWC[l] << "\t" << Max_SWC[l]  << "\t" << FC_SWC[l] << "\t" << Res_SWC[l] << "\t" << Min_SWC[l] << "\t" << Ksat[l] << "\t" << a_vgm[l] << "\t" << m_vgm[l] << endl;
+                    Config::output[33] << l  << "\t" << layer_depth[l]  << "\t" << Sat_SWC[l] << "\t" << Max_SWC[l]  << "\t" << FC_SWC[l] << "\t" << Res_SWC[l] << "\t" << Min_SWC[l] << "\t" << Ksat[l] << "\t" << a_vgm[l] << "\t" << m_vgm[l] << endl;
                     }
 
 } else if (_WATER_RETENTION_CURVE==0) {
                     
-                    output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "phi_e" << "\t" << "b" << endl;
+                    Config::output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "phi_e" << "\t" << "b" << endl;
                     for (int l=0; l<nblayers_soil; l++) {
-                    output[33] << l  << "\t" << layer_depth[l]  << "\t" << Sat_SWC[l] << "\t" << Max_SWC[l] << "\t" << FC_SWC[l] << "\t" << Res_SWC[l] << "\t" << Min_SWC[l] << "\t" << Ksat[l] << "\t" << phi_e[l] << "\t" << b[l] << endl;
+                    Config::output[33] << l  << "\t" << layer_depth[l]  << "\t" << Sat_SWC[l] << "\t" << Max_SWC[l] << "\t" << FC_SWC[l] << "\t" << Res_SWC[l] << "\t" << Min_SWC[l] << "\t" << Ksat[l] << "\t" << phi_e[l] << "\t" << b[l] << endl;
                          }
 }
                    
@@ -5338,20 +5338,20 @@ if (_WATER_RETENTION_CURVE==1) {
                     if(_OUTPUT_extended){
                         // these are the "cases" of trees that are followed
                         sprintf(nnn,"%s_%i_trees_fortracking.txt",Config::buf, easympi_rank);
-                        output_track[0].open(nnn, ios::out);
-                        output_track[0] << "site" << "\t" << "timeofyear_born" << "\t" << "col" << "\t" << "row" << "\t" << "species" << "\t" << "dbh" << "\t" << "cr" << "\t" << "height"  << "\t" << "agb" << "\t" << "multiplier_cr" << "\t" << "multiplier_height" << "\t" << "wsg" << "\t" << "Nmass" << "\t" << "Pmass" << "\t" << "LMA" << "\t" << "deviation_wsg" << "\t" << "multiplier_Nmass" << "\t" << "multiplier_Pmass" << "\t" << "multiplier_lma" << "\t" << "Vcmax" << "\t" << "Jmax" << "\t" << "Rdark" << "\t" << "LAImax" << "\t" << "leaflifespan" << endl;
+                        Config::output_track[0].open(nnn, ios::out);
+                        Config::output_track[0] << "site" << "\t" << "timeofyear_born" << "\t" << "col" << "\t" << "row" << "\t" << "species" << "\t" << "dbh" << "\t" << "cr" << "\t" << "height"  << "\t" << "agb" << "\t" << "multiplier_cr" << "\t" << "multiplier_height" << "\t" << "wsg" << "\t" << "Nmass" << "\t" << "Pmass" << "\t" << "LMA" << "\t" << "deviation_wsg" << "\t" << "multiplier_Nmass" << "\t" << "multiplier_Pmass" << "\t" << "multiplier_lma" << "\t" << "Vcmax" << "\t" << "Jmax" << "\t" << "Rdark" << "\t" << "LAImax" << "\t" << "leaflifespan" << endl;
                         
                         // these are the "activities" that are recorded for each tree
                         sprintf(nnn,"%s_%i_trees_tracked.txt",Config::buf, easympi_rank);
-                        output_track[1].open(nnn, ios::out);
+                        Config::output_track[1].open(nnn, ios::out);
                         
-                        output_track[1] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seeds" << "\t" << "seedstotal" << "\t" << "carbstarv" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "dbhgrowth" << "\t" << "height" << "\t" << "heightgrowth" << "\t" << "cr" << "\t" << "crgrowth" << "\t" << "agb" << "\t" << "agbgrowth" << "\t" << "GPP" << "\t" << "GPPsq" << "\t" << "NPP" << "\t" << "NPPsq" << "\t" << "Rday" << "\t" << "Rnight" << "\t" << "Rstem" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "carbstore_avg" << endl;
+                        Config::output_track[1] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seeds" << "\t" << "seedstotal" << "\t" << "carbstarv" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "dbhgrowth" << "\t" << "height" << "\t" << "heightgrowth" << "\t" << "cr" << "\t" << "crgrowth" << "\t" << "agb" << "\t" << "agbgrowth" << "\t" << "GPP" << "\t" << "GPPsq" << "\t" << "NPP" << "\t" << "NPPsq" << "\t" << "Rday" << "\t" << "Rnight" << "\t" << "Rstem" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "carbstore_avg" << endl;
                         
                         // this is to get information on the dead trees > 10cm
                         sprintf(nnn,"%s_%i_trees_aftertracking.txt",Config::buf, easympi_rank);
-                        output_track[2].open(nnn, ios::out);
+                        Config::output_track[2].open(nnn, ios::out);
                         
-                        output_track[2] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seedstotal" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "height" << "\t" << "cr" << "\t" << "agb" << "\t" << "GPP" << "\t" << "NPP" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "GPPsquared" << "\t" << "NPPsquared" << "\t" << "LAIabovesquared_avg" << "\t" << "LAIabovesquared_effavg" << endl;
+                        Config::output_track[2] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seedstotal" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "height" << "\t" << "cr" << "\t" << "agb" << "\t" << "GPP" << "\t" << "NPP" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "GPPsquared" << "\t" << "NPPsquared" << "\t" << "LAIabovesquared_avg" << "\t" << "LAIabovesquared_effavg" << endl;
                     }
 #endif
                 }
@@ -5456,7 +5456,7 @@ if (_WATER_RETENTION_CURVE==1) {
                 }
             }
             // initialise output streams
-            OutputABCWriteHeaders(output[11], output[12], output[13], output[14], output[15], output[16], output[17], output[18], output[19],output[23], output[24],output[25], output[26], output[27]);
+            OutputABCWriteHeaders(Config::output[11], Config::output[12], Config::output[13], Config::output[14], Config::output[15], Config::output[16], Config::output[17], Config::output[18], Config::output[19],Config::output[23], Config::output[24],Config::output[25], Config::output[26], Config::output[27]);
             
         }
 #endif
@@ -6702,16 +6702,16 @@ if (_WATER_RETENTION_CURVE==1) {
                     litterfall += S[spp].s_litterfall;
                     
                     //if(_OUTPUT_extended){
-                        output_extended[0] << iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
+                        Config::output_extended[0] << iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
                     //}
                 }
                 
                 
-                output_basic[0] << iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
+                Config::output_basic[0] << iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
                 
 #ifdef MIP_Lichstein
                 if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
-                    output_MIP_eco << iter << "\t" << iter <<  "\t" << iter << "\t" << gpp*100 << "\t" << npp*100 << "\t" ;
+                    Config::output_MIP_eco << iter << "\t" << iter <<  "\t" << iter << "\t" << gpp*100 << "\t" << npp*100 << "\t" ;
                 }
 #endif
                 
@@ -6737,11 +6737,11 @@ if (_WATER_RETENTION_CURVE==1) {
                     }
                     tototest /=float(sites*LH*LH);                              // Average light flux (PPFD) on the ground
                     tototest2 /=float(sites*LH*LH);
-                    if(iter) output_extended[1] << iter<< "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2-tototest*tototest) << "\n";
+                    if(iter) Config::output_extended[1] << iter<< "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2-tototest*tototest) << "\n";
                     
                     
-                    if(_BASICTREEFALL) output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares<< "\t" << nbTreefall1*inbhectares << "\t" << nbTreefall10*inbhectares << endl;
-                    else output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares << endl;
+                    if(_BASICTREEFALL) Config::output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares<< "\t" << nbTreefall1*inbhectares << "\t" << nbTreefall10*inbhectares << endl;
+                    else Config::output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares << endl;
                     
                 }
             }
@@ -6824,8 +6824,8 @@ if (_WATER_RETENTION_CURVE==1) {
             lai*=icells;
             transpiration_1016*=isites;
             
-            output[11] << iter << "\t" << precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
-            output[21] << iter << "\t" << lai << endl;
+            Config::output[11] << iter << "\t" << precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
+            Config::output[21] << iter << "\t" << lai << endl;
             
 #ifdef MIP_Lichstein
             float transpitot=0.0;
@@ -6837,7 +6837,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     transpi+=Transpiration[l][d];  // in m3
                 }
                 transpi*=isites; // in m
-                output[11] << transpi << "\t";
+                Config::output[11] << transpi << "\t";
                 cout << transpi*1000 << " | "; // in mm
                 
 #ifdef MIP_Lichstein
@@ -6845,13 +6845,13 @@ if (_WATER_RETENTION_CURVE==1) {
 #endif
             }
             
-            output[11] << transpiration_1016 << "\t" ;
+            Config::output[11] << transpiration_1016 << "\t" ;
             
             cout << transpiration_1016*1000 <<  " | "  << endl;
             
 #ifdef MIP_Lichstein
             if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
-                output_MIP_eco << (transpitot+evapo)*1000 << "\t" << lai << "\t" <<  litterfall*0.5*100 << "\t" ;
+                Config::output_MIP_eco << (transpitot+evapo)*1000 << "\t" << lai << "\t" <<  litterfall*0.5*100 << "\t" ;
             }
             
             float SW1=0.0, SW2=0.0, SW3=0.0, SW4=-9999; //Guyaflux
@@ -6868,7 +6868,7 @@ if (_WATER_RETENTION_CURVE==1) {
                 float layer_depth_current = layer_depth[l];
                 float layer_thickness = layer_depth_current - layer_depth_previous;
                 soilWC*=isites/layer_thickness;  // in m3/m3
-                output[11] << soilWC << "\t";
+                Config::output[11] << soilWC << "\t";
                 
 #ifdef MIP_Lichstein
                 if (l==0 || l==1) {          //Guyaflux
@@ -6911,10 +6911,10 @@ if (_WATER_RETENTION_CURVE==1) {
                     soilPhi+=soil_phi3D[l][d];  //in MPa
                 }
                 soilPhi*=icells; // in MPa
-                output[11] << soilPhi << "\t";
+                Config::output[11] << soilPhi << "\t";
             }
             
-            output[11] <<"\n";
+            Config::output[11] <<"\n";
             
 #ifdef MIP_Lichstein
             SW1/=LT1;
@@ -6923,7 +6923,7 @@ if (_WATER_RETENTION_CURVE==1) {
             //SW4/=LT4;     //Tapajos
             
             if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
-                output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
+                Config::output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
             }
 #endif
             
@@ -6946,64 +6946,64 @@ if (_WATER_RETENTION_CURVE==1) {
                     o_wfluxes=20;
                 }
                 
-                output[o_wfluxes] << "LAI" << "\t";
+                Config::output[o_wfluxes] << "LAI" << "\t";
                 for (int d=0; d<nbdcells;d++) {
-                    output[o_wfluxes] << LAI_DCELL[0][d] << "\t";
+                    Config::output[o_wfluxes] << LAI_DCELL[0][d] << "\t";
                 }
-                output[o_wfluxes] << endl;
+                Config::output[o_wfluxes] << endl;
                 
-                output[o_wfluxes] << "Evaporation" << "\t";
+                Config::output[o_wfluxes] << "Evaporation" << "\t";
                 for (int d=0; d<nbdcells;d++) {
-                    output[o_wfluxes] << Evaporation[d]*i_sites_per_dcell << "\t"; // in m
+                    Config::output[o_wfluxes] << Evaporation[d]*i_sites_per_dcell << "\t"; // in m
                 }
-                output[o_wfluxes] << endl;
+                Config::output[o_wfluxes] << endl;
                 
                 layer_depth_previous = 0.0;
                 for(int l=0; l<nblayers_soil; l++) {
                     float layer_depth_current = layer_depth[l];
                     float layer_thickness = layer_depth_current - layer_depth_previous;
                     float norm=i_sites_per_dcell/layer_thickness;
-                    output[o_swc] << l << "\t";
-                    output[o_swp] << l << "\t";
-                    output[o_wfluxes] << "Transpiration_" << l << "\t";
+                    Config::output[o_swc] << l << "\t";
+                    Config::output[o_swp] << l << "\t";
+                    Config::output[o_wfluxes] << "Transpiration_" << l << "\t";
                     for (int d=0; d<nbdcells;d++) {
-                        output[o_swc] << SWC3D[l][d]*norm  << "\t"; // in m3/m3
-                        output[o_swp] << soil_phi3D[l][d] << "\t";
-                        output[o_wfluxes] << Transpiration[l][d]*i_sites_per_dcell << "\t";
+                        Config::output[o_swc] << SWC3D[l][d]*norm  << "\t"; // in m3/m3
+                        Config::output[o_swp] << soil_phi3D[l][d] << "\t";
+                        Config::output[o_wfluxes] << Transpiration[l][d]*i_sites_per_dcell << "\t";
                     }
                     layer_depth_previous = layer_depth_current;
-                    output[o_swc] << endl;
-                    output[o_swp] << endl;
-                    output[o_wfluxes] << endl;
+                    Config::output[o_swc] << endl;
+                    Config::output[o_swp] << endl;
+                    Config::output[o_wfluxes] << endl;
                 }
                 
                 
                 
             }
             
-            output[22] << iter  << "\t";
-            output[23] << iter  << "\t";
-            output[24] << iter  << "\t";
+            Config::output[22] << iter  << "\t";
+            Config::output[23] << iter  << "\t";
+            Config::output[24] << iter  << "\t";
             for (int l=0; l<HEIGHT+1; l++) {
                 LAI_young[l]*=isites;
                 LAI_mature[l]*=isites;
                 LAI_old[l]*=isites;
-                output[22] << LAI_young[l]  << "\t";
-                output[23] << LAI_mature[l]  << "\t";
-                output[24] << LAI_old[l]  << "\t";
+                Config::output[22] << LAI_young[l]  << "\t";
+                Config::output[23] << LAI_mature[l]  << "\t";
+                Config::output[24] << LAI_old[l]  << "\t";
                 LAI_young[l]=0.0;
                 LAI_mature[l]=0.0;
                 LAI_old[l]=0.0;
             }
-            output[22] << endl;
-            output[23] << endl;
-            output[24] << endl;
+            Config::output[22] << endl;
+            Config::output[23] << endl;
+            Config::output[24] << endl;
             
             abund_phi_root*=inbhectares/sum1;
             abund10_phi_root*=inbhectares/sum10;
             agb_phi_root*=inbhectares/agb;
             
-            output[31] << iter << "\t" << abund_phi_root << "\t" << abund10_phi_root << "\t" << agb_phi_root << endl;
+            Config::output[31] << iter << "\t" << abund_phi_root << "\t" << abund10_phi_root << "\t" << agb_phi_root << endl;
             
             
 
@@ -7048,13 +7048,13 @@ if (_WATER_RETENTION_CURVE==1) {
                 MPI_Reduce(layer,layer,HEIGHT,MPI_FLOAT,MPI_SUM,0,MPI_COMM_WORLD);
 #endif
                 if(!mpi_rank) {
-                    // output of the dbh histograms (output[31])
-                    for(d=1;d<dbhmaxincm;d++) output[31] << d << "\t" << nbdbh[d]  << "\n";
-                    output[31] <<  "\n";
-                    // output of the mean LAI per height class (output[32])
+                    // output of the dbh histograms (Config::output[31])
+                    for(d=1;d<dbhmaxincm;d++) Config::output[31] << d << "\t" << nbdbh[d]  << "\n";
+                    Config::output[31] <<  "\n";
+                    // output of the mean LAI per height class (Config::output[32])
                     float norm = 1.0/float(sites*LH*LH*mpi_size);
-                    for(h=0;h<(HEIGHT+1);h++) output[32] << iter << "\t" << h*LV << "\t" << layer[h]*norm << "\n";
-                    output[32] <<  "\n";
+                    for(h=0;h<(HEIGHT+1);h++) Config::output[32] << iter << "\t" << h*LV << "\t" << layer[h]*norm << "\n";
+                    Config::output[32] <<  "\n";
                 }
             }
         }
@@ -7229,7 +7229,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     for(int h=0;h<(HEIGHT+1);h++){
                         if(LAI3D[h][site+SBORD] > 0.0) height_canopy = max(h,height_canopy);
                     }
-                    output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy+1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site+SBORD] << endl;
+                    Config::output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy+1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site+SBORD] << endl;
                 }
             }
 #else
@@ -7240,7 +7240,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     for(int h=0;h<(HEIGHT+1);h++){
                         if(LAI3D[h][site+SBORD] > 0.0) height_canopy = max(h,height_canopy);
                     }
-                    output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy+1 << "\t" << LAI3D[0][site+SBORD] << endl;
+                    Config::output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy+1 << "\t" << LAI3D[0][site+SBORD] << endl;
                 }
             }
 #endif
@@ -7448,45 +7448,45 @@ if (_WATER_RETENTION_CURVE==1) {
         //    val = dst.val;
         //}
         
-        /* void ExportPointcloudHeader(vector<int> &beams, fstream& output_pointcloud){
+        /* void ExportPointcloudHeader(vector<int> &beams, fstream& Config::output_pointcloud){
             // las files are defined as little endian
             // for the moment, we assume a little endian system and that chars actually have 8 bits (1 byte)
             // all names are just LAS definition names with underscores
             // future versions should upgrade format to 1.4, and include ways to parameterize coordinate reference system, etc.
             
             char file_signature[5] = "LASF";
-            output_pointcloud.write(file_signature, sizeof(file_signature) - 1); // remove terminating NULL in char
+            Config::output_pointcloud.write(file_signature, sizeof(file_signature) - 1); // remove terminating NULL in char
             
             uint16_t file_source_id = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&file_source_id), sizeof(file_source_id));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&file_source_id), sizeof(file_source_id));
             
             uint16_t global_encoding = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&global_encoding), sizeof(global_encoding));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&global_encoding), sizeof(global_encoding));
             
             uint32_t project_id_guid_data_1 = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_1), sizeof(project_id_guid_data_1));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_1), sizeof(project_id_guid_data_1));
             
             uint16_t project_id_guid_data_2 = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_2), sizeof(project_id_guid_data_2));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_2), sizeof(project_id_guid_data_2));
             
             uint16_t project_id_guid_data_3 = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_3), sizeof(project_id_guid_data_3));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_3), sizeof(project_id_guid_data_3));
             
             unsigned char project_id_guid_data_4[9] = "";
-            output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_4), sizeof(project_id_guid_data_4) - 1);
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_4), sizeof(project_id_guid_data_4) - 1);
             
             unsigned char version_major = 1;    // this is slightly weird: why were these not simply defined as uint8_t in LAS specification? Or is "unsigned char" short for uint8_t? Because there is also an ascii char reserved for numbers (e.g. "1" corresponds to char = 49)
-            output_pointcloud.write(reinterpret_cast<const char *>(&version_major), sizeof(version_major));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&version_major), sizeof(version_major));
             
             unsigned char version_minor = 2;    // this is slightly weird: why were these not simply defined as uint8_t in LAS specification? Or is "unsigned char" short for uint8_t? Because there is also an ascii char reserved for numbers (e.g. "1" corresponds to char = 49)
-            output_pointcloud.write(reinterpret_cast<const char *>(&version_minor), sizeof(version_minor));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&version_minor), sizeof(version_minor));
             
             char system_identifier[33];
             sprintf(system_identifier,"ALS simulator");
-            output_pointcloud.write(system_identifier, sizeof(system_identifier) - 1); // remove terminating NULL in char
+            Config::output_pointcloud.write(system_identifier, sizeof(system_identifier) - 1); // remove terminating NULL in char
             
             char generating_software[33] = "TROLL v.3.1.6+ forest simulator";
-            output_pointcloud.write(generating_software, sizeof(generating_software) - 1); // remove terminating NULL in char
+            Config::output_pointcloud.write(generating_software, sizeof(generating_software) - 1); // remove terminating NULL in char
             
             // get current day and year, cf. https://www.tutorialspoint.com/cplusplus/cpp_date_time.htm
             time_t now = time(0);
@@ -7495,24 +7495,24 @@ if (_WATER_RETENTION_CURVE==1) {
             uint16_t file_creation_day_of_year = ltm->tm_yday;
             uint16_t file_creation_year = 1900 + ltm->tm_year;
             
-            output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_day_of_year), sizeof(file_creation_day_of_year));
-            output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_year), sizeof(file_creation_year));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_day_of_year), sizeof(file_creation_day_of_year));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_year), sizeof(file_creation_year));
             
             uint16_t header_size = 227;
-            output_pointcloud.write(reinterpret_cast<const char *>(&header_size), sizeof(header_size));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&header_size), sizeof(header_size));
             
             uint32_t offset_to_point_data = 227;
-            output_pointcloud.write(reinterpret_cast<const char *>(&offset_to_point_data), sizeof(offset_to_point_data));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&offset_to_point_data), sizeof(offset_to_point_data));
             
             uint32_t number_of_variable_length_records = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&number_of_variable_length_records), sizeof(number_of_variable_length_records));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&number_of_variable_length_records), sizeof(number_of_variable_length_records));
             
             unsigned char point_data_format_ID = 0; // no GPS time needed
-            output_pointcloud.write(reinterpret_cast<const char *>(&point_data_format_ID), sizeof(point_data_format_ID));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&point_data_format_ID), sizeof(point_data_format_ID));
             
             // each record in format 0 has 20 bytes (12 for coordinates, 2 for intensity, 6 for other information)
             uint16_t point_data_record_length = 20;
-            output_pointcloud.write(reinterpret_cast<const char *>(&point_data_record_length), sizeof(point_data_record_length));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&point_data_record_length), sizeof(point_data_record_length));
             
             // calculate the number of returns per return number
             int nb_perreturn[5] = {0};
@@ -7530,44 +7530,44 @@ if (_WATER_RETENTION_CURVE==1) {
             cout << "Sampled " << nb_beams << " pulses, creating " << nb_returns << " returns." << endl;
             
             uint32_t number_of_point_records = nb_returns;
-            output_pointcloud.write(reinterpret_cast<const char *>(&number_of_point_records), sizeof(number_of_point_records));
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&number_of_point_records), sizeof(number_of_point_records));
             
             for(int i = 0; i < 5; i++){
                 uint32_t number_of_points_by_return = nb_perreturn[i];
-                output_pointcloud.write(reinterpret_cast<const char *>(&number_of_points_by_return), sizeof(number_of_points_by_return));
+                Config::output_pointcloud.write(reinterpret_cast<const char *>(&number_of_points_by_return), sizeof(number_of_points_by_return));
             }
             
             // there is no fixed-width type for floating-point numbers, so we assume that the 8 byte required by the las specification are fulfilled
             for(int i = 0; i < 3; i++){
                 double xyz_scale_factor = 0.01;
-                output_pointcloud.write(reinterpret_cast<const char *>(&xyz_scale_factor), 8); // hardcoded 8 bytes
+                Config::output_pointcloud.write(reinterpret_cast<const char *>(&xyz_scale_factor), 8); // hardcoded 8 bytes
             }
             
             for(int i = 0; i < 3; i++){
                 double xyz_offset = 0.0;
-                output_pointcloud.write(reinterpret_cast<const char *>(&xyz_offset), 8); // hardcoded 8 bytes
+                Config::output_pointcloud.write(reinterpret_cast<const char *>(&xyz_offset), 8); // hardcoded 8 bytes
             }
             
             double max_x = cols;
-            output_pointcloud.write(reinterpret_cast<const char *>(&max_x), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&max_x), 8); // hardcoded 8 bytes
             
             double min_x = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&min_x), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&min_x), 8); // hardcoded 8 bytes
             
             double max_y = rows;
-            output_pointcloud.write(reinterpret_cast<const char *>(&max_y), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&max_y), 8); // hardcoded 8 bytes
             
             double min_y = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&min_y), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&min_y), 8); // hardcoded 8 bytes
             
             double max_z = HEIGHT;
-            output_pointcloud.write(reinterpret_cast<const char *>(&max_z), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&max_z), 8); // hardcoded 8 bytes
             
             double min_z = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&min_z), 8); // hardcoded 8 bytes
+            Config::output_pointcloud.write(reinterpret_cast<const char *>(&min_z), 8); // hardcoded 8 bytes
         }
         
-         void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream& output_pointcloud){
+         void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream& Config::output_pointcloud){
             cout << "Point cloud generation." << endl;
             
             vector<int> beams;
@@ -7576,7 +7576,7 @@ if (_WATER_RETENTION_CURVE==1) {
             // three options
             GenerateVoxelreturnsALS(beams, beams_returns, mean_beam, sd_beam, klaser, transmittance_laser);
             
-            ExportPointcloudHeader(beams, output_pointcloud);
+            ExportPointcloudHeader(beams, Config::output_pointcloud);
             
             // now write point cloud records to file
             int nb_beams = int(beams.size()/2);
@@ -7597,12 +7597,12 @@ if (_WATER_RETENTION_CURVE==1) {
                     int32_t z_hit = round(beams_returns[index_return] * 100.0);
                     index_return++;
                     
-                    output_pointcloud.write(reinterpret_cast<const char *>(&x_hit), sizeof(x_hit));
-                    output_pointcloud.write(reinterpret_cast<const char *>(&y_hit), sizeof(y_hit));
-                    output_pointcloud.write(reinterpret_cast<const char *>(&z_hit), sizeof(z_hit));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&x_hit), sizeof(x_hit));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&y_hit), sizeof(y_hit));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&z_hit), sizeof(z_hit));
                     
                     uint16_t intensity = 0;
-                    output_pointcloud.write(reinterpret_cast<const char *>(&intensity), sizeof(intensity));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&intensity), sizeof(intensity));
                     
                     // the LAS-format makes use of sub-byte level information for return number / number of returns / scan direction / edge of flight line
                     // all are together in one single byte, stored in, respectively, 3 bits, 3 bits, 1 bit, 1 bit
@@ -7686,19 +7686,19 @@ if (_WATER_RETENTION_CURVE==1) {
                     for(int i = 0; i < 8; i++){
                         return_info += information_bitlevel[i] * pow(2,7-i);
                     }
-                    output_pointcloud.write(reinterpret_cast<const char *>(&return_info), sizeof(return_info));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&return_info), sizeof(return_info));
                     
                     unsigned char classification = 0;
-                    output_pointcloud.write(reinterpret_cast<const char *>(&classification), sizeof(classification));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&classification), sizeof(classification));
                     
                     char scan_angle_rank = 0;
-                    output_pointcloud.write(reinterpret_cast<const char *>(&scan_angle_rank), sizeof(scan_angle_rank));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&scan_angle_rank), sizeof(scan_angle_rank));
                     
                     unsigned char user_data = 0;
-                    output_pointcloud.write(reinterpret_cast<const char *>(&user_data), sizeof(user_data));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&user_data), sizeof(user_data));
                     
                     uint16_t point_source_id = 1;
-                    output_pointcloud.write(reinterpret_cast<const char *>(&point_source_id), sizeof(point_source_id));
+                    Config::output_pointcloud.write(reinterpret_cast<const char *>(&point_source_id), sizeof(point_source_id));
                     
                 }
             }
@@ -7740,7 +7740,7 @@ if (_WATER_RETENTION_CURVE==1) {
                         if(timeofyear == timeofyear_born){
                             // write to output
                             if(T[site].t_dbh >= 0.1){
-                                output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t"  <<  T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t"  <<  T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear  << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear<< "\t" << T[site].t_carbon_storage_avgyear << endl;
+                                Config::output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t"  <<  T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t"  <<  T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear  << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear<< "\t" << T[site].t_carbon_storage_avgyear << endl;
                             }
                             // reset
                             T[site].t_time_carbonstarvation_year = 0;
@@ -8009,15 +8009,15 @@ if (_WATER_RETENTION_CURVE==1) {
         //##############################################
         void OutputABC(){
             cout << " ABC: Conservation of Traits " << endl;
-            OutputABCConservationTraits(output[11]);
+            OutputABCConservationTraits(Config::output[11]);
             cout << " ABC: Ground data " << endl;
-            OutputABC_ground(output[12]);
+            OutputABC_ground(Config::output[12]);
             cout << " ABC: CHM simulation " << endl;
-            OutputABC_CHM(output[13], output[14], output[19]);
+            OutputABC_CHM(Config::output[13], Config::output[14], Config::output[19]);
             cout << " ABC: Transmittance simulation " << endl;
-            OutputABC_transmittance(output[15], output[16]);
+            OutputABC_transmittance(Config::output[15], Config::output[16]);
             cout << " ABC: Species outputs " << endl;
-            OutputABC_species(output[23], output[24],output[25], output[26], output[27]);
+            OutputABC_species(Config::output[23], Config::output[24],Config::output[25], Config::output[26], Config::output[27]);
         }
         
         //##############################################
@@ -9368,45 +9368,45 @@ if (_WATER_RETENTION_CURVE==1) {
         
         //! Close outputs
         void CloseOutputs(){
-            output_info.close();
-            output_info.clear();
+            Config::output_info.close();
+            Config::output_info.clear();
             
             for(int i = 0; i < 4; i++){
-                output_basic[i].close();
-                output_basic[i].clear();
+                Config::output_basic[i].close();
+                Config::output_basic[i].clear();
             }
             
             if(_OUTPUT_extended == 1){
                 for(int i = 0; i < 9; i++){
-                    output_extended[i].close();
-                    output_extended[i].clear();
+                    Config::output_extended[i].close();
+                    Config::output_extended[i].clear();
                 }
                 if(extent_visual > 0){
                     for(int i = 0; i < 2; i++){
-                        output_visual[i].close();
-                        output_visual[i].clear();
+                        Config::output_visual[i].close();
+                        Config::output_visual[i].clear();
                     }
                 }
             }
             
 #ifdef Output_ABC
             for(int i = 0; i < 11; i++){
-                output_abc[i].close();
-                output_abc[i].clear();
+                Config::output_abc[i].close();
+                Config::output_abc[i].clear();
             }
 #endif
 #ifdef WATER
             for(int i = 0; i < 10; i++){
-                output[i].close();
-                output[i].clear();
-                //output_water[i].close();
-                //output_water[i].clear();
+                Config::output[i].close();
+                Config::output[i].clear();
+                //Config::output_water[i].close();
+                //Config::output_water[i].clear();
             }
 #endif
 #ifdef TRACK_INDIVIDUALS
             for(int i = 0; i < 3; i++){
-                output_track[i].close();
-                output_track[i].clear();
+                Config::output_track[i].close();
+                Config::output_track[i].clear();
             }
 #endif
         }
