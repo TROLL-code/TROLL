@@ -1,6 +1,7 @@
 #include "config.hpp"
-
+//
 // configuration & input path variables definition
+//
 char Config::buffer[256];
 char* Config::buf = nullptr;
 char Config::inputfile[256];
@@ -22,8 +23,9 @@ char* Config::bufi_dataSWC = nullptr;
 #endif
 char Config::inputfile_species[256];
 char* Config::bufi_species = nullptr;
-
+//
 // output path variables definition
+//
 std::fstream Config::output_info;
 std::fstream Config::output_basic[4];
 std::fstream Config::output_extended[9];
@@ -43,4 +45,22 @@ std::fstream Config::output[40];
 #ifdef TRACK_INDIVIDUALS
 std::fstream Config::output_track[3];
 #endif
-
+//
+// user controls
+//
+bool Config::_NONRANDOM = false;
+bool Config::_GPPcrown = false;
+bool Config::_BASICTREEFALL = false;
+bool Config::_SEEDTRADEOFF = false;
+bool Config::_NDD = false;
+bool Config::_CROWN_MM = false;
+bool Config::_OUTPUT_extended = false;
+bool Config::_OUTPUT_inventory = false;
+bool Config::_FromInventory = false;
+bool Config::_sapwood = false;
+bool Config::_seedsadditional = false;
+bool Config::_LL_parameterization = false;
+int Config::_LA_regulation = 0;
+int Config::_OUTPUT_pointcloud = 0;
+int Config::_SOIL_LAYER_WEIGHT = 0;
+int Config::_WATER_RETENTION_CURVE = 0;

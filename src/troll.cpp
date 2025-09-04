@@ -26,7 +26,7 @@ void Species::Init() {
     s_iseedmass=1.0/s_seedmass;
     s_ds=40.0; // !!!UPDATE
     
-    if(_SEEDTRADEOFF) s_nbext = (int(s_regionalfreq*Cseedrain*s_iseedmass)+1);
+    if(Config::_SEEDTRADEOFF) s_nbext = (int(s_regionalfreq*Cseedrain*s_iseedmass)+1);
     else s_nbext = int(s_regionalfreq*Cseedrain*(sites*LH*LH/10000));
     
     s_nbind=0;
@@ -67,7 +67,7 @@ void Species::Init() {
         t_inInventory=0;
 #endif
         
-        if(_NDD){
+        if(Config::_NDD){
             t_NDDfield.reserve(nbspp+1);
             for(int sp=0;sp<(nbspp+1);sp++) t_NDDfield.push_back(0.0);
         }
@@ -86,7 +86,7 @@ void Species::Init() {
 #ifdef Output_ABC
         t_dbh_previous = 0.0;
 #endif
-        if(_BASICTREEFALL) t_Ct = 0.0;
+        if(Config::_BASICTREEFALL) t_Ct = 0.0;
     };
 
 //#############################################
@@ -187,7 +187,7 @@ void Tree::Birth(int nume, int site0) {
         
         t_CrownDisplacement = 0;
         
-        if(_BASICTREEFALL) {
+        if(Config::_BASICTREEFALL) {
             t_Ct = CalcCt();
         }
         
@@ -205,7 +205,7 @@ void Tree::Birth(int nume, int site0) {
         t_fraction_filled = fminf(fraction_filled_general/(t_mult_CR * t_mult_CR),1.0);
         float crown_area_nogaps = GetCrownAreaFilled(crown_area);
         
-        if(_LA_regulation > 0){
+        if(Config::_LA_regulation > 0){
             
             //In this case, we determine both maximum LAI (theoretical if fully exposed to sunlight) and maximum leaf area (actual, i.e. also considering shading by neighboring trees)
             // v.3.1.5, we can simply set t_LAImax to the precomputed value
@@ -493,7 +493,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         
         // leaf related traits
         
-        //if(_LA_regulation > 0) CalcLAImax();
+        //if(Config::_LA_regulation > 0) CalcLAImax();
         
         parameter_name = "LAImax";
         parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
@@ -575,7 +575,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         //*## Calculate derived traits ##*/
         //*##############################*/
         
-        if(_BASICTREEFALL){
+        if(Config::_BASICTREEFALL){
             parameter_name = "Ct";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_Ct, 0.0f,float(HEIGHT), 0.0f, quiet); // the default is a height fall threshold of maximum height (so sth the tree never reaches)
@@ -626,7 +626,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
             // there could be more consistency checks here (e.g. t_youngLA + t_matureLA + t_oldLA should be approximately t_LA)
             t_LAI = t_LA/crown_area_nogaps;
         } else {
-            if(_LA_regulation > 0){
+            if(Config::_LA_regulation > 0){
                 float LAIexperienced_eff;
                 CalcLAmax(LAIexperienced_eff, t_LAmax);     // !!!: problematic calculation if only classic inventory data is provided (i.e. x/y/dbh/s_name): we calculate the maximum leaf area for an empty canopy, thus grossly overestimating it for trees in the understory --> first improvement would be implementing calculation of this variable from highest tree to smallest tree and successively allocating leaves. Cf. the currently not used CalcLAinitial(). Interestingly, when trying this, the effects were not very large, probably because they are overshadowed by the impact of random allometric deviations and crown overlap.
                 t_LA = t_LAmax;   // assume half the maximum leaf area?
@@ -652,7 +652,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
             UpdateSapwoodArea(ddbh);
         }
         
-        if(_LA_regulation > 0){
+        if(Config::_LA_regulation > 0){
             //float carbon_storage_max = CalcCarbonStorageMax();
             parameter_name = "carbon_storage";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
@@ -804,7 +804,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //        float crown_area = PI*t_CR*t_CR;
 //        float crown_area_nogaps = GetCrownAreaFilled(crown_area);
 //
-//        if(_LA_regulation > 0){
+//        if(Config::_LA_regulation > 0){
 //            float LAIexperienced_eff;
 //            CalcLAmax(LAIexperienced_eff, t_LAmax);
 //            t_LA = t_LAmax;   // assume half the maximum leaf area?
@@ -967,15 +967,15 @@ void Tree::Water_availability() {
         
         if(t_LA > 0.0){
 
-if (_WATER_RETENTION_CURVE==1) {
-            if (_SOIL_LAYER_WEIGHT==0) { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
+if (Config::_WATER_RETENTION_CURVE==1) {
+            if (Config::_SOIL_LAYER_WEIGHT==0) { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
                 t_soil_layer_weight[l]=t_root_biomass[l];
                 t_phi_root+=t_soil_layer_weight[l]*soil_phi3D[l][site_DCELL[t_site]];
-            } else if (_SOIL_LAYER_WEIGHT==1) {
+            } else if (Config::_SOIL_LAYER_WEIGHT==1) {
                 t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
                 t_phi_root+=t_soil_layer_weight[l]*soil_phi3D[l][site_DCELL[t_site]];   //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 
-            } else if (_SOIL_LAYER_WEIGHT==2) { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
+            } else if (Config::_SOIL_LAYER_WEIGHT==2) { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
                 
                 //if (soil_phi3D[l][site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)))*(soil_phi3D[l][site_DCELL[t_site]]+3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
                 //if (soil_phi3D[l][site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0/(length_dcell*length_dcell*layer_thickness))*0.001)))*(soil_phi3D[l][site_DCELL[t_site]]+3);
@@ -984,17 +984,17 @@ if (_WATER_RETENTION_CURVE==1) {
                 t_phi_root+=t_soil_layer_weight[l]*soil_phi3D[l][site_DCELL[t_site]];   //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 
             }
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
     
-            if (_SOIL_LAYER_WEIGHT==0) { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
+            if (Config::_SOIL_LAYER_WEIGHT==0) { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
                 t_soil_layer_weight[l]=t_root_biomass[l];
                 t_phi_root+=t_soil_layer_weight[l]*soil_phi3D[l][site_DCELL[t_site]];
-            } else if (_SOIL_LAYER_WEIGHT==1) {
+            } else if (Config::_SOIL_LAYER_WEIGHT==1) {
                 t_soil_layer_weight[l]=t_root_biomass[l]*10.0/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
                 t_phi_root+=t_soil_layer_weight[l]*KsPhi[l][site_DCELL[t_site]];   //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 t_soil_layer_weight[l]*=Ks[l][site_DCELL[t_site]];
                 
-            } else if (_SOIL_LAYER_WEIGHT==2) { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
+            } else if (Config::_SOIL_LAYER_WEIGHT==2) { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
 
                 if (soil_phi3D[l][site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=(t_root_biomass[l]*10.0/root_area)/(abs(log(sqrt(PI*t_root_biomass[l]*10.0/(root_area*layer_thickness))*0.001)))*(soil_phi3D[l][site_DCELL[t_site]]+3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
                 else t_soil_layer_weight[l]=0.0;
@@ -1290,11 +1290,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float dd=deltaD*ndd*(1-2*dbh/t_dbhmax);
         
         dr=basal;
-        if (_LA_regulation==0) {
+        if (Config::_LA_regulation==0) {
             if(carbon_starv > t_leaflifespan) dr+=1.0/timestep;
         }
         else {
-            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when Config::_LA_regulation==0)
         }
         if(dd > 0) dr+=dd;
         return dr*timestep;
@@ -1307,11 +1307,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         
         dr=basal;
         //if (carbon_starv > t_leaflifespan) dr+=1.0/timestep;
-        if (_LA_regulation==0) {
+        if (Config::_LA_regulation==0) {
             if (carbon_starv > t_leaflifespan) dr+=1.0/timestep;
         }
         else {
-            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when Config::_LA_regulation==0)
         }
         // if the water availabiliy in the root zone is below the lethal level, the tree dies, !!!: not that deterministic, right?
         if (phi_root < (t_phi_lethal)) dr+=1.0/timestep;
@@ -1329,11 +1329,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float basal=fmaxf(m-m1*t_wsg,0.0);
         
         dr=basal;
-        if (_LA_regulation==0) {
+        if (Config::_LA_regulation==0) {
             if (carbon_starv > t_leaflifespan) dr+=1.0/timestep;
         }
         else {
-            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            if (carbon_starv <= 0.0 && t_NPP <= 0.0) dr+=1.0/timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when Config::_LA_regulation==0)
         }
         
         return dr*timestep;
@@ -1903,7 +1903,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         return(carbon_storage_max);
     }
     
-    //Calculation of the treefall threshold, if _BASICTREEFALL is activated
+    //Calculation of the treefall threshold, if Config::_BASICTREEFALL is activated
     //Slightly updated in v.3.1
     float Tree::CalcCt(){
         float dbhrealmax = t_dbhmax * 1.5;
@@ -1915,7 +1915,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
     
     //Determines leaf life span, either from empirical function or from Kikuzawa model
     void Tree::CalcLeafLifespan(){
-        if(_LL_parameterization == 0){ // prescribed relationship for LL
+        if(Config::_LL_parameterization == 0){ // prescribed relationship for LL
             t_leaflifespan=12.755*exp(0.007*t_LMA-0.565*t_Nmass);           // expression developed by Sylvain Schmitt, avoids problem of very low leaflifespans at low LMA
             t_leaflifespan = fmaxf(t_leaflifespan,3.0);
             //t_leaflifespan = pow(10,(2.040816*(2.579713-log10(SLA))));    //this is the expression from Reich et al. 1997 PNAS (provides probably more realistic estimates for species with high LMA).
@@ -1947,10 +1947,10 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
     }
     
     //Determine sapwood area, limited by increase in dbh (ddbh) (in m2)
-    //! - Options: fixed percentage (option _sapwood == 0) or based on tree's leaf area (option _sapwood > 0). In the case _sapwood>0, a tree cannot retroactively convert heartwood into sapwood, just because it could allocate more leaves
+    //! - Options: fixed percentage (option Config::_sapwood == 0) or based on tree's leaf area (option Config::_sapwood > 0). In the case Config::_sapwood>0, a tree cannot retroactively convert heartwood into sapwood, just because it could allocate more leaves
     //! - TODO: should there be another limit on leaf area? (i.e. if sapwood cannot grow more than ddbh increment, then leaf area should probably not be allowed to grow beyond what is reasonable through the current sapwood area)
     void Tree::UpdateSapwoodArea(float ddbh){
-        if(_sapwood > 0){
+        if(Config::_sapwood > 0){
             float sapwood_area_new = PI * 0.5 * ddbh * (t_dbh - 0.5 * ddbh); // correction from previous equation in v.3.0, derived from (0.5 * t_dbh) * (0.5 * t_dbh) * PI - (0.5 * (t_dbh - ddbh)) * (0.5 * (t_dbh - ddbh)) * PI, this presupposes that t_dbh has already been updated (i.e. t_dbh += ddbh). If dbh has grown entirely from zero, then the equation reduces to PI * 0.5 * dbh * 0.5 * dbh, i.e. the whole stem area
             t_sapwood_area += sapwood_area_new;
             t_sapwood_area = fminf(t_sapwood_area, 0.0001 * 2.0 * t_LA / (0.066 + 0.017 * t_height - 0.18 + 1.6 * t_wsg)); // upper bound on sapwood area, either through previously existing sapwood area (sapwood cannot grow quicker than the rest of the tree) or through the amount of sapwood needed from from Fyllas et al. 2014, based on inversion of pipe model, multiplication with 0.0001 to convert cm2 to m2
@@ -2083,7 +2083,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float crown_area = PI * t_CR * t_CR;
         float crown_area_nogaps = GetCrownAreaFilled(crown_area);
         
-        if(_LA_regulation == 1){
+        if(Config::_LA_regulation == 1){
             // this is the case where we limit leaf allocation to the tree's maximum LAI, but have no dynamic reactions to the environment
             LAIexperienced_eff = 0.0;
         } else {
@@ -2179,7 +2179,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         
         float absorb_prev = 0.0;
         float absorb_delta;
-        if(_LA_regulation > 0) absorb_delta = t_LAImax;
+        if(Config::_LA_regulation > 0) absorb_delta = t_LAImax;
         else absorb_delta = 3.0;
         
         int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
@@ -2269,7 +2269,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         carbon_assimilated_total += t_GPP;
 #endif
         
-        if(_LA_regulation == 0){
+        if(Config::_LA_regulation == 0){
             //Classic case of no regulation of leaf area, all NPP > 0.0 is converted into leaves
             if(t_NPP<0.0){
                 t_NPPneg++;
@@ -2304,14 +2304,14 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             //if NPP is still negative, even after compensating for it through stored carbon, then carbon starvation sets in.
             if(t_NPP<0.0){
-                //t_NPPneg++; //newIM 2021: if NPP still negative, this means that the tree has completly depleted its minimal carbon stock pool, ie. is not viable anymore (Martinez-Vilalta et al. 2016) ==> death at the next timestep (the previous version made a mix between the use of NPPneg (that was introduced in absence of a variable for carbon storage and a dynamic monitoring and allocation to this carbon storage pool: NPPneg is not needed anymore when _LA_regulation >0)
+                //t_NPPneg++; //newIM 2021: if NPP still negative, this means that the tree has completly depleted its minimal carbon stock pool, ie. is not viable anymore (Martinez-Vilalta et al. 2016) ==> death at the next timestep (the previous version made a mix between the use of NPPneg (that was introduced in absence of a variable for carbon storage and a dynamic monitoring and allocation to this carbon storage pool: NPPneg is not needed anymore when Config::_LA_regulation >0)
                 t_NPP=0.0;
                 //v.2.3.0 -- Line of code below was odd. If NPP <0.0, then to ensure C balance it should be simply reset to NPP=0 at this stage
                 //t_NPP=t_GPP - 1.5*(t_Rday+t_Rnight+t_Rstem); REMOVED AS OF v.2.3.0.a4
                 //NPP allocation to leaves
                 UpdateLeafDynamics();
             } else {
-                //t_NPPneg=0; //newIM 2021: no use of NPPneg anymore when _LA_regulation >0
+                //t_NPPneg=0; //newIM 2021: no use of NPPneg anymore when Config::_LA_regulation >0
                 //in v.2.4.1: allocation to leaves is done before updating biometry
                 //idea is: at least leaves need to be sustained, otherwise the tree cannot come back from carbon stress
                 //NPP allocation to leaf, storage, wood and tree size increment
@@ -2351,7 +2351,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         if(t_LA > 0.0){
 #ifdef WATER
 #else
-            if(_GPPcrown){
+            if(Config::_GPPcrown){
                 // v.2.3.1 -- fast GPP calculation option.
                 float PPFD = 0.0, VPD = 0.0, Tmp = 0.0, leafarea_layer;
                 Fluxh(int(t_height)+1, PPFD, VPD, Tmp, leafarea_layer);
@@ -2522,7 +2522,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float lambda_mature = ileafdem_resolution * t_lambda_mature ;
         float lambda_old = ileafdem_resolution * t_lambda_old ;
         
-        if(_LA_regulation == 0){
+        if(Config::_LA_regulation == 0){
             // leaf demography, without any dynamic leaf area regulation
             t_litter = 0.0;
             
@@ -2682,7 +2682,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             if(carbon_excess > 0.0){
                 t_carbon_storage = carbon_storage_max;
-                if(_seedsadditional == 0 || t_dbh < t_dbhmature){
+                if(Config::_seedsadditional == 0 || t_dbh < t_dbhmature){
                     t_carbon_biometry += carbon_excess;         // by default, excess carbon that cannot be stored is allocated to growth
                 } else {
                     float seedcarbon = t_NPP*falloccanopy*0.08*0.5;
@@ -2707,7 +2707,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         //! t_ddbh = flor( volume* 4.0/( 3.0*PI*t_dbh*LH*t_height*LV ) )* NH;
         
         float delta_agb;
-        if(_LA_regulation == 0){
+        if(Config::_LA_regulation == 0){
             delta_agb = 2.0 *t_NPP * fallocwood * 0.6; // new in v. 2.4.0: only 60% of woody npp is actually used for construction, the rest is for branch fall repair (cf. Malhi et al. 2011)
         } else {
             delta_agb = 2.0 * t_carbon_biometry;
@@ -2760,7 +2760,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
 #endif
         
 #ifdef MIP_Lichstein
-        if (_FromInventory || (!_FromInventory && iter >=(nbiter-100*iterperyear))){
+        if (Config::_FromInventory || (!Config::_FromInventory && iter >=(nbiter-100*iterperyear))){
             if(t_dbh*LH >= 0.01 && t_inInventory == 1) {
                 float agb = 0.5 * CalcAGB(); // in kg C
                 Config::output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
@@ -2790,7 +2790,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             if ((S[t_sp_lab].s_nbind30)>0) (S[t_sp_lab].s_nbind30)--;
         }
         // New v.2.2. new outputs
-        if(_OUTPUT_extended) {
+        if(Config::_OUTPUT_extended) {
             if(iter == 2) Config::output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
             if(iter == int(nbiter/2)) Config::output[24]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
             if(iter == int(nbiter-1)) Config::output[25]<< "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height <<  "\n";
@@ -2803,7 +2803,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         t_dbh = t_height = t_CR = t_CD= 0.0;
         t_CrownDisplacement = 0;
         
-        if(_BASICTREEFALL) t_Ct = 0.0;
+        if(Config::_BASICTREEFALL) t_Ct = 0.0;
         
 #ifdef Output_ABC
         t_dbh_previous = 0.0;
@@ -2821,7 +2821,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
     void Tree::DisperseSeed(){
         if(t_dbh >= t_dbhmature){
             int nbs;
-            if(_SEEDTRADEOFF) nbs=int(t_NPP*2.0*falloccanopy*0.08*0.5*(S[t_sp_lab].s_iseedmass)); //some multiplications could be avoided in this line.
+            if(Config::_SEEDTRADEOFF) nbs=int(t_NPP*2.0*falloccanopy*0.08*0.5*(S[t_sp_lab].s_iseedmass)); //some multiplications could be avoided in this line.
             else nbs=nbs0*t_multiplier_seed;
             //else nbs=int(t_NPP*2*falloccanopy*0.08*0.5); // test 17/01/2017: use a factor to translate NPP into seeds produced, but not species specific, not linked to mass of grains
             for(int i=0;i<nbs;i++){
@@ -2867,15 +2867,15 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             Water_availability();                   //here, t_phi_root and WSF are updated, which is needed to compute Deathrate, carbon assimilation and transpiration
 #endif
             //v.2.4.0: outputs have been moved to Death() function
-            if(_NDD)
+            if(Config::_NDD)
                 death = int(gsl_rng_uniform(gslrand)+DeathRateNDD(t_dbh, t_NPPneg, t_NDDfield[t_sp_lab]));
             else
 #ifdef WATER  // note that I did not include a version with both drought-induced mortality/carbon starvation and NDD effect on mortality, to be done if needed.
                 //death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
-                if (_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
+                if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
                 else death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_carbon_storage, t_phi_root)); // newIM 2021: directly use the t_carbon_stoarge variable instead of NPPneg
 #else
-            if (_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg));
+            if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg));
             else death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_carbon_storage)); // newIM 2021: directly use the t_carbon_storage variable instead of NPPneg
 #endif
             if(death) Death();
@@ -2886,7 +2886,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
     //####################################
     // Tree falling function, called by TriggerTreefall
     //####################################
-    //! - Tree falling routine, formerly FallTree(),  _BASICTREEFALL, changed in v.2.4.0
+    //! - Tree falling routine, formerly FallTree(),  Config::_BASICTREEFALL, changed in v.2.4.0
     //! - Creates a treefall (but no longer treefall probability). Takes angle as argument and can now be used for primary, secondary treefalls, forestry, or other disturbances
     //! - NEW in TROLL v.2.4: FallTree() function has become Treefall() function, calculation of angle and treefall outside of function, and damages are now added up from several treefalls
     void Tree::Treefall(float angle) {
@@ -2974,7 +2974,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             
 #ifdef MIP_Lichstein
-            if (iter%iterperyear==364 && (_FromInventory || (!_FromInventory && iter >=(nbiter-100*iterperyear)))){
+            if (iter%iterperyear==364 && (Config::_FromInventory || (!Config::_FromInventory && iter >=(nbiter-100*iterperyear)))){
                 if(t_dbh*LH >= 0.01) {
                     t_inInventory = 1;
                     Config::output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh*100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5*agb << "\t" << 1000*t_wsg << "\t" << 1000/t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
@@ -3540,14 +3540,14 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                             break;
                         case 'f':                      // new v.2.3: initialisation from field, 'f' for "forest", "field data"
                             Config::bufi_data = argv[argn]+2;
-                            _FromInventory = 1;        // new v.3.1: automatic recognition of whether data sheet is provided or not
+                            Config::_FromInventory = 1;        // new v.3.1: automatic recognition of whether data sheet is provided or not
                             break;
                         case 'w':                      // new v.2.3: initialisation from field, 'f' for "forest", "field data"
                             Config::bufi_dataSWC = argv[argn]+2;
                             break;
                         case 'l':
                             Config::bufi_pointcloud = argv[argn]+2;  // new v.3.1.6: output of simulated point clouds for TROLL-created stands
-                            _OUTPUT_pointcloud = 1;
+                            Config::_OUTPUT_pointcloud = 1;
                             break;
                         case 'n':
                             easympi_rank=atoi(argv[argn]+2); // new v.2.2
@@ -3564,11 +3564,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             sprintf(Config::inputfile_soil,"%s",Config::bufi_soil);
             sprintf(Config::inputfile_species,"%s",Config::bufi_species);
             
-            if(_OUTPUT_pointcloud){
+            if(Config::_OUTPUT_pointcloud){
                 sprintf(Config::inputfile_pointcloud,"%s",Config::bufi_pointcloud); // v.3.1.6
             }
             
-            if(_FromInventory){
+            if(Config::_FromInventory){
                 sprintf(Config::inputfile_inventory,"%s",Config::bufi_data);
 #ifdef WATER
                 sprintf(Config::inputfile_SWC,"%s",Config::bufi_dataSWC);
@@ -3576,7 +3576,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             }
             
             // v.3.1: removed par output, because no single parameter sheet provided anymore (in future all separate parameter sheets could be provided as outputs as well
-            ReadInputGeneral(); // v.3.1 has to be done before initialisation of random number generators (_NONRANDOM)
+            ReadInputGeneral(); // v.3.1 has to be done before initialisation of random number generators (Config::_NONRANDOM)
             
             // Stuff for constant number generator
             const gsl_rng_type *Trandgsl;
@@ -3589,7 +3589,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             unsigned long int t = (unsigned long int) time(NULL);
             unsigned long int seed = 3*t + 2*(easympi_rank+1)+1;
             
-            if(_NONRANDOM == 1) seed = 1;
+            if(Config::_NONRANDOM == 1) seed = 1;
             
             gsl_rng_set(gslrand, seed);
             
@@ -3606,11 +3606,11 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             InitialiseABC();
 #endif
             
-            if(_OUTPUT_pointcloud){
+            if(Config::_OUTPUT_pointcloud){
                 ReadInputPointcloud();  // parameters for point cloud generation, v.3.1.6
             }
             
-            if(_FromInventory){
+            if(Config::_FromInventory){
                 ReadInputInventory();   // Initial configuration of the forest, read from data
             }
             
@@ -3621,15 +3621,15 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             cout << "Atmospheric pressure is: " << PRESS << endl;
 #endif
             
-            if(_GPPcrown == 1) cout << "Activated Module: FastGPP" << endl;
-            if(_BASICTREEFALL == 1) cout << "Activated Module: BASICTREEFALL" << endl;
-            if(_NDD == 1) cout << "Activated Module: NDD" << endl;
-            if(_SEEDTRADEOFF == 1) cout << "Activated Module: SEEDTRADEOFF" << endl;
-            if(_FromInventory == 1) cout << "Activated Module: FromInventory" << endl;
-            if(_OUTPUT_extended == 1) cout << "Activated Module: OUTPUT_extended" << endl;
-            if(_OUTPUT_inventory == 1) cout << "Activated Module: OUTPUT_inventory" << endl;
-            if(_OUTPUT_extended == 1 && extent_visual > 0) cout << "Activated visualization output." << endl;
-            if(_OUTPUT_pointcloud == 1) cout << "Activated Module: Point cloud output (simplified ALS simulation)" << endl; // v.3.1.6
+            if(Config::_GPPcrown == 1) cout << "Activated Module: FastGPP" << endl;
+            if(Config::_BASICTREEFALL == 1) cout << "Activated Module: BASICTREEFALL" << endl;
+            if(Config::_NDD == 1) cout << "Activated Module: NDD" << endl;
+            if(Config::_SEEDTRADEOFF == 1) cout << "Activated Module: SEEDTRADEOFF" << endl;
+            if(Config::_FromInventory == 1) cout << "Activated Module: FromInventory" << endl;
+            if(Config::_OUTPUT_extended == 1) cout << "Activated Module: OUTPUT_extended" << endl;
+            if(Config::_OUTPUT_inventory == 1) cout << "Activated Module: OUTPUT_inventory" << endl;
+            if(Config::_OUTPUT_extended == 1 && extent_visual > 0) cout << "Activated visualization output." << endl;
+            if(Config::_OUTPUT_pointcloud == 1) cout << "Activated Module: Point cloud output (simplified ALS simulation)" << endl; // v.3.1.6
             
             //!*********************
             //!** Evolution loop  **
@@ -3654,8 +3654,8 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             }
             
             // initial pattern, should be empty, unless an inventory has been provided
-            if(_OUTPUT_extended & !_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.01);                  // Initial Pattern, for trees > 0.01m DBH
-            else if (_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.001);
+            if(Config::_OUTPUT_extended & !Config::_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.01);                  // Initial Pattern, for trees > 0.01m DBH
+            else if (Config::_OUTPUT_inventory) OutputSnapshot(Config::output_basic[1], 1, 0.001);
             else OutputSnapshot(Config::output_basic[1], 1, 0.1);                                   // Initial Pattern, for trees > 0.1m DBH
 
             
@@ -3668,12 +3668,12 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 stop_time = clock();
                 duration +=fmaxf(stop_time-start_time,0.0);
                 
-                if(_OUTPUT_extended == 1 && extent_visual > 0){
+                if(Config::_OUTPUT_extended == 1 && extent_visual > 0){
                     int timeofyear = GetTimeofyear();
                     if(timeofyear == 0) OutputVisual();
                 }
                 
-                /*if(_OUTPUT_pointcloud > 0 && iter == iter_pointcloud_generation){
+                /*if(Config::_OUTPUT_pointcloud > 0 && iter == iter_pointcloud_generation){
                     ExportPointcloud(mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, Config::output_pointcloud); // v.3.1.6
                 }*/
                 
@@ -3701,18 +3701,18 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             cout << "Simulation ends with " << nblivetrees << " trees." << endl;
             
             // final pattern
-            if(_OUTPUT_extended & !_OUTPUT_inventory){
+            if(Config::_OUTPUT_extended & !Config::_OUTPUT_inventory){
                 OutputSnapshot(Config::output_basic[2], 1, 0.01);                 // Final Pattern, for trees > 0.01m DBH
-            } else if (_OUTPUT_inventory){
+            } else if (Config::_OUTPUT_inventory){
                 OutputSnapshot(Config::output_basic[2], 1, 0.001);
             } else {
                 OutputSnapshot(Config::output_basic[2], 1, 0.1);                  // Final Pattern, for trees > 0.1m DBH
             }
-            if(_OUTPUT_extended){
+            if(Config::_OUTPUT_extended){
                 OutputLAI(Config::output_extended[7]);
                 OutputCHM(Config::output_extended[8]);
             }
-            if (_OUTPUT_inventory) {
+            if (Config::_OUTPUT_inventory) {
                 for (int d=0; d<nbdcells; d=d+1) {
                     Config::output_basic[3] << d ;
                     for (int l=0; l<nblayers_soil; l=l+1) {
@@ -3924,40 +3924,40 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 SetParameter(parameter_name, parameter_value, PRESS, 10.0f, 110.0f, 101.0f, quiet);
 #endif
             } else if(parameter_name == "_LL_parameterization"){
-                SetParameter(parameter_name, parameter_value, _LL_parameterization, bool(0), bool(1), bool(1), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_LL_parameterization, bool(0), bool(1), bool(1), quiet);
             } else if(parameter_name == "_LA_regulation"){
-                SetParameter(parameter_name, parameter_value, _LA_regulation, 0, 2, 2, quiet);
+                SetParameter(parameter_name, parameter_value, Config::_LA_regulation, 0, 2, 2, quiet);
             } else if(parameter_name == "_sapwood"){
-                SetParameter(parameter_name, parameter_value, _sapwood, bool(0), bool(1), bool(1), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_sapwood, bool(0), bool(1), bool(1), quiet);
             } else if(parameter_name == "_seedsadditional"){
-                SetParameter(parameter_name, parameter_value, _seedsadditional, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_seedsadditional, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_SOIL_LAYER_WEIGHT"){
-                SetParameter(parameter_name, parameter_value, _SOIL_LAYER_WEIGHT, 0, 2, 2, quiet);
+                SetParameter(parameter_name, parameter_value, Config::_SOIL_LAYER_WEIGHT, 0, 2, 2, quiet);
             } else if(parameter_name == "_WATER_RETENTION_CURVE"){
-                SetParameter(parameter_name, parameter_value, _WATER_RETENTION_CURVE, 0, 1, 0, quiet);
+                SetParameter(parameter_name, parameter_value, Config::_WATER_RETENTION_CURVE, 0, 1, 0, quiet);
             } else if(parameter_name == "_NONRANDOM"){
-                SetParameter(parameter_name, parameter_value, _NONRANDOM, bool(0), bool(1), bool(1), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_NONRANDOM, bool(0), bool(1), bool(1), quiet);
             } else if(parameter_name == "_GPPcrown"){
-                SetParameter(parameter_name, parameter_value, _GPPcrown, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_GPPcrown, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_BASICTREEFALL"){
-                SetParameter(parameter_name, parameter_value, _BASICTREEFALL, bool(0), bool(1), bool(1), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_BASICTREEFALL, bool(0), bool(1), bool(1), quiet);
             } else if(parameter_name == "_SEEDTRADEOFF"){
-                SetParameter(parameter_name, parameter_value, _SEEDTRADEOFF, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_SEEDTRADEOFF, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_NDD"){
-                SetParameter(parameter_name, parameter_value, _NDD, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_NDD, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_CROWN_MM"){
-                SetParameter(parameter_name, parameter_value, _CROWN_MM, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_CROWN_MM, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_OUTPUT_extended"){
-                SetParameter(parameter_name, parameter_value, _OUTPUT_extended, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_OUTPUT_extended, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "_OUTPUT_inventory"){
-                SetParameter(parameter_name, parameter_value, _OUTPUT_inventory, bool(0), bool(1), bool(0), quiet);
+                SetParameter(parameter_name, parameter_value, Config::_OUTPUT_inventory, bool(0), bool(1), bool(0), quiet);
             } else if(parameter_name == "extent_visual"){
                 SetParameter(parameter_name, parameter_value, extent_visual, 0, INT_MAX, 0, quiet);
             }
             
             
             // !!!: TODO, implement NDD parameters
-            /* if (_NDD) {
+            /* if (Config::_NDD) {
              In >> R; In.getline(buffer,128,'\n');
              In >> deltaR; In.getline(buffer,128,'\n');
              In >> deltaD; In.getline(buffer,128,'\n');
@@ -4055,7 +4055,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 cout << "rows: " << rows << " cols: " << cols << " HEIGHT: " << HEIGHT << endl;
                 cout << "Number of dcells: " << nbdcells << endl;
                 cout << "Lin number of dcells: " << linear_nb_dcells << endl;
-                cout << _WATER_RETENTION_CURVE << " " << _SOIL_LAYER_WEIGHT << " " << Cair << endl;
+                cout << Config::_WATER_RETENTION_CURVE << " " << Config::_SOIL_LAYER_WEIGHT << " " << Cair << endl;
                 
 #ifdef WATER
                 i_sites_per_dcell=1.0/float(sites_per_dcell);
@@ -4575,7 +4575,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 while(getline(InSoil, line)){
                     istringstream linestream(line);
                     
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                     float thickness_current, proportion_Silt_current, proportion_Clay_current, proportion_Sand_current, SOC_current, DBD_current, pH_current, CEC_current;
                     linestream >> thickness_current >> proportion_Silt_current >> proportion_Clay_current >> proportion_Sand_current >> SOC_current >> DBD_current >> pH_current >> CEC_current;
                     layer_thickness.push_back(thickness_current);
@@ -4587,7 +4587,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     DBD.push_back(DBD_current);
                     pH.push_back(pH_current);
                     CEC.push_back(CEC_current);
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
                     float thickness_current, proportion_Silt_current, proportion_Clay_current, proportion_Sand_current;
                     linestream >> thickness_current >> proportion_Silt_current >> proportion_Clay_current >> proportion_Sand_current;
                     layer_thickness.push_back(thickness_current);
@@ -4615,9 +4615,9 @@ if (_WATER_RETENTION_CURVE==1) {
                 
                 for (int l=0; l<nblayers_soil; l++) {
                     
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                     Sat_SWC[l] = 0.01*(81.799+(0.099*proportion_Clay[l])-(31.42*DBD[l])+(0.018*CEC[l])+(0.451*pH[l])-(0.0005*proportion_Sand[l]*proportion_Clay[l]));  // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
                     Sat_SWC[l]= 0.01*(40.61+(0.165*proportion_Silt[l])+(0.162*proportion_Clay[l])+(0.00137*proportion_Silt[l]*proportion_Silt[l])+(0.000018*proportion_Silt[l]*proportion_Silt[l]*proportion_Clay[l])); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
 }
                     Max_SWC[l]=Sat_SWC[l]*sites_per_dcell*LH*LH*layer_thickness[l]; // in m3
@@ -4635,9 +4635,9 @@ if (_WATER_RETENTION_CURVE==1) {
                 
                 for (int l=0; l<nblayers_soil; l++) {
                     
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                     Res_SWC[l]= 0.01*(22.733-(0.164*proportion_Sand[l])+(0.235*CEC[l])-(0.831*pH[l])+(0.0018*proportion_Clay[l]*proportion_Clay[l])+(0.0026*proportion_Sand[l]*proportion_Clay[l])); // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
-} if (_WATER_RETENTION_CURVE==0) {
+} if (Config::_WATER_RETENTION_CURVE==0) {
                     Res_SWC[l]= 0.01*fmaxf(0.0,(-2.094+(0.047*proportion_Silt[l])+(0.431*proportion_Clay[l])-(0.00827*proportion_Silt[l]*proportion_Clay[l]))); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014.
 }
                     Min_SWC[l]=Res_SWC[l]*sites_per_dcell*LH*LH*layer_thickness[l]; //in m3
@@ -4645,7 +4645,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     cout << "layer " << l << " Vol=" << sites_per_dcell*LH*LH*layer_thickness[l] << "m3; Res=" << Res_SWC[l]<<  " MIN_SWC =" << Min_SWC[l] << " m3" << endl;
                 }
                 
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                 if(NULL==(a_vgm=new float[nblayers_soil])) cerr<<"!!! Mem_Alloc a_vgm" << endl;
                 if(NULL==(b_vgm=new float[nblayers_soil])) cerr<<"!!! Mem_Alloc b_vgm" << endl;
                 if(NULL==(c_vgm=new float[nblayers_soil])) cerr<<"!!! Mem_Alloc c_vgm" << endl;
@@ -4664,7 +4664,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     
                     cout << "layer " << l << " alpha=" << alpha << "\t" << "n_vgm=" << n_vgm << " FC_SWC=" << FC_SWC[l] << endl;
                 }
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
                 if(NULL==(phi_e=new float[nblayers_soil])) cerr<<"!!! Mem_Alloc phi_e" << endl;
                 if(NULL==(b=new float[nblayers_soil])) cerr<<"!!! Mem_Alloc b" << endl;
                 for (int l=0; l<nblayers_soil; l++) {
@@ -5080,7 +5080,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     Config::output_MIP_ind << "YEAR\tSP\tID\tNLIVE\tNDEAD\tDBH\tHT\tTB\tAGB\tWD\tSLA\tNMASS\tPMASS\tDBHMAX\tTLP\tLA"<< endl;
 #endif
                     
-                    if(_OUTPUT_extended){
+                    if(Config::_OUTPUT_extended){
                         sprintf(nnn,"%s_%i_sumstats_species.txt",Config::buf, easympi_rank);
                         Config::output_extended[0].open(nnn, ios::out);
                         sprintf(nnn,"%s_%i_ppfd0.txt",Config::buf, easympi_rank);
@@ -5103,7 +5103,7 @@ if (_WATER_RETENTION_CURVE==1) {
                         // write headers
                         Config::output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
                         Config::output_extended[1] << "iter\tvariable\tvalue\tresidual" << endl;
-                        if(_BASICTREEFALL) Config::output_extended[2] << "iter\tnbdead_n1\tnbdead_n10\tnbTreefall1\tnbTreefall10" << endl;
+                        if(Config::_BASICTREEFALL) Config::output_extended[2] << "iter\tnbdead_n1\tnbdead_n10\tnbTreefall1\tnbTreefall10" << endl;
                         else Config::output_extended[2] << "iter\tnbdead_n1\tnbdead_n10" << endl;
                         Config::output_extended[3] << "iter\tspecies\tage\tdbh\theight" << endl;
                         Config::output_extended[4] << "iter\twsg\tdbh\tbasal\tdr" <<  endl;
@@ -5126,7 +5126,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     }
                     
                     // v.3.1.6 output for point cloud
-                    if(_OUTPUT_pointcloud){
+                    if(Config::_OUTPUT_pointcloud){
                         sprintf(nnn,"%s_%i.las",Config::buf, easympi_rank);
                         Config::output_pointcloud.open(nnn, ios::out | ios::binary);
                         Config::output_pointcloud.imbue(locale::classic()); // justification here: https://stackoverflow.com/questions/14750496/sending-integer-to-fstream-as-little-endian; locale regulates how streams print and read values (i.e. commas vs. points for decimals, etc.); setting it to classic to ensure portability, but not entirely sure how important this is in practice for binary files
@@ -5318,13 +5318,13 @@ if (_WATER_RETENTION_CURVE==1) {
 #ifdef WATER
                     
                     
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                     Config::output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "a_vgm" << "\t" << "m_vgm" << endl;
                     for (int l=0; l<nblayers_soil; l++) {
                     Config::output[33] << l  << "\t" << layer_depth[l]  << "\t" << Sat_SWC[l] << "\t" << Max_SWC[l]  << "\t" << FC_SWC[l] << "\t" << Res_SWC[l] << "\t" << Min_SWC[l] << "\t" << Ksat[l] << "\t" << a_vgm[l] << "\t" << m_vgm[l] << endl;
                     }
 
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
                     
                     Config::output[33] << "layer" << "\t" << "depth" << "\t" << "sat" << "\t" << "max" << "\t" << "fc" << "\t" << "res" << "\t" << "min" << "\t" << "Ksat" << "\t" << "phi_e" << "\t" << "b" << endl;
                     for (int l=0; l<nblayers_soil; l++) {
@@ -5335,7 +5335,7 @@ if (_WATER_RETENTION_CURVE==1) {
 #endif
                     
 #ifdef TRACK_INDIVIDUALS
-                    if(_OUTPUT_extended){
+                    if(Config::_OUTPUT_extended){
                         // these are the "cases" of trees that are followed
                         sprintf(nnn,"%s_%i_trees_fortracking.txt",Config::buf, easympi_rank);
                         Config::output_track[0].open(nnn, ios::out);
@@ -5743,7 +5743,7 @@ if (_WATER_RETENTION_CURVE==1) {
             for (int d=0; d<nbdcells; d++) {
                 for (int l=0; l<nblayers_soil; l++) {
                     float theta_w=(SWC3D[l][d]-Min_SWC[l])/(Max_SWC[l]-Min_SWC[l]);
-                if (_WATER_RETENTION_CURVE==1) {
+                if (Config::_WATER_RETENTION_CURVE==1) {
                     if(theta_w==0) {
                         theta_w=0.001; // SS addition for limit value
                         cout << "Warning theta_w = 0 " << endl ;
@@ -5753,7 +5753,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     Ks[l][d]=Ksat[l]*pow(theta_w, 0.5)*inter*inter; // this is the van Genuchten-Mualem model (as in Table 1 in Marthews et al. 2014)
                     if (isnan(soil_phi3D[l][d]) || isnan(Ks[l][d]) ||  (SWC3D[l][d]-Min_SWC[l])<0) //|| KsPhi[l][d]==0.0 || Ks[l][d]==0.0 || soil_phi3D[l][d]==0.0)
                         cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d]-Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl ;
-                } else if (_WATER_RETENTION_CURVE==0) {
+                } else if (Config::_WATER_RETENTION_CURVE==0) {
                     soil_phi3D[l][d]=phi_e[l]*pow(theta_w, -b[l]); // this is the soil water characteristic of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                     Ks[l][d]=Ksat[l]*pow(theta_w, 2.5+2*b[l]); // this is the hydraulic conductivity curve of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                     KsPhi[l][d]=Ksat[l]*phi_e[l]*pow(theta_w, 2.5+b[l]); //Ks times soil_phi3D, computed directly as the exact power of theta.
@@ -5897,8 +5897,8 @@ if (_WATER_RETENTION_CURVE==1) {
             
             for(int i = 0; i < nbspp; i++) n_species[i] = 0;
             
-            if(_SEEDTRADEOFF) if (NULL==(PROB_S=new float[nbspp+1])) cerr<<"!!! Mem_Alloc\n";
-            if(_NDD) if (NULL==(PROB_S=new float[nbspp+1])) cerr<<"!!! Mem_Alloc\n";
+            if(Config::_SEEDTRADEOFF) if (NULL==(PROB_S=new float[nbspp+1])) cerr<<"!!! Mem_Alloc\n";
+            if(Config::_NDD) if (NULL==(PROB_S=new float[nbspp+1])) cerr<<"!!! Mem_Alloc\n";
             //  if (NULL==(persist=new long int[nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
             //  if (NULL==(distr=new int[cols])) cerr<<"!!! Mem_Alloc\n";
             
@@ -6024,7 +6024,7 @@ if (_WATER_RETENTION_CURVE==1) {
 #ifdef Output_ABC
             nbdead_n10_abc=0;
 #endif
-            if(_BASICTREEFALL){
+            if(Config::_BASICTREEFALL){
                 // secondary treefalls are triggered first, since they have been caused in the previous iteration
                 TriggerTreefallSecondary(); // Compute and distribute Treefall events, caused by treefalls in the previous iteration
                 TriggerTreefall();          // Compute and distribute Treefall events, caused by wind drag
@@ -6046,7 +6046,7 @@ if (_WATER_RETENTION_CURVE==1) {
         
             // Update trees
             Average();                          //! Compute averages for outputs
-            if(_OUTPUT_extended) OutputField(); //! Output the statistics
+            if(Config::_OUTPUT_extended) OutputField(); //! Output the statistics
         }
         
         
@@ -6130,7 +6130,7 @@ if (_WATER_RETENTION_CURVE==1) {
             
             UpdateSeeds();
             
-            if(_NDD){
+            if(Config::_NDD){
                 // Evolution of the field NDDfield
                 
                 float normBA=10000.0/(0.001+PI*Rndd*Rndd*BAtot);
@@ -6414,7 +6414,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     
                     float theta_w=(SWC3D[l][d]-Min_SWC[l])/(Max_SWC[l]-Min_SWC[l]);
                     
-if (_WATER_RETENTION_CURVE==1) {
+if (Config::_WATER_RETENTION_CURVE==1) {
                     if(theta_w==0) {
                         theta_w=0.001; // SS addition for limit value
                         cout << "Warning theta_w = 0 " << endl ;
@@ -6427,7 +6427,7 @@ if (_WATER_RETENTION_CURVE==1) {
                         cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d]-Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl ;
                     
 
-} else if (_WATER_RETENTION_CURVE==0) {
+} else if (Config::_WATER_RETENTION_CURVE==0) {
                     soil_phi3D[l][d]=phi_e[l]*pow(theta_w, -b[l]); // this is the soil water characteristic of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                     Ks[l][d]=Ksat[l]*pow(theta_w, 2.5+2*b[l]); // this is the hydraulic conductivity curve of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                     KsPhi[l][d]=Ksat[l]*phi_e[l]*pow(theta_w, 2.5+b[l]); //Ks times soil_phi3D, computed directly as the exact power of theta.
@@ -6451,7 +6451,7 @@ if (_WATER_RETENTION_CURVE==1) {
                 if((row >=0) && (row < rows)) {
                     int site = col + cols * row;
                     //if(T[site].t_age == 0){
-                    if(_SEEDTRADEOFF) SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
+                    if(Config::_SEEDTRADEOFF) SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
                     else SPECIES_SEEDS[site][spp] = 1;     // If s_Seed[site] = 0, site is not occupied, if s_Seed[site] > 1, s_Seed[site] is the presence of a seed
                     //cout << "site: " << site << " spp: " << spp << " Seed added!!! " << endl;
                     //}
@@ -6523,9 +6523,9 @@ if (_WATER_RETENTION_CURVE==1) {
             for(int site=0;site<sites;site++)
                 if(T[site].t_age) {
                     // treefall is triggered given a certain flexural force
-                    // _BASICTREEFALL: just dependent on height threshold + random uniform distribution
+                    // Config::_BASICTREEFALL: just dependent on height threshold + random uniform distribution
                     float angle = 0.0, c_forceflex = 0.0;
-                    if(_BASICTREEFALL){
+                    if(Config::_BASICTREEFALL){
                         c_forceflex =(1- (1-gsl_rng_uniform(gslrand))/(12*timestep))*T[site].t_height ;    // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
                         angle = float(twoPi*gsl_rng_uniform(gslrand));                    // random angle
                     }
@@ -6606,7 +6606,7 @@ if (_WATER_RETENTION_CURVE==1) {
         float CalcCRBaseline(float &dbh){
             // crown radius allometry
             float CR;
-            if(!_CROWN_MM) {
+            if(!Config::_CROWN_MM) {
                 CR = exp(CR_a + CR_b*log(dbh));            // power law, the default
             }
             else CR = CR_b * dbh/(dbh + CR_a);                       // Michaelis Menten type allometry !!!: requires CR_b to be the CR_max parameter and CR_a the initial increase */
@@ -6701,7 +6701,7 @@ if (_WATER_RETENTION_CURVE==1) {
                     rstem += S[spp].s_rstem;
                     litterfall += S[spp].s_litterfall;
                     
-                    //if(_OUTPUT_extended){
+                    //if(Config::_OUTPUT_extended){
                         Config::output_extended[0] << iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
                     //}
                 }
@@ -6710,7 +6710,7 @@ if (_WATER_RETENTION_CURVE==1) {
                 Config::output_basic[0] << iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
                 
 #ifdef MIP_Lichstein
-                if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
+                if ((!Config::_FromInventory && iter >=(nbiter-100*iterperyear)) || Config::_FromInventory) {
                     Config::output_MIP_eco << iter << "\t" << iter <<  "\t" << iter << "\t" << gpp*100 << "\t" << npp*100 << "\t" ;
                 }
 #endif
@@ -6728,7 +6728,7 @@ if (_WATER_RETENTION_CURVE==1) {
 #endif
                 
                 
-                if(_OUTPUT_extended){
+                if(Config::_OUTPUT_extended){
                     float tototest=0.0, tototest2=0.0, flux;
                     for(int site=0;site<sites;site++) {
                         flux = WDailyMean*exp(-fmaxf(LAI3D[0][site+SBORD],0.0)*kpar);
@@ -6740,13 +6740,13 @@ if (_WATER_RETENTION_CURVE==1) {
                     if(iter) Config::output_extended[1] << iter<< "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2-tototest*tototest) << "\n";
                     
                     
-                    if(_BASICTREEFALL) Config::output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares<< "\t" << nbTreefall1*inbhectares << "\t" << nbTreefall10*inbhectares << endl;
+                    if(Config::_BASICTREEFALL) Config::output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares<< "\t" << nbTreefall1*inbhectares << "\t" << nbTreefall10*inbhectares << endl;
                     else Config::output_extended[2] << iter << "\t" << nbdead_n1*inbhectares << "\t" << nbdead_n10*inbhectares << endl;
                     
                 }
             }
                 
-                if (_NDD) BAtot=ba;
+                if (Config::_NDD) BAtot=ba;
                 
                 for(int site = 0; site < sites; site++){
                     if(T[site].t_age > 0){
@@ -6850,7 +6850,7 @@ if (_WATER_RETENTION_CURVE==1) {
             cout << transpiration_1016*1000 <<  " | "  << endl;
             
 #ifdef MIP_Lichstein
-            if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
+            if ((!Config::_FromInventory && iter >=(nbiter-100*iterperyear)) || Config::_FromInventory) {
                 Config::output_MIP_eco << (transpitot+evapo)*1000 << "\t" << lai << "\t" <<  litterfall*0.5*100 << "\t" ;
             }
             
@@ -6922,7 +6922,7 @@ if (_WATER_RETENTION_CURVE==1) {
             SW3/=LT3;
             //SW4/=LT4;     //Tapajos
             
-            if ((!_FromInventory && iter >=(nbiter-100*iterperyear)) || _FromInventory) {
+            if ((!Config::_FromInventory && iter >=(nbiter-100*iterperyear)) || Config::_FromInventory) {
                 Config::output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
             }
 #endif
@@ -7110,7 +7110,7 @@ if (_WATER_RETENTION_CURVE==1) {
             }
             
             //output.setf(ios::fixed,ios::floatfield);
-            if(_OUTPUT_inventory) {
+            if(Config::_OUTPUT_inventory) {
                 output.precision(10); // needed for correct restart
             } else {
                 output.precision(5);
@@ -9376,7 +9376,7 @@ if (_WATER_RETENTION_CURVE==1) {
                 Config::output_basic[i].clear();
             }
             
-            if(_OUTPUT_extended == 1){
+            if(Config::_OUTPUT_extended == 1){
                 for(int i = 0; i < 9; i++){
                     Config::output_extended[i].close();
                     Config::output_extended[i].clear();
@@ -9428,7 +9428,7 @@ if (_WATER_RETENTION_CURVE==1) {
             delete [] p_species;
             delete [] n_species;
             
-            if(_SEEDTRADEOFF || _NDD) delete [] PROB_S;
+            if(Config::_SEEDTRADEOFF || Config::_NDD) delete [] PROB_S;
             for (int h=0; h<(HEIGHT+1); h++) delete [] LAI3D[h];
             delete [] LAI3D;
             
