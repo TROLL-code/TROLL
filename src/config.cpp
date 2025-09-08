@@ -64,3 +64,11 @@ int Config::_LA_regulation = 0;
 int Config::_OUTPUT_pointcloud = 0;
 int Config::_SOIL_LAYER_WEIGHT = 0;
 int Config::_WATER_RETENTION_CURVE = 0;
+//
+// random number generator
+//
+gsl_rng* Config::gslrand = nullptr;
+gsl_matrix* Config::mcov_N_P_LMA = nullptr;
+gsl_vector* Config::mu_N_P_LMA = nullptr;
+gsl_vector* Config::variation_N_P_LMA = nullptr;
+int Config::covariance_status = 0;      

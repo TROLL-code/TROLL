@@ -2,6 +2,13 @@
 #define CONFIG_HPP
 
 #include <fstream>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_test.h>
+#include <gsl/gsl_ieee_utils.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_errno.h>
 
 #include "troll_defines.hpp"
 
@@ -55,6 +62,12 @@ static int _LA_regulation;     //!< User control: updated v.3.1: potentially thr
 static int _OUTPUT_pointcloud;  //!<User control: ATTENTION! At the moment assumes a little-endian system (most personal computers, but not necessarily server systems), because LAS fles are in little-endian! If == 1, creates a point cloud from a simplified ALS simulation;
 static int _SOIL_LAYER_WEIGHT; // !< User control: three ways of computing the fraction of transpiration supplied by each soil layer in individual tree total transpiration, and to weight the tree average water potential in the root zone. (0: root biomass only, 1: relative root-to soil conductance, 2: relative estimated maximal transpiration as in Duursma & Medlyn 2012).
 static int _WATER_RETENTION_CURVE; // !< User control: different water retention curves can be used. So far two are have been implemented: either brooks & Corey (0), either van Genuchten-Mualem (1). To each wtare retention cirve option is associated a different set of pedo-transfer functions, see Table 2 (texture-based Tomasella & Hodnett 1998
+
+// Random number generator for trait covariance calculation
+static gsl_rng *gslrand;   //!< Global variable: random number generator
+static gsl_matrix *mcov_N_P_LMA;   //!< Global variable: covariance matrix for leaf_properties
+static gsl_vector *mu_N_P_LMA, *variation_N_P_LMA; //!< Global variable: mean values of the distributions and the output vector for the multivariate draw
+static int covariance_status;      //!< Global variable: covariance status: if one of N, P, or LMA has zero variation, the Cholesky decomposition fails, we then use no correlation at all
 
 };
 

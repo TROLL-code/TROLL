@@ -62,14 +62,6 @@
 #include "mpi.h"
 #endif
 
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_test.h>
-#include <gsl/gsl_ieee_utils.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_errno.h>
-
 using namespace std;
 
 // GLOBAL PARAMETERS OF THE SIMULATION
@@ -85,12 +77,6 @@ int freqout;    //!< Global variable: frequency HDF outputs
 #ifdef FULL_CLIMATE
 int nbdays;     //!< Global variable: number of days with explicit daily climate variation provided in input
 #endif // FULL_CLIMATE
-
-// Random number generator for trait covariance calculation
-gsl_rng *gslrand;   //!< Global variable: random number generator
-gsl_matrix *mcov_N_P_LMA;   //!< Global variable: covariance matrix for leaf_properties
-gsl_vector *mu_N_P_LMA, *variation_N_P_LMA; //!< Global variable: mean values of the distributions and the output vector for the multivariate draw
-int covariance_status;      //!< Global variable: covariance status: if one of N, P, or LMA has zero variation, the Cholesky decomposition fails, we then use no correlation at all
 
 // DCELL: coarser grids (typically, one site is 1 m^2, while one dcell would be 20*20 m^2)
 int length_dcell;   //!< Global variable: linear size of a dcell (coarser grid of the simulated scene); default since v.3.0 standard
@@ -113,8 +99,6 @@ float NH; //!< Global variable: number of cells per m (horizontal)
 float LV; //!< Global variable: LV = 1.0/NV; NV is vertical number of cells per m
 float LH; //!< Global variable: LH = 1.0/NH; NH is horizontal number of cells per m
 float timestep; //!< Global variable: duration of one timestep (in years)=1/iterperyear
-
-
 
 float p_nonvert; //!< Global variable: ratio of non-vertical incident light
 float Cseedrain; //!< Global variable: constant used to scale total seed rain per hectare across species

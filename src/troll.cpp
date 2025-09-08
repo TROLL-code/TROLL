@@ -95,7 +95,7 @@ void Species::Init() {
 //! Actions needed at birth for a tree (precisely, at time when a stem enters the > 1 cm trunk diameter class)
 void Tree::Birth(int nume, int site0) {
    
-    int dev_rand = int(gsl_rng_uniform_int(gslrand,10000));    // modified FF v.3.1.5 (reduced to 10000)
+    int dev_rand = int(gsl_rng_uniform_int(Config::gslrand,10000));    // modified FF v.3.1.5 (reduced to 10000)
 
     
 #ifdef LCP_alternative
@@ -285,7 +285,7 @@ void Tree::Birth(int nume, int site0) {
 int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<string> &parameter_values, int &nb_speciesrandom){
     int success = 0;
     bool quiet = 1;
-    int dev_rand = int(gsl_rng_uniform_int(gslrand,10000)); // in case traits have to be drawn at random, modified FF v.3.1.5
+    int dev_rand = int(gsl_rng_uniform_int(Config::gslrand,10000)); // in case traits have to be drawn at random, modified FF v.3.1.5
     
     //*############################################*/
     //*## First diameter (minimum data condition ##*/
@@ -321,7 +321,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
             }
         }
         if(species_exists == 0){
-            t_sp_lab = int(gsl_rng_uniform_int(gslrand,nbspp)) + 1;
+            t_sp_lab = int(gsl_rng_uniform_int(Config::gslrand,nbspp)) + 1;
             nb_speciesrandom++;
             //cout << "Species: " << parameter_value << " not found. Initializing as random species: " << S[t_sp_lab].s_name << endl;
         }
@@ -1909,7 +1909,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float dbhrealmax = t_dbhmax * 1.5;
         float hrealmax = t_mult_height * CalcHeightBaseline(t_ah, t_hmax, dbhrealmax);   // realized maximum height
         float vC_intraspecific = vC/1.5 - 1.0/(2.3 * t_mult_height) + 1.0/2.3;  //! since v.2.5: adjusting vC to intraspecific height variation. If vC was not modified, tall trees would start falling at much larger heights than smaller trees of the same species and with the same dbh, despite a much worse height/dbh ratio. The default assumption is now that the minimum onset of treefalls should be around the same height threshold irrespective of the height multiplier, but stronger assumptions would be justified too (i.e. tall trees falling more easily). The formula is derived as follows: assuming that the onset of treefall can be described by the 99.5 percentile of the sqrt(-log(uniform)) distribution, which is 2.3, we calculate the corresponding Ct_min and impose the condition that it stays equal irrespective of t_mult_height. In this case, we can solve for vC_intraspecific. This is a conservative assumption, likely a stronger dependence on dbh/height ratio would be found, but probably superseded by E-Ping's module anyways
-        float Ct = fminf(float(HEIGHT-1),hrealmax*fmaxf(1.0  - vC_intraspecific * sqrt(-log(gsl_rng_uniform_pos(gslrand))),0.0));
+        float Ct = fminf(float(HEIGHT-1),hrealmax*fmaxf(1.0  - vC_intraspecific * sqrt(-log(gsl_rng_uniform_pos(Config::gslrand))),0.0));
         return(Ct);
     }
     
@@ -2236,7 +2236,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
         float Vcmax_25_mass = t_Vcmax*LookUp_VcmaxT[convT]/t_LMA;
         
         //Core model
-        float b = exp(5.467025 - 1.138354 * log(Vcmax_25_mass) + gsl_ran_gaussian(gslrand, 0.6112195)); // parameter as in Xu et al. 2017, fit to their data
+        float b = exp(5.467025 - 1.138354 * log(Vcmax_25_mass) + gsl_ran_gaussian(Config::gslrand, 0.6112195)); // parameter as in Xu et al. 2017, fit to their data
         float LL = 1.0 + 0.0333333 * fminf(b,sqrt(3.0 * 0.5 * t_LMA * b/GPP_effective));   // cf. Kikuzawa 1991 for formula, and Xu et al. 2017. As opposed to Xu et al. 2017 we assume decline in respiration rates. Also, LL can never be bigger than b
         LL = fmaxf(LL,3.0);
         
@@ -2830,8 +2830,8 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 //update 2.5: rho does not seem to correspond to original 1999 paper anymore and in previous version predicted dispersal with a lower cutoff instead of the Rayleigh distribution
                 //here we restore the previous formulation by using the Rayleigh implementation from the gsl library
                 //for the moment, we do not use the crown radius as an additional dispersal kernel. This would lead to a loss of large tree species locally, because they will have much less seeds within the plot
-                float rho = gsl_ran_rayleigh(gslrand, S[t_sp_lab].s_ds);
-                float theta_angle = float(twoPi*gsl_rng_uniform(gslrand)); //Dispersal angle theta
+                float rho = gsl_ran_rayleigh(Config::gslrand, S[t_sp_lab].s_ds);
+                float theta_angle = float(twoPi*gsl_rng_uniform(Config::gslrand)); //Dispersal angle theta
                 int col_tree = t_site%cols;
                 int row_tree = t_site/cols;
                 int dist_cols = int(rho*cos(theta_angle));
@@ -2868,15 +2868,15 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
 #endif
             //v.2.4.0: outputs have been moved to Death() function
             if(Config::_NDD)
-                death = int(gsl_rng_uniform(gslrand)+DeathRateNDD(t_dbh, t_NPPneg, t_NDDfield[t_sp_lab]));
+                death = int(gsl_rng_uniform(Config::gslrand)+DeathRateNDD(t_dbh, t_NPPneg, t_NDDfield[t_sp_lab]));
             else
 #ifdef WATER  // note that I did not include a version with both drought-induced mortality/carbon starvation and NDD effect on mortality, to be done if needed.
-                //death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
-                if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
-                else death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_carbon_storage, t_phi_root)); // newIM 2021: directly use the t_carbon_stoarge variable instead of NPPneg
+                //death = int(gsl_rng_uniform(Config::gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
+                if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(Config::gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
+                else death = int(gsl_rng_uniform(Config::gslrand)+DeathRate(t_dbh, t_carbon_storage, t_phi_root)); // newIM 2021: directly use the t_carbon_stoarge variable instead of NPPneg
 #else
-            if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_NPPneg));
-            else death = int(gsl_rng_uniform(gslrand)+DeathRate(t_dbh, t_carbon_storage)); // newIM 2021: directly use the t_carbon_storage variable instead of NPPneg
+            if (Config::_LA_regulation==0) death = int(gsl_rng_uniform(Config::gslrand)+DeathRate(t_dbh, t_NPPneg));
+            else death = int(gsl_rng_uniform(Config::gslrand)+DeathRate(t_dbh, t_carbon_storage)); // newIM 2021: directly use the t_carbon_storage variable instead of NPPneg
 #endif
             if(death) Death();
             else Growth();   // v.2.4: t_hurt is now updated in the TriggerTreefallSecondary() function
@@ -3582,7 +3582,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             const gsl_rng_type *Trandgsl;
             gsl_rng_env_setup();
             Trandgsl = gsl_rng_default;
-            gslrand = gsl_rng_alloc (Trandgsl);
+            Config::gslrand = gsl_rng_alloc (Trandgsl);
             
             cout << "Easy MPI rank: " << easympi_rank << endl;
             
@@ -3591,7 +3591,7 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
             
             if(Config::_NONRANDOM == 1) seed = 1;
             
-            gsl_rng_set(gslrand, seed);
+            gsl_rng_set(Config::gslrand, seed);
             
             cout << "On proc #" << easympi_rank << " seed: " << seed << endl;
             sprintf(Config::outputinfo,"%s_%i_info.txt",Config::buf, easympi_rank);
@@ -4076,33 +4076,33 @@ void Tree::Fluxh(int h,float &PPFD, float &VPD, float &Tmp, float &leafarea_laye
                 
                 if(cov_N_P == 0.0 || cov_N_LMA == 0.0 || cov_P_LMA == 0.0){
                     cerr << "\nCovariance matrix N,P,LMA could not be decomposed. Using uncorrelated variation of trait values instead" << endl;
-                    covariance_status = 0;
+                    Config::covariance_status = 0;
                 }
                 else{
                     cout << "Correlation status. corr_N_P: " << corr_N_P << " cov_N_LMA: " << corr_N_LMA << " corr_P_LMA: " << corr_P_LMA << endl;
-                    covariance_status = 1;
+                    Config::covariance_status = 1;
                     // Initialise covariance matrix for N, P, LMA
-                    mcov_N_P_LMA = gsl_matrix_alloc(3,3);
-                    gsl_matrix_set(mcov_N_P_LMA,0,0,sigma_N*sigma_N);
-                    gsl_matrix_set(mcov_N_P_LMA,0,1,cov_N_P);
-                    gsl_matrix_set(mcov_N_P_LMA,0,2,cov_N_LMA);
-                    gsl_matrix_set(mcov_N_P_LMA,1,0,cov_N_P);
-                    gsl_matrix_set(mcov_N_P_LMA,1,1,sigma_P*sigma_P);
-                    gsl_matrix_set(mcov_N_P_LMA,1,2,cov_P_LMA);
-                    gsl_matrix_set(mcov_N_P_LMA,2,0,cov_N_LMA);
-                    gsl_matrix_set(mcov_N_P_LMA,2,1,cov_P_LMA);
-                    gsl_matrix_set(mcov_N_P_LMA,2,2,sigma_LMA*sigma_LMA);
+                    Config::mcov_N_P_LMA = gsl_matrix_alloc(3,3);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,0,0,sigma_N*sigma_N);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,0,1,cov_N_P);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,0,2,cov_N_LMA);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,1,0,cov_N_P);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,1,1,sigma_P*sigma_P);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,1,2,cov_P_LMA);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,2,0,cov_N_LMA);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,2,1,cov_P_LMA);
+                    gsl_matrix_set(Config::mcov_N_P_LMA,2,2,sigma_LMA*sigma_LMA);
                     
                     // Cholesky decomposition for multivariate draw
                     cout << "\nCovariance matrix N,P,LMA: " << endl;
-                    for(int mrow=0; mrow<3;mrow++) cout << gsl_matrix_get(mcov_N_P_LMA, mrow, 0) << "\t" << gsl_matrix_get(mcov_N_P_LMA, mrow, 1) << "\t" << gsl_matrix_get(mcov_N_P_LMA, mrow, 2) << endl;
-                    gsl_linalg_cholesky_decomp1(mcov_N_P_LMA);
+                    for(int mrow=0; mrow<3;mrow++) cout << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 0) << "\t" << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 1) << "\t" << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 2) << endl;
+                    gsl_linalg_cholesky_decomp1(Config::mcov_N_P_LMA);
                     cout << "\nCovariance matrix N,P,LMA (after Cholesky decomposition) " << endl;
-                    for(int mrow=0; mrow<3;mrow++) cout << gsl_matrix_get(mcov_N_P_LMA, mrow, 0) << "\t" << gsl_matrix_get(mcov_N_P_LMA, mrow, 1) << "\t" << gsl_matrix_get(mcov_N_P_LMA, mrow, 2) << endl;
+                    for(int mrow=0; mrow<3;mrow++) cout << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 0) << "\t" << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 1) << "\t" << gsl_matrix_get(Config::mcov_N_P_LMA, mrow, 2) << endl;
                     // allocating mean and result vectors for multivariate draw
-                    mu_N_P_LMA = gsl_vector_alloc(3);
-                    for(int j=0;j<3;j++) gsl_vector_set(mu_N_P_LMA,j,0.0); // zero means
-                    variation_N_P_LMA = gsl_vector_alloc(3);
+                    Config::mu_N_P_LMA = gsl_vector_alloc(3);
+                    for(int j=0;j<3;j++) gsl_vector_set(Config::mu_N_P_LMA,j,0.0); // zero means
+                    Config::variation_N_P_LMA = gsl_vector_alloc(3);
                 }
                 crown_gap_fraction = fmaxf(crown_gap_fraction,0.000001);     // crown_gap_fraction is prevented from becoming zero in order to avoid division by zero. Given that crown area is currently limited to 1963 (int(3.14 * 25.0 * 25.0), the lowest crown_gap_fraction that could potentially have an effect would be 1/1963, which is ~ 0.0005
                 iCair = 1.0/Cair;
@@ -4707,25 +4707,25 @@ if (Config::_WATER_RETENTION_CURVE==1) {
             
             double variation_height=0.0, variation_CR=0.0, variation_CD=0.0, variation_P=0.0, variation_N=0.0, variation_LMA=0.0,variation_wsg=0.0,variation_dbhmax=0.0;
             for(int i=0;i<10000;i++){ // modified FF v.3.1.5 (reduced from 100000 to 10000)
-                if(covariance_status == 0){
-                    variation_N = gsl_ran_gaussian(gslrand, sigma_N);
-                    variation_P = gsl_ran_gaussian(gslrand, sigma_P);
-                    variation_LMA = gsl_ran_gaussian(gslrand, sigma_LMA);
+                if(Config::covariance_status == 0){
+                    variation_N = gsl_ran_gaussian(Config::gslrand, sigma_N);
+                    variation_P = gsl_ran_gaussian(Config::gslrand, sigma_P);
+                    variation_LMA = gsl_ran_gaussian(Config::gslrand, sigma_LMA);
                 } else {
-                    gsl_ran_multivariate_gaussian(gslrand, mu_N_P_LMA, mcov_N_P_LMA, variation_N_P_LMA);
-                    variation_N = gsl_vector_get(variation_N_P_LMA, 0);
-                    variation_P = gsl_vector_get(variation_N_P_LMA, 1);
-                    variation_LMA = gsl_vector_get(variation_N_P_LMA, 2);
+                    gsl_ran_multivariate_gaussian(Config::gslrand, Config::mu_N_P_LMA, Config::mcov_N_P_LMA, Config::variation_N_P_LMA);
+                    variation_N = gsl_vector_get(Config::variation_N_P_LMA, 0);
+                    variation_P = gsl_vector_get(Config::variation_N_P_LMA, 1);
+                    variation_LMA = gsl_vector_get(Config::variation_N_P_LMA, 2);
                 }
-                gsl_ran_bivariate_gaussian(gslrand, sigma_height, sigma_CR, corr_CR_height, &variation_height, &variation_CR);
-                // variation_height = gsl_ran_gaussian(gslrand, sigma_height);
-                // variation_CR = gsl_ran_gaussian(gslrand, sigma_CR);
-                variation_CD = gsl_ran_gaussian(gslrand, sigma_CD);
-                variation_wsg = gsl_ran_gaussian(gslrand, sigma_wsg);
-                variation_dbhmax = gsl_ran_gaussian(gslrand, sigma_dbhmax);
+                gsl_ran_bivariate_gaussian(Config::gslrand, sigma_height, sigma_CR, corr_CR_height, &variation_height, &variation_CR);
+                // variation_height = gsl_ran_gaussian(Config::gslrand, sigma_height);
+                // variation_CR = gsl_ran_gaussian(Config::gslrand, sigma_CR);
+                variation_CD = gsl_ran_gaussian(Config::gslrand, sigma_CD);
+                variation_wsg = gsl_ran_gaussian(Config::gslrand, sigma_wsg);
+                variation_dbhmax = gsl_ran_gaussian(Config::gslrand, sigma_dbhmax);
 #ifdef WATER
-                variation_leafarea = gsl_ran_gaussian(gslrand, sigma_leafarea);
-                variation_tlp = gsl_ran_gaussian(gslrand, sigma_tlp);
+                variation_leafarea = gsl_ran_gaussian(Config::gslrand, sigma_leafarea);
+                variation_tlp = gsl_ran_gaussian(Config::gslrand, sigma_tlp);
 #endif
                 
                 // limit extent of variation, some coarse biological limits for variation around allometries
@@ -4758,7 +4758,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                 d_intraspecific_CD[i] = float(exp(variation_CD));
                 d_intraspecific_wsg[i] = float(variation_wsg);             // normal, not log-normal
                 d_intraspecific_dbhmax[i] = float(exp(variation_dbhmax));
-                // d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(gslrand, sigma_height)));
+                // d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(Config::gslrand, sigma_height)));
                 max_intraspecific_height = fmaxf(max_intraspecific_height,d_intraspecific_height[i]);
                 min_intraspecific_height = fminf(min_intraspecific_height,d_intraspecific_height[i]);
                 max_intraspecific_CR = fmaxf(max_intraspecific_CR,d_intraspecific_CR[i]);
@@ -6059,14 +6059,14 @@ if (Config::_WATER_RETENTION_CURVE==1) {
             if(iter%iterperyear == 0){
                 // acceleration, using the multinomial distribution
                 int ha = sites/10000;
-                gsl_ran_multinomial(gslrand, sites, Cseedrain * ha, p_seed, n_seed);
+                gsl_ran_multinomial(Config::gslrand, sites, Cseedrain * ha, p_seed, n_seed);
                 cout << sites << " Seedrain: " << Cseedrain * ha << endl;
                 int seedsadded = 0;
                 for(int s = 0; s < sites; s++){
                     //if(T[s].t_age == 0){
                     int nbseeds = n_seed[s];
                     //cout << "Site: " << s << " nbseeds: " << nbseeds << " nbspp: " << nbspp << endl;
-                    gsl_ran_multinomial(gslrand, nbspp, nbseeds, p_species, n_species);
+                    gsl_ran_multinomial(Config::gslrand, nbspp, nbseeds, p_species, n_species);
                     for(int spp = 1; spp <= nbspp; spp++){
                         int nbseeds_species = n_species[spp-1];
                         //cout << "Site: " << s << " Species: " << spp << " nbseeds: " << nbseeds_species << endl;
@@ -6476,7 +6476,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                     if(spp_withseeds > 0) {  // ... and then randomly select one of these species
                         
                         // new in v.2.4.1: for consistency use genrand2() instead of rand(), since v.2.5: use gsl RNG
-                        int spp_index = int(gsl_rng_uniform_int(gslrand,spp_withseeds));
+                        int spp_index = int(gsl_rng_uniform_int(Config::gslrand,spp_withseeds));
                         int spp = SPECIES_GERM[spp_index];
                         // otherwise all species with seeds present are equiprobable
                         
@@ -6526,8 +6526,8 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                     // Config::_BASICTREEFALL: just dependent on height threshold + random uniform distribution
                     float angle = 0.0, c_forceflex = 0.0;
                     if(Config::_BASICTREEFALL){
-                        c_forceflex =(1- (1-gsl_rng_uniform(gslrand))/(12*timestep))*T[site].t_height ;    // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
-                        angle = float(twoPi*gsl_rng_uniform(gslrand));                    // random angle
+                        c_forceflex =(1- (1-gsl_rng_uniform(Config::gslrand))/(12*timestep))*T[site].t_height ;    // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
+                        angle = float(twoPi*gsl_rng_uniform(Config::gslrand));                    // random angle
                     }
                     // above a given stress threshold the tree falls
                     if(c_forceflex > T[site].t_Ct){
@@ -6570,9 +6570,9 @@ if (Config::_WATER_RETENTION_CURVE==1) {
             for(int site=0;site<sites;site++){
                 if(T[site].t_age){
                     float height_threshold = T[site].t_height/T[site].t_mult_height;  // since 2.5: a tree's stability is defined by its species' average height, i.e. we divide by the intraspecific height multiplier to account for lower stability in quickly growing trees; otherwise slender, faster growing trees would be treated preferentially and experience less secondary treefall than more heavily built trees
-                    if(2.0*T[site].t_hurt*(1-(1-gsl_rng_uniform(gslrand))/(12*timestep)) > height_threshold) {         // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when timestep=1/12, gslrand <= 1.0 - 0.5 * t_height/t_hurt, or gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
-                        if(p_tfsecondary > gsl_rng_uniform(gslrand)){                              // check whether tree falls or dies otherwise
-                            float angle = float(twoPi*gsl_rng_uniform(gslrand));                    // random angle
+                    if(2.0*T[site].t_hurt*(1-(1-gsl_rng_uniform(Config::gslrand))/(12*timestep)) > height_threshold) {         // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when timestep=1/12, Config::gslrand <= 1.0 - 0.5 * t_height/t_hurt, or Config::gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
+                        if(p_tfsecondary > gsl_rng_uniform(Config::gslrand)){                              // check whether tree falls or dies otherwise
+                            float angle = float(twoPi*gsl_rng_uniform(Config::gslrand));                    // random angle
                             T[site].Treefall(angle);
                         } else {
                             T[site].Death();
@@ -7363,7 +7363,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
             for(int r = 0; r < rows; r++){
                 for(int c = 0; c < cols; c++){
                     int site = c + r * cols;
-                    int nbbeams = int(mean_beam + gsl_ran_gaussian(gslrand, sd_beam));    // always rounding up
+                    int nbbeams = int(mean_beam + gsl_ran_gaussian(Config::gslrand, sd_beam));    // always rounding up
                     nbbeams = max(nbbeams,1);
                     
                     for(int beam = 0; beam < nbbeams; beam++){
@@ -7389,12 +7389,12 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                                 if(LAD > 0.0) prob_hit = 1.0 - exp(-klaser * LAD);
                                 else prob_hit = 0.0;
                                 
-                                int is_hit = gsl_ran_bernoulli(gslrand, prob_hit);
+                                int is_hit = gsl_ran_bernoulli(Config::gslrand, prob_hit);
                                 
                                 if(is_hit){
-                                    beam_continues = gsl_ran_bernoulli(gslrand, transmittance_laser);
+                                    beam_continues = gsl_ran_bernoulli(Config::gslrand, transmittance_laser);
                                     beam_return++;
-                                    float z_hit = float(h) + gsl_rng_uniform(gslrand);
+                                    float z_hit = float(h) + gsl_rng_uniform(Config::gslrand);
                                     beams_returns.push_back(z_hit);
                                 }
                             } else {
@@ -7590,8 +7590,8 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                 int col = site_beam%cols;
                 
                 // long format + 0.01 scaling (1cm precision)
-                int32_t x_hit = round((float(col) + gsl_rng_uniform(gslrand)) * 100.0);
-                int32_t y_hit = round((float(row) + gsl_rng_uniform(gslrand)) * 100.0);
+                int32_t x_hit = round((float(col) + gsl_rng_uniform(Config::gslrand)) * 100.0);
+                int32_t y_hit = round((float(row) + gsl_rng_uniform(Config::gslrand)) * 100.0);
                 
                 for(int rtrn = 0; rtrn < nb_returns_beam; rtrn++){
                     int32_t z_hit = round(beams_returns[index_return] * 100.0);
@@ -7848,7 +7848,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
             for(int r = row_start; r < row_end; r++){
                 for(int c = col_start; c < col_end; c++){
                     int site = c + r * cols;
-                    int nbbeams = int(mean_beam + gsl_ran_gaussian(gslrand, sd_beam));    // always rounding up
+                    int nbbeams = int(mean_beam + gsl_ran_gaussian(Config::gslrand, sd_beam));    // always rounding up
                     nbbeams = max(nbbeams,1);
                     
                     //loop over the field from maximum height to 0 and iteratively update voxels from top to bottom, following the beam. An alternative version, also allowing for ground returns, can be activated to extending the loop to h >= -1. In this case, when a beam is not extinguished before it reaches the ground (h >= 0), then it is counted as a ground return
@@ -7880,7 +7880,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                                     float LAD = LAI_current - LAI_above;
                                     if(LAD > 0.0) prob_hit = 1.0 - exp(-klaser * LAD);
                                     else prob_hit = 0.0;
-                                    hits = gsl_ran_binomial(gslrand, prob_hit, nbbeams);
+                                    hits = gsl_ran_binomial(Config::gslrand, prob_hit, nbbeams);
                                     //transmittance = exp(-klaser * LAD);
                                     if(hits == 0){
                                         transmittance = 1.0;
@@ -7890,7 +7890,7 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                                         nbbeams -= hits;
                                         //nbbeams += int(0.1*float(hits));                            // 10% of intercepted beams are not getting extinct
                                         // now simulate transmittance of beam through the leaves
-                                        int hits_notextinct = gsl_ran_binomial(gslrand, transmittance_laser, hits);
+                                        int hits_notextinct = gsl_ran_binomial(Config::gslrand, transmittance_laser, hits);
                                         nbbeams += hits_notextinct;
                                     }
                                 }
@@ -8496,10 +8496,10 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                         float sd1 = (0.0062 * dbh_previous * 100.0 + 0.0904)*0.01;
                         float sd2 = 0.0464;
                         
-                        float prob = gsl_rng_uniform(gslrand);
+                        float prob = gsl_rng_uniform(Config::gslrand);
                         float error;
-                        if(prob < 0.95) error = gsl_ran_gaussian(gslrand, sd1);
-                        else error = gsl_ran_gaussian(gslrand, sd2);
+                        if(prob < 0.95) error = gsl_ran_gaussian(Config::gslrand, sd1);
+                        else error = gsl_ran_gaussian(Config::gslrand, sd2);
                         
                         float dbh_previous_witherror = fmaxf(dbh_previous + error, 0.66 * dbh_previous);
                         dbh_previous_witherror = fminf(dbh_previous_witherror, 1.33 * dbh_previous);
@@ -8528,10 +8528,10 @@ if (Config::_WATER_RETENTION_CURVE==1) {
                             float sd1 = (0.0062 * dbh_previous * 100.0 + 0.0904)*0.01;
                             float sd2 = 0.0464;
                             
-                            float prob = gsl_rng_uniform(gslrand);
+                            float prob = gsl_rng_uniform(Config::gslrand);
                             float error;
-                            if(prob < 0.95) error = gsl_ran_gaussian(gslrand, sd1);
-                            else error = gsl_ran_gaussian(gslrand, sd2);
+                            if(prob < 0.95) error = gsl_ran_gaussian(Config::gslrand, sd1);
+                            else error = gsl_ran_gaussian(Config::gslrand, sd2);
                             
                             float dbh_witherror = fmaxf(dbh + error, 0.66 * dbh);
                             dbh_witherror = fminf(dbh_witherror, 1.33 * dbh);
