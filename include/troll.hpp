@@ -64,11 +64,8 @@
 
 using namespace std;
 
-// GLOBAL PARAMETERS OF THE SIMULATION
-int sites;      //!< Global variable: number of pixels in the scene (cols*rows)
-int cols;       //!< Global variable: number of columns in the scene
-int rows;       //!< Global variable: number of rows in the scene
-int nbspp;      //!< Global variable: number of species
+// TIME variables
+
 int iterperyear;//!< Global variable: number of iterations per year (=12 if monthly timestep, =365 if daily timestep)
 int nbiter;     //!< Global variable: total number of timesteps
 int iter;       //!< Global variable: current timestep
@@ -77,29 +74,35 @@ int freqout;    //!< Global variable: frequency HDF outputs
 #ifdef FULL_CLIMATE
 int nbdays;     //!< Global variable: number of days with explicit daily climate variation provided in input
 #endif // FULL_CLIMATE
+float timestep; //!< Global variable: duration of one timestep (in years)=1/iterperyear
 
+// GRID variables
+
+int sites;      //!< Global variable: number of pixels in the scene (cols*rows)
+int cols;       //!< Global variable: number of columns in the scene
+int rows;       //!< Global variable: number of rows in the scene
+float NV; //!< Global variable: number of cells per m (vertical)
+float NH; //!< Global variable: number of cells per m (horizontal)
+float LV; //!< Global variable: LV = 1.0/NV; NV is vertical number of cells per m
+float LH; //!< Global variable: LH = 1.0/NH; NH is horizontal number of cells per m
 // DCELL: coarser grids (typically, one site is 1 m^2, while one dcell would be 20*20 m^2)
 int length_dcell;   //!< Global variable: linear size of a dcell (coarser grid of the simulated scene); default since v.3.0 standard
 int linear_nb_dcells;    //!< Global variable: linear number of dcells
 int sites_per_dcell;    //!< Global variable: number of sites per dcell
 int nbdcells;           //!< Global variable: total number of dcells; note that nbdcells = linear_nb_dcells * linear_nb_dcells
-
 #ifdef WATER
 int *site_DCELL(0); //!< Global variable: site_DCELL[site] attributes a site to its dcell
 float i_sites_per_dcell; //!< Global variable: 1.0/sites_per_dcell, where sites_per_dcell is number of sites per dcell
 #endif
 
+// GLOBAL PARAMETERS OF THE SIMULATION
+
+int nbspp;      //!< Global variable: number of species
 int HEIGHT; //!< Global variable: maximum height (m)
 int dbhmaxincm; //!< Global variable: maximum diameter at breast height (DBH) in cm (the convention in forestry; !!! departure from usual SI units)
 int RMAX; //!< Global variable: maximum crown radius (m)
 int SBORD; //!< Global variable: boundary condition, defined as RMAX*cols
 int leafdem_resolution; //!< Global variable: resolution for leaf demography model !!!MORE_COMMENT
-float NV; //!< Global variable: number of cells per m (vertical)
-float NH; //!< Global variable: number of cells per m (horizontal)
-float LV; //!< Global variable: LV = 1.0/NV; NV is vertical number of cells per m
-float LH; //!< Global variable: LH = 1.0/NH; NH is horizontal number of cells per m
-float timestep; //!< Global variable: duration of one timestep (in years)=1/iterperyear
-
 float p_nonvert; //!< Global variable: ratio of non-vertical incident light
 float Cseedrain; //!< Global variable: constant used to scale total seed rain per hectare across species
 float nbs0; //!< Global variable: number of seeds produced and dispersed by each mature tree when SEEDTRADEOFF is not defined
