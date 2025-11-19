@@ -71,4 +71,17 @@ gsl_rng* Config::gslrand = nullptr;
 gsl_matrix* Config::mcov_N_P_LMA = nullptr;
 gsl_vector* Config::mu_N_P_LMA = nullptr;
 gsl_vector* Config::variation_N_P_LMA = nullptr;
-int Config::covariance_status = 0;      
+int Config::covariance_status = 0; 
+//
+// time variables
+//
+int Config::iterperyear = 0;  // Initialize to a sensible default or leave uninitialized if set elsewhere
+int Config::nbiter = 0;
+int Config::iter = 0;
+int Config::nbout = 0;
+int Config::freqout = 0;
+#ifdef FULL_CLIMATE
+int Config::nbdays = 0;
+#endif // FULL_CLIMATE
+float Config::timestep = 0.0f;
+

@@ -64,18 +64,6 @@
 
 using namespace std;
 
-// TIME variables
-
-int iterperyear;//!< Global variable: number of iterations per year (=12 if monthly timestep, =365 if daily timestep)
-int nbiter;     //!< Global variable: total number of timesteps
-int iter;       //!< Global variable: current timestep
-int nbout;      //!< Global variable: number of outputs
-int freqout;    //!< Global variable: frequency HDF outputs
-#ifdef FULL_CLIMATE
-int nbdays;     //!< Global variable: number of days with explicit daily climate variation provided in input
-#endif // FULL_CLIMATE
-float timestep; //!< Global variable: duration of one timestep (in years)=1/iterperyear
-
 // GRID variables
 
 int sites;      //!< Global variable: number of pixels in the scene (cols*rows)
@@ -111,10 +99,8 @@ float Cair; //!< Global variable: atmospheric CO_2 concentration (in ppm). If in
 float PRESS; //!< Global variable: atmospheric CO_2 pressure (in kPa). If in the future PRESS should vary, it should have the same status as other climatic variables
 #endif
 float iCair; //!< Global variable: inverse of Cair
-
 float crown_gap_fraction; //!< Global variable: fraction of gaps in a crown, new in v.2.4.1: adds gaps according to a predetermined gap_fraction in tree crown. Gaps inserted regularly (i.e. every 4 pixels for a gap fraction of 0.25). In v.2.5:  gap fraction is now given as a target fraction and, in filling up a tree's crown, gaps are inserted when fraction_filled is too high: more accurate approximation of gap fraction (e.g., gap fractions > 0.5 are now possible). Also in v.2.5: intraspecific variation in crown radius affects gap fraction: trees with larger crowns also have more gaps, so large crowns get more open and smaller crowns denser, while keeping the same leaf area. !!!IMPROVE_IN_FUTURE
 float shape_crown; //!< Global variable: percentage of crown radius that reaches the crown top and defines how steep the crown slope is; only required if CROWN_UMBRELLA is activated, but added to main code so that input sheet does not have to be modified.
-
 // NEGATIVE DENSITY DEPENDENCE (NDD)
 float Rndd; //!< Global variable: distance beyond which negative density dependence (NDD) effect is not accounted anymore
 float deltaR; //!< Global variable: negative density dependence (NDD) strength parameter in recruitment rate
@@ -122,9 +108,9 @@ float deltaD; //!< Global variable: negative density dependence (NDD) strength p
 float BAtot; //!< Global variable: !!!UPDATE
 
 // VISUALIZATION parameter
+
 int extent_visual; //!< Global variable: extent of visualization outputs, bounded by extent of simulation
 int mincol_visual, maxcol_visual, minrow_visual, maxrow_visual, minrow_visual_slice, maxrow_visual_slice; //!<! Global variables: computed from extent, defining the two visualization outputs
-
 
 //! ENVIRONMENTAL VARIABLES
 
