@@ -1,0 +1,50 @@
+name: Build TROLL (Cross-Platform)
+on:
+  pull_request:
+    branches: [ "dev" ]  # Run when a PR targets the `dev` branch
+  push:
+    branches: [ "dev" ]  # Run when a commit is pushed directly to `dev`
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake libgsl-dev
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install gsl cmake
+
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install cmake
+          # For simplicity, this example uses MS-GSL available via vcpkg.
+          vcpkg install ms-gsl
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Verify executable (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: ls -lh build/TROLL
+
+      - name: Verify executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dir build\Release\TROLL.exe
