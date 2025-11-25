@@ -4,6 +4,7 @@ on:
     branches: [ "dev" ]  # Run when a PR targets the `dev` branch
   push:
     branches: [ "dev" ]  # Run when a commit is pushed directly to `dev`
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   build:
