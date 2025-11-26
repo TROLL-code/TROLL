@@ -47,22 +47,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gsl-
 
-      - name: Detect Homebrew path (macOS)
-        if: matrix.os == 'macos-latest'
-        id: homebrew-path
-        run: |
-          echo "path=$(brew --prefix gsl)" >> $GITHUB_OUTPUT
+      # - name: Detect Homebrew path (macOS)
+      #   if: matrix.os == 'macos-latest'
+      #   id: homebrew-path
+      #   run: |
+      #     echo "path=$(brew --prefix gsl)" >> $GITHUB_OUTPUT
 
-      - name: Cache GSL (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ steps.homebrew-path.outputs.path }}/include
-            ${{ steps.homebrew-path.outputs.path }}/lib
-          key: ${{ runner.os }}-gsl-${{ hashFiles('**/CMakeLists.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-gsl-
+      # - name: Cache GSL (macOS)
+      #   if: matrix.os == 'macos-latest'
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ${{ steps.homebrew-path.outputs.path }}/include
+      #       ${{ steps.homebrew-path.outputs.path }}/lib
+      #     key: ${{ runner.os }}-gsl-${{ hashFiles('**/CMakeLists.txt') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-gsl-
 
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
