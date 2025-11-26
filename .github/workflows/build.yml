@@ -67,14 +67,11 @@ jobs:
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update
           sudo apt-get install -y g++ cmake libgsl-dev
 
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew update
-          brew uninstall --ignore-dependencies gsl || true
           brew install gsl cmake
 
       - name: Configure CMake
