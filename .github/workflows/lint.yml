@@ -1,0 +1,35 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt install -y cppcheck cpplint
+
+      - name: Configure CMake
+        run: cmake -B lint -S lint
+
+      - name: Run cpplint (lint-style)
+        run: |
+          cmake --build lint --target lint-style > cpplint_output.txt 2>&1 || true
+          cat cpplint_output.txt  # Print to logs for immediate visibility
+
+      - name: Run cppcheck (lint-static)
+        run: |
+          cmake --build lint --target lint-static > cppcheck_output.txt 2>&1 || true
+          cat cppcheck_output.txt  # Print to logs for immediate visibility
+
+      - name: Upload lint outputs
+        uses: actions/upload-artifact@v4
+        if: always()  # Upload even if previous steps fail
+        with:
+          name: lint-outputs
+          path: |
+            cpplint_output.txt
+            cppcheck_output.txt
