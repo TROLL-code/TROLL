@@ -72,7 +72,7 @@ jobs:
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew install gsl cmake
+          brew install gsl   # cmake already installed on macos-latest
 
       - name: Configure CMake
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
