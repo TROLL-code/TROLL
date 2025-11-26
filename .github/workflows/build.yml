@@ -20,8 +20,7 @@ jobs:
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ cmake libgsl-dev
+          sudo apt install -y cmake libgsl-dev # g++ already installed on ubuntu-latest
 
       - name: Install dependencies (macOS)
         if: matrix.os == 'macos-latest'
