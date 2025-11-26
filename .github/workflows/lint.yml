@@ -27,7 +27,7 @@ jobs:
           cat cppcheck_output.txt  # Print to logs for immediate visibility
 
       - name: Upload lint outputs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()  # Upload even if previous steps fail
         with:
           name: lint-outputs
