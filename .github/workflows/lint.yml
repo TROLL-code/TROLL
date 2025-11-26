@@ -10,7 +10,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y cppcheck cpplint
+          sudo apt install -y cppcheck cpplint
 
       - name: Configure CMake
         run: cmake -B lint -S lint

@@ -8,10 +8,6 @@ TROLL 4.0 is an individual- and trait-based model of forest dynamics. A full des
 
 ## Installation
 
-### Compilation
-
-For developpers & users.
-
 Required:
 - CMake Build System, see https://cmake.org
   - Ubuntu: `sudo apt install cmake`
@@ -33,26 +29,6 @@ The following command line can be used to compile the code:
 cd build/
 cmake ..
 make
-```
-
-### Tests
-
-For developpers.
-
-Required:
-- [`cpplint`](https://github.com/cpplint/cpplint) for C++ formatting 
-  - Ubuntu: `sudo apt install cpplint`
-  - macos: `brew install cpplint`
-- [`cppcheck`](http://cppcheck.net/) for static code analysis
-  - Ubuntu: `sudo apt install cppcheck`
-  - macos: `brew install cppcheck`
-
-```bash
-cd build/
-cmake ..
-make lint-style # cpplint only
-make lint-static # cppcheck only
-make lint # both cpplint & cppcheck
 ```
 
 ## Get started
