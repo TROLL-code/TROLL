@@ -1,6 +1,7 @@
 *
 !*.cpp
+!*.hpp
+!*.py
 !*.md
 !example/*.txt
 !.gitignore
-
