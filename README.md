@@ -8,16 +8,51 @@ TROLL 4.0 is an individual- and trait-based model of forest dynamics. A full des
 
 ## Installation
 
+### Compilation
+
+For developpers & users.
+
 Required:
 - CMake Build System, see https://cmake.org
+  - Ubuntu: `sudo apt install cmake`
+  - macOS: `brew install cmake`
 - GNU Scientific Library (GSL) installation, see https://www.gnu.org/software/gsl/
+  - Ubuntu: `sudo apt install libgsl-dev`
+  - macOS: `brew install gsl`
+- C++ compiler, both [`g++`](https://gcc.gnu.org/) (GNU Compiler Collection) and [`clang++`](https://clang.llvm.org/) (C language family frontend for LLVM) work fine
+  - Ubuntu: 
+    - Default install g++  `sudo apt install g++`
+    - Alternatively install clang++ `sudo apt install clang++`
+  - macOS: 
+    - Default install Xcode Command Line Tools (includes `clang++`): `xcode-select --install`
+    - Alternatively install `g++` via Homebrew `brew install gcc`
 
 The following command line can be used to compile the code:
 
-```
+```bash
 cd build/
 cmake ..
 make
+```
+
+### Tests
+
+For developpers.
+
+Required:
+- [`cpplint`](https://github.com/cpplint/cpplint) for C++ formatting 
+  - Ubuntu: `sudo apt install cpplint`
+  - macos: `brew install cpplint`
+- [`cppcheck`](http://cppcheck.net/) for static code analysis
+  - Ubuntu: `sudo apt install cppcheck`
+  - macos: `brew install cppcheck`
+
+```bash
+cd build/
+cmake ..
+make lint-style # cpplint only
+make lint-static # cppcheck only
+make lint # both cpplint & cppcheck
 ```
 
 ## Get started
@@ -26,7 +61,7 @@ The code of TROLL 4.0 is written in C++ and requires five input files to run a s
 
 The following command line can be used to run the code:
 
-```
+```bash
 ./TROLLv4_exe -i./example/global_inputs.txt -s./example/species.txt -m./example/daily_climate.txt -d./example/halfhourly_climate.txt -p./example/soil.txt -o./TROLLv4_test
 ```
 
@@ -34,7 +69,7 @@ The following command line can be used to run the code:
 
 TROLL 4.0 can be set-up and run, and its outputs can be analyzed with an updated version of the R package rcontroll (https://github.com/sylvainschmitt/rcontroll/tree/TROLLV4), also available in R through the command:
 
-```
+```R
 devtools::install_github("sylvainschmitt/rcontroll", ref = "TROLLV4").
 ```
 
