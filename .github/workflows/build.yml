@@ -1,0 +1,87 @@
+name: Build TROLL (Cross-Platform)
+on:
+  pull_request:
+    branches: [ "dev" ]  # Run when a PR targets the `dev` branch
+  push:
+    branches: [ "dev" ]  # Run when a commit is pushed directly to `dev`
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Cache CMake build directory
+      - name: Cache CMake build
+        uses: actions/cache@v3
+        with:
+          path: build
+          key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', 'src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-cmake-build-
+
+      - name: Detect GSL path (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        id: gsl-path
+        run: |
+          if command -v pkg-config; then
+            echo "prefix=$(pkg-config --variable=prefix gsl 2>/dev/null || echo '/usr')" >> $GITHUB_OUTPUT
+          else
+            echo "prefix=/usr" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Cache GSL (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.gsl-path.outputs.prefix }}/include/gsl
+            ${{ steps.gsl-path.outputs.prefix }}/lib/libgsl*
+          key: ${{ runner.os }}-gsl-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gsl-
+
+      - name: Detect Homebrew path (macOS)
+        if: matrix.os == 'macos-latest'
+        id: homebrew-path
+        run: |
+          echo "path=$(brew --prefix gsl)" >> $GITHUB_OUTPUT
+
+      - name: Cache GSL (macOS)
+        if: matrix.os == 'macos-latest'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.homebrew-path.outputs.path }}/include
+            ${{ steps.homebrew-path.outputs.path }}/lib
+          key: ${{ runner.os }}-gsl-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-gsl-
+
+      - name: Install dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ cmake libgsl-dev
+
+      - name: Install dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew update
+          brew install gsl cmake
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Verify executable (Linux/macOS)
+        if: matrix.os != 'windows-latest'
+        run: ls -lh build/TROLL
