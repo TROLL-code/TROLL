@@ -10,20 +10,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
           sudo apt-get install -y cppcheck cpplint
 
       - name: Configure CMake
-        run: cmake -B build -DBUILD_LINT_ONLY=ON
+        run: cmake -B lint -S lint
 
       - name: Run cpplint (lint-style)
         run: |
-          cmake --build build --target lint-style > cpplint_output.txt 2>&1 || true
+          cmake --build lint --target lint-style > cpplint_output.txt 2>&1 || true
           cat cpplint_output.txt  # Print to logs for immediate visibility
 
       - name: Run cppcheck (lint-static)
         run: |
-          cmake --build build --target lint-static > cppcheck_output.txt 2>&1 || true
+          cmake --build lint --target lint-static > cppcheck_output.txt 2>&1 || true
           cat cppcheck_output.txt  # Print to logs for immediate visibility
 
       - name: Upload lint outputs
