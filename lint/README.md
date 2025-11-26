@@ -2,6 +2,8 @@
 
 For developpers.
 
+## Requirements
+
 Required:
 - [`cpplint`](https://github.com/cpplint/cpplint) for C++ formatting 
   - Ubuntu: `sudo apt install cpplint`
@@ -10,7 +12,9 @@ Required:
   - Ubuntu: `sudo apt install cppcheck`
   - macos: `brew install cppcheck`
 
-From `./lint/` folder:
+## Run
+
+Run tests from `./lint/` folder:
 
 ```bash
 cmake .
@@ -18,3 +22,7 @@ make lint-style # cpplint only
 make lint-static # cppcheck only
 make lint # both cpplint & cppcheck
 ```
+
+## Workflow 
+
+`lint` workflow defined in `.github/workflows/lint.yml`
