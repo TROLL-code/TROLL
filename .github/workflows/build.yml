@@ -19,7 +19,7 @@ jobs:
       
       # Cache CMake build directory
       - name: Cache CMake build
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: build
           key: ${{ runner.os }}-cmake-build-${{ hashFiles('CMakeLists.txt', 'src/**') }}
@@ -38,7 +38,7 @@ jobs:
 
       - name: Cache GSL (Linux)
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ${{ steps.gsl-path.outputs.prefix }}/include/gsl
@@ -55,7 +55,7 @@ jobs:
 
       - name: Cache GSL (macOS)
         if: matrix.os == 'macos-latest'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ${{ steps.homebrew-path.outputs.path }}/include
@@ -74,6 +74,7 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: |
           brew update
+          brew uninstall --ignore-dependencies gsl || true
           brew install gsl cmake
 
       - name: Configure CMake
