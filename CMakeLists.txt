@@ -2,14 +2,18 @@ cmake_minimum_required(VERSION 3.10.0)
 
 project(TROLL VERSION 4.1.0 LANGUAGES C CXX)
 
-# Find GSL package
-find_package(GSL REQUIRED)
-if(NOT ${GSL_FOUND})
-    MESSAGE(FATAL_ERROR "The GSL library was not found")
+option(BUILD_LINT_ONLY "Skip GSL and only configure lint targets" OFF)
+
+if(NOT BUILD_LINT_ONLY)
+    # Find GSL package
+    find_package(GSL REQUIRED)
+    if(NOT ${GSL_FOUND})
+        MESSAGE(FATAL_ERROR "The GSL library was not found")
+    endif()
+    MESSAGE(STATUS "GSL found")
+    MESSAGE(STATUS "   - version ${GSL_VERSION}")
+    MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 endif()
-MESSAGE(STATUS "GSL found")
-MESSAGE(STATUS "   - version ${GSL_VERSION}")
-MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
