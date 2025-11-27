@@ -15,7 +15,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SANITY_DIR="$ROOT_DIR/sanity"
 BASE="./base_results"
 TEST="./test_runs"
-SKIP_RUN=true
+SKIP_RUN=false
 
 cd "$SANITY_DIR"
 
@@ -27,10 +27,39 @@ NC='\033[0m'
 
 echo -e "${YELLOW}=== TROLL SANITY CHECK ===${NC}"
 
-if [ ! SKIP_RUN ]; then
+if [ $SKIP_RUN == false ]; then
 
     # ----------------------------------------
-    # 1. Compile
+    # 1. Create reference if missing
+    # ----------------------------------------
+
+    if [ ! -d "$BASE" ] || [ -z "$(ls -A "$BASE")" ]; then
+      # create BASE dir if missing
+      if [ ! -d "$BASE" ]; then
+        mkdir "$BASE"
+      fi
+      # clone TROLL main 
+      git clone --depth=1 https://github.com/troll-model/TROLL.git "$BASE"
+      # compile TROLL
+      cd "$BASE"
+      g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I GSL_PATH/include -L GSL_PATH/lib -lgsl -lgslcblas -lm
+      # reduce nomber of time iterations to 20
+      sed 's/nbiter\s\+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
+      # run TROLL
+      ./TROLLv4_exe \
+        -i./global_inputs_nbiter20.txt \
+        -s./example/species.txt \
+        -m./example/daily_climate.txt \
+        -d./example/halfhourly_climate.txt \
+        -p./example/soil.txt -o./test
+      echo -e "${GREEN}✔ Refernce run complete${NC}"
+      # clear old cache folder
+      cd $SANITY_DIR
+      rm -rf .troll_cache
+    fi
+
+    # ----------------------------------------
+    # 2. Compile
     # ----------------------------------------
     echo -e "${YELLOW}Compiling...${NC}"
 
@@ -41,9 +70,14 @@ if [ ! SKIP_RUN ]; then
     echo -e "${GREEN}✔ Compilation OK${NC}"
 
     # ----------------------------------------
-    # 2. Run model
+    # 3. Run model
     # ----------------------------------------
     echo -e "${YELLOW}Running model...${NC}"
+
+    # create TEST dir if missing
+      if [ ! -d "$TEST" ]; then
+        mkdir "$TEST"
+      fi
 
     # Clean test_runs output directory
     rm -f "$TEST"/*
@@ -64,7 +98,7 @@ if [ ! SKIP_RUN ]; then
 fi
 
 # ----------------------------------------
-# 3. Compare results
+# 4. Compare results
 # ----------------------------------------
 echo
 echo -e "${YELLOW}Comparing test_runs ↔ base_results...${NC}"
