@@ -1,0 +1,20 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Run sanity checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt install -y cmake libgsl-dev
+
+      - name: Configure project
+        run: cmake -B build
+
+      - name: Run sanity checks
+        run: cmake --build build --target test
