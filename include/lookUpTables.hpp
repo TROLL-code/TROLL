@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LOOKUPTABLES_HPP
+#define LOOKUPTABLES_HPP
+
 
 //
 // Global LUT metadata
@@ -50,3 +52,5 @@ extern int LookUp_Crown_site[2601];
 // The initializer itself (already existing in mainTROLL)
 //
 void InitialiseLookUpTables();
+
+#endif // LOOKUPTABLES_HPP

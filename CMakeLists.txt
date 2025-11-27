@@ -16,7 +16,7 @@ MESSAGE(STATUS "GSL found")
 MESSAGE(STATUS "   - version ${GSL_VERSION}")
 MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 
-add_executable(${PROJECT_NAME} src/troll.cpp)
+add_executable(${PROJECT_NAME} src/troll.cpp src/lookUpTables_cache.cpp)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
