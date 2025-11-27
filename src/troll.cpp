@@ -4644,7 +4644,8 @@ void ReadInputGeneral(Context &ctx)
             AssignValueGlobal(parameter_names[i], parameter_values[i]);
         }
         // update derived parameters
-        sites = rows * cols;
+        sites = rows * cols;    // leave global for now
+        ctx.grid.sites = sites; // set context variable
         sites_per_dcell = length_dcell * length_dcell;
         nbdcells = int(sites / sites_per_dcell);
         linear_nb_dcells = int(cols / length_dcell);
@@ -6124,8 +6125,8 @@ void Initialise(Context &ctx)
 
     //** Initialization of trees **
     //*****************************
-    T.reserve(sites);
-    for (int site = 0; site < sites; site++)
+    T.reserve(ctx.grid.sites);
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         Tree T_site;
         T.push_back(T_site);
@@ -6150,7 +6151,6 @@ void Initialise(Context &ctx)
     {
         std::cout << "Loaded LUTs from cache." << std::endl;
     }
-    // InitialiseLookUpTables();
 }
 
 #ifdef Output_ABC
