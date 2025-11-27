@@ -3,13 +3,26 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem> // C++17 feature
 
-static const char *LUT_CACHE_FILE = "sanity/test_runs/lut_cache.bin";
+static const char *LUT_CACHE_FILE = "./.troll_cache/lut.bin";
 
 // --- Save LUTs to file -------------------------------------------------------
 
 bool SaveLookUpTablesToCache()
 {
+
+    // Create the directory if it doesn't exist
+    std::filesystem::path cacheDir = ".troll_cache";
+    if (!std::filesystem::exists(cacheDir))
+    {
+        if (!std::filesystem::create_directory(cacheDir))
+        {
+            std::cerr << "Failed to create directory: " << cacheDir << "\n";
+            return false;
+        }
+    }
+
     std::ofstream out(LUT_CACHE_FILE, std::ios::binary);
     if (!out)
     {
