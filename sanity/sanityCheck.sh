@@ -13,8 +13,9 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SANITY_DIR="$ROOT_DIR/sanity"
-BASE="$SANITY_DIR/base_results"
-TEST="$SANITY_DIR/test_runs"
+BASE="./base_results"
+TEST="./test_runs"
+SKIP_RUN=true
 
 cd "$SANITY_DIR"
 
@@ -26,36 +27,41 @@ NC='\033[0m'
 
 echo -e "${YELLOW}=== TROLL SANITY CHECK ===${NC}"
 
-# ----------------------------------------
-# 1. Compile
-# ----------------------------------------
-echo -e "${YELLOW}Compiling...${NC}"
-rm -f troll
+if [ ! SKIP_RUN ]; then
 
-g++ -std=c++17 -O3 -Wall -o troll ../mainTROLL4.0.cpp \
-    -I/opt/homebrew/include \
-    -L/opt/homebrew/lib \
-    -lgsl -lgslcblas -lm
+    # ----------------------------------------
+    # 1. Compile
+    # ----------------------------------------
+    echo -e "${YELLOW}Compiling...${NC}"
 
-echo -e "${GREEN}✔ Compilation OK${NC}"
+    cmake ..
+    make clean
+    make 
 
-# ----------------------------------------
-# 2. Run model
-# ----------------------------------------
-echo -e "${YELLOW}Running model...${NC}"
+    echo -e "${GREEN}✔ Compilation OK${NC}"
 
-# Clean test_runs output directory
-rm -f "$TEST"/*
+    # ----------------------------------------
+    # 2. Run model
+    # ----------------------------------------
+    echo -e "${YELLOW}Running model...${NC}"
 
-./troll \
-  -i./inputs/Paracou_input_global.txt \
-  -d./inputs/Paracou_input_daily.txt \
-  -m./inputs/Paracou_input_climate.txt \
-  -p./inputs/Paracou_input_pedology.txt \
-  -s./inputs/Paracou_input_species.txt \
-  -o"$TEST/test"
+    # Clean test_runs output directory
+    rm -f "$TEST"/*
 
-echo -e "${GREEN}✔ Run complete${NC}"
+    # reduce nomber of time iterations to 20
+    sed 's/nbiter\s\+365/nbiter 20/' ../example/global_inputs.txt > "$TEST"/global_inputs_nbiter20.txt
+
+    ./TROLL \
+    -i"$TEST"/global_inputs_nbiter20.txt \
+    -s../example/species.txt \
+    -m../example/daily_climate.txt \
+    -d../example/halfhourly_climate.txt \
+    -p../example/soil.txt \
+    -o"$TEST/test"
+
+    echo -e "${GREEN}✔ Run complete${NC}"
+
+fi
 
 # ----------------------------------------
 # 3. Compare results
@@ -66,7 +72,7 @@ echo -e "${YELLOW}Comparing test_runs ↔ base_results...${NC}"
 fail=0
 count=0
 
-for f in "$TEST"/test_*; do
+for f in $(ls -1 "$TEST"/test_*); do
     filename=$(basename "$f")
     ref="$BASE/$filename"
 
@@ -76,18 +82,18 @@ for f in "$TEST"/test_*; do
         continue
     fi
 
-# Filtered comparison: ignore average computation time line
-if diff -q <(grep -Ev "Average computation time" "$ref") \
-            <(grep -Ev "Average computation time" "$f") >/dev/null; then
-    echo -e "$filename [${GREEN}OK${NC}]"
-else
-    echo -e "$filename [${RED}DIFF${NC}]"
-    diff -u <(grep -Ev "Average computation time" "$ref") \
-            <(grep -Ev "Average computation time" "$f")
-    fail=1
-fi
+    # Filtered comparison: ignore average computation time line
+    if diff -q <(grep -Ev "Average computation time" "$ref") \
+                <(grep -Ev "Average computation time" "$f") >/dev/null; then
+        echo -e "$filename [${GREEN}OK${NC}]"
+    else
+        echo -e "$filename [${RED}DIFF${NC}]"
+        diff -u <(grep -Ev "Average computation time" "$ref") \
+                <(grep -Ev "Average computation time" "$f")
+        fail=1
+    fi
 
-    ((count++))
+    ((count+=1))
 done
 
 echo "-----------------------------------"

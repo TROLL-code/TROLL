@@ -1,0 +1,6 @@
+# Ignore everything ...
+*
+
+# ... but these files.
+!.gitignore
+sanityCheck.sh
