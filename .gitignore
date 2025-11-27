@@ -1,3 +1,5 @@
 git.log
 build/*
 .vscode
+sanity/inputs/*
+.DS_Store
