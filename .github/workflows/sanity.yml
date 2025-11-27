@@ -1,0 +1,28 @@
+name: Test
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Run sanity checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache sanity base results
+        uses: actions/cache@v4
+        id: cache-base-results
+        with:
+          path: sanity/base_results
+          key: ${{ runner.os }}-sanity-base-results-${{ hashFiles('sanity/check.sh') }}
+          # Restore from cache if the check.sh script hasn't changed
+
+      - name: Install dependencies
+        run: sudo apt install -y cmake libgsl-dev
+
+      - name: Configure project
+        run: cmake -B build
+
+      - name: Run sanity checks
+        run: cmake --build build --target test
