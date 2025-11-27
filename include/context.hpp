@@ -1,0 +1,288 @@
+#ifndef TROLL_CONTEXT_HPP
+#define TROLL_CONTEXT_HPP
+
+#include <vector>
+#include <string>
+#include <gsl/gsl_rng.h>
+
+// Forward declaration
+struct Species;
+struct Tree;
+
+struct FileIO
+{
+    char buffer[256];
+    char inputfile[256];
+    char inputfile_daytimevar[256];
+    char inputfile_climate[256];
+    char inputfile_soil[256];
+    char outputinfo[256];
+    char inputfile_inventory[256];
+    char inputfile_pointcloud[256];
+    char inputfile_SWC[256];
+    char inputfile_species[256];
+};
+
+struct InputBuffers
+{
+    char *bufi = nullptr;
+    char *bufi_daytimevar = nullptr;
+    char *bufi_climate = nullptr;
+    char *bufi_soil = nullptr;
+    char *buf = nullptr;
+    char *bufi_data = nullptr;
+    char *bufi_pointcloud = nullptr;
+    char *bufi_dataSWC = nullptr;
+    char *bufi_species = nullptr;
+};
+
+struct OutputConfig
+{
+    int output_info;
+    int output_basic[4];
+    int output_extended[9];
+    int output_visual[2];
+    int output_pointcloud;
+    int output[40];
+};
+
+struct ModelOptions
+{
+    bool _NONRANDOM;
+    bool _GPPcrown;
+    bool _BASICTREEFALL;
+    bool _SEEDTRADEOFF;
+    bool _NDD;
+    bool _CROWN_MM;
+    bool _sapwood;
+    bool _seedsadditional;
+    bool _LL_parameterization;
+    bool _FromInventory;
+    int _LA_regulation;
+    int _OUTPUT_pointcloud;
+    int _SOIL_LAYER_WEIGHT;
+    int _WATER_RETENTION_CURVE;
+};
+
+struct Grid
+{
+    int sites;
+    int cols;
+    int rows;
+    int nbspp;
+    int length_dcell;
+    int linear_nb_dcells;
+    int sites_per_dcell;
+    int nbdcells;
+    int *site_DCELL = nullptr;
+    float i_sites_per_dcell;
+    int HEIGHT;
+    int SBORD;
+};
+
+struct TimeState
+{
+    int iterperyear;
+    int nbiter;
+    int iter;
+    int nbout;
+    int freqout;
+    int nbdays;
+    int nbsteps_varday;
+    float inv_nbsteps_varday;
+    float nbhours_covered;
+};
+
+struct Climate
+{
+    int DailyMeanTemperature;
+    int DailyMeanIrradiance;
+    int DailyMeanVapourPressureDeficit;
+    int NightTemperature;
+    int Rainfall;
+    int DailyMeanWindSpeed;
+
+    int varday_light;
+    int varday_vpd;
+    int varday_T;
+    int varday_WS;
+
+    float tnight;
+    float precip;
+    float WSDailyMean;
+    float WDailyMean;
+    float tDailyMean;
+    float VPDDailyMean;
+    float WDailyMean_year;
+    float tDailyMean_year;
+    float VPDDailyMean_year;
+    float windDailyMean_year;
+
+    float *WDailyMean_all = nullptr;
+    float *VPDDailyMean_all = nullptr;
+    float *tDailyMean_all = nullptr;
+    float *windDailyMean_all = nullptr;
+};
+
+struct LookupTables
+{
+    int nbTbins;
+    float iTaccuracy;
+
+    float *LookUp_KmT = nullptr;
+    float *LookUp_GammaT = nullptr;
+    float *LookUp_VcmaxT = nullptr;
+    float *LookUp_JmaxT = nullptr;
+    float *LookUp_Rleaf = nullptr;
+    float *LookUp_flux_absorption = nullptr;
+    float *LookUp_flux = nullptr;
+    float *LookUp_ExtinctLW = nullptr;
+    float *LookUp_VPD = nullptr;
+    float *LookUp_T = nullptr;
+    float *LookUp_Rstem = nullptr;
+    int *LookUp_Crown_site = nullptr;
+
+    int nbVPDbins;
+    float iVPDaccuracy;
+
+    float **LookUp_INLR = nullptr;
+    float *LookUp_SLOPE = nullptr;
+    float *LookUp_GRADN = nullptr;
+
+    int nbHbins;
+    float iHaccuracy;
+
+    float *LookUp_Wind = nullptr;
+
+    int LookUpLAImax;
+};
+
+struct Soil
+{
+    int nblayers_soil;
+    float *layer_depth = nullptr;
+
+    float *Sat_SWC = nullptr;
+    float *Max_SWC = nullptr;
+    float *FC_SWC = nullptr;
+    float *Res_SWC = nullptr;
+    float *Min_SWC = nullptr;
+
+    float *Ksat = nullptr;
+    float *a_vgm = nullptr;
+    float *b_vgm = nullptr;
+    float *c_vgm = nullptr;
+    float *m_vgm = nullptr;
+    float *phi_e = nullptr;
+    float *b = nullptr;
+
+    float **SWC3D = nullptr;
+    float **soil_phi3D = nullptr;
+    float **Ks = nullptr;
+    float **KsPhi = nullptr;
+    float **Transpiration = nullptr;
+
+    float **LAI_DCELL = nullptr;
+
+    float *LAI_young = nullptr;
+    float *LAI_mature = nullptr;
+    float *LAI_old = nullptr;
+
+    float *Canopy_height_DCELL = nullptr;
+    int *HSum_DCELL = nullptr;
+    float *TopWindSpeed_DCELL = nullptr;
+
+    float *Interception = nullptr;
+    float *Throughfall = nullptr;
+    float *Runoff = nullptr;
+    float *Leakage = nullptr;
+    float *Evaporation = nullptr;
+};
+
+struct Diagnostics
+{
+    int nblivetrees;
+    int nbtrees_n10, nbtrees_n30;
+    int nbdead_n1, nbdead_n10, nbdead_n30;
+    int nbTreefall1, nbTreefall10, nbTreefall30;
+    int nbtrees_carbstarv_n1, nbtrees_carbstarv_n10, nbtrees_carbstarv_n30;
+
+    int *nbdbh = nullptr;
+    float *layer = nullptr;
+};
+
+struct PointCloud
+{
+    float mean_beam_pc;
+    float sd_beam_pc;
+    float klaser_pc;
+    float transmittance_laser;
+    int iter_pointcloud_generation;
+};
+
+struct RNGState
+{
+    gsl_rng *gslrand = nullptr;
+};
+
+struct SpeciesState
+{
+    int **SPECIES_SEEDS = nullptr;
+    double *p_seed = nullptr;
+    unsigned int *n_seed = nullptr;
+
+    double *p_species = nullptr;
+    unsigned int *n_species = nullptr;
+
+    int *SPECIES_GERM = nullptr;
+    float *PROB_S = nullptr;
+};
+
+struct Intraspecific
+{
+    float d_intraspecific_height[10000];
+    float d_intraspecific_CR[10000];
+    float d_intraspecific_CD[10000];
+    float d_intraspecific_P[10000];
+    float d_intraspecific_N[10000];
+    float d_intraspecific_LMA[10000];
+    float d_intraspecific_wsg[10000];
+    float d_intraspecific_dbhmax[10000];
+    float d_intraspecific_leafarea[10000];
+    float d_intraspecific_tlp[10000];
+};
+
+struct CrownGeometry
+{
+    float crown_gap_fraction;
+    float shape_crown;
+    float Rndd, deltaR, deltaD;
+
+    float BAtot;
+
+    int extent_visual;
+    int mincol_visual, maxcol_visual;
+    int minrow_visual, maxrow_visual;
+    int minrow_visual_slice, maxrow_visual_slice;
+};
+
+struct Context
+{
+    FileIO fileio;
+    InputBuffers buffers;
+    OutputConfig out;
+    ModelOptions opt;
+    Grid grid;
+    TimeState time;
+    Climate climate;
+    LookupTables lookup;
+    Soil soil;
+    Diagnostics diag;
+    PointCloud pc;
+    RNGState rng;
+    SpeciesState species;
+    Intraspecific intra;
+    CrownGeometry crown;
+};
+
+#endif

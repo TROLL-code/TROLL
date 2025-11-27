@@ -1,6 +1,7 @@
 #include "troll.hpp"
 #include "constants.hpp"
 #include "lookUpTables_cache.hpp"
+#include "context.hpp"
 
 // #############################################
 //  Species constructor
@@ -208,7 +209,7 @@ void Tree::Birth(int nume, int site0)
 #ifdef WATER
         t_WSF = t_WSF_A = 1.0; // Tree leaf lifespan and LAImax are computed under no water stress and with average climatic conditions (radiation, temperature).
                                // This could/should be updated later, so that these two quantities change under water stress, and also seasonally.
-        // t_WSF and t_WSF_A are then updated later in Tree::Birth to account for the real water conditions at birth.
+                               // t_WSF and t_WSF_A are then updated later in Tree::Birth to account for the real water conditions at birth.
 #endif
         float crown_area = PI * t_CR * t_CR;
         float fraction_filled_general = 1.0 - crown_gap_fraction;
@@ -268,7 +269,7 @@ void Tree::Birth(int nume, int site0)
         // Water_availability();
         t_transpiration = 0.0;
         Water_availability(); // Roots are not set here, but at the beginning of Tree::Update (however see comments within function Tree::Water_availability)
-        // UpdateRootDistribution();
+                              // UpdateRootDistribution();
 #endif
 
         // ###############
@@ -3947,9 +3948,11 @@ int main(int argc, char *argv[])
         sprintf(inputfile_SWC, "%s", bufi_dataSWC);
 #endif
     }
+    // add context
+    Context ctx;
 
     // v.3.1: removed par output, because no single parameter sheet provided anymore (in future all separate parameter sheets could be provided as outputs as well
-    ReadInputGeneral(); // v.3.1 has to be done before initialisation of random number generators (_NONRANDOM)
+    ReadInputGeneral(ctx); // v.3.1 has to be done before initialisation of random number generators (_NONRANDOM)
 
     // Stuff for constant number generator
     const gsl_rng_type *Trandgsl;
@@ -3973,9 +3976,9 @@ int main(int argc, char *argv[])
     if (!output_info)
         cerr << "ERROR with info file" << endl;
 
-    Initialise();              // Read global parameters
+    Initialise(ctx);           // Read global parameters
     InitialiseOutputStreams(); // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
-    AllocMem();                // Memory allocation
+    AllocMem(ctx);             // Memory allocation
 
 #ifdef Output_ABC
     InitialiseABC();
@@ -4054,7 +4057,7 @@ int main(int argc, char *argv[])
     {
         start_time = stop_time;
 
-        Evolution();
+        Evolution(ctx);
         stop_time = clock();
         duration += fmaxf(stop_time - start_time, 0.0);
 
@@ -4607,7 +4610,7 @@ void AssignValuePointcloud(string parameter_name, string parameter_value)
 //! - Also sets up initial values for some parameters computed from input parameters
 //! - !!!: TO IMPLEMENT: automatic stop of program under error to avoid running empty simulations on cluster etc.
 //! - !!!: TO IMPLEMENT: separate error messages (i.e. no input file provided, empty input file, etc.)
-void ReadInputGeneral()
+void ReadInputGeneral(Context &ctx)
 {
     fstream In(inputfile, ios::in);
     if (In)
@@ -6097,7 +6100,7 @@ void InitialiseOutputStreams()
 // ######################################
 //  Global function: initialisation with bare ground conditions
 // ######################################
-void Initialise()
+void Initialise(Context &ctx)
 {
     //** Initialization of the simulation parameters **
     //*************************************************
@@ -6643,7 +6646,7 @@ void ReadInputInventory()
 // ######################################
 //  Global function: Field dynamic memory allocation
 // ######################################
-void AllocMem()
+void AllocMem(Context &ctx)
 {
     // this needs better commenting and probably a rethink (mainly has to do with MPI)
     float d = 0.0; // maximum diameter possible
@@ -6875,7 +6878,7 @@ void AllocMem()
 // ######################################
 //  Global function: Evolution at each timestep
 // ######################################
-void Evolution()
+void Evolution(Context &ctx)
 {
 #ifdef CHECK_CARBON
     if (iter == 0)
