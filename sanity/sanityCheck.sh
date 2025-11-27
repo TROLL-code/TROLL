@@ -42,7 +42,21 @@ if [ $SKIP_RUN == false ]; then
       git clone --depth=1 https://github.com/troll-model/TROLL.git "$BASE"
       # compile TROLL
       cd "$BASE"
-      g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I GSL_PATH/include -L GSL_PATH/lib -lgsl -lgslcblas -lm
+      # Detect the operating system
+      OS="$(uname -s)"
+      # Set GSL_PATH and compile based on the OS
+      if [[ "$OS" == "Darwin" ]]; then
+        # macOS
+        GSL_PATH=$(brew --prefix gsl)
+        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PATH"/include -L "$GSL_PATH"/lib -lgsl -lgslcblas -lm
+      elif [[ "$OS" == "Linux" ]]; then
+        # Ubuntu/Linux
+        GSL_PREFIX=$(pkg-config --variable=prefix gsl)
+        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PREFIX"/include/gsl -L "$GSL_PREFIX"/lib/libgsl* -lgsl -lgslcblas -lm
+      else
+        echo "Unsupported operating system: $OS, TROLL compilation might not work."
+        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -lgsl -lgslcblas -lm
+      fi
       # reduce nomber of time iterations to 20
       sed 's/nbiter\s\+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
       # run TROLL
