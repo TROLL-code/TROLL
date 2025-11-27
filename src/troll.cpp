@@ -6141,6 +6141,7 @@ void Initialise(Context &ctx)
 #endif
     }
     InitialiseIntraspecific();
+#ifdef CACHE_LUT
     if (!LoadLookUpTablesFromCache())
     {
         std::cout << "LUT cache missing → computing LUTs..." << std::endl;
@@ -6151,6 +6152,9 @@ void Initialise(Context &ctx)
     {
         std::cout << "Loaded LUTs from cache." << std::endl;
     }
+#else  // CACHE_LUT
+    InitialiseLookUpTables();
+#endif // CACHE_LUT
 }
 
 #ifdef Output_ABC
