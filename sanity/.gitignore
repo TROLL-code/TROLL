@@ -3,4 +3,6 @@
 
 # ... but these files.
 !.gitignore
-check.sh
+!check.sh
+!README.md
+
