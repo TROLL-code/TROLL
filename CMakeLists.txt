@@ -26,4 +26,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_compile_options(${PROJECT_NAME} PRIVATE -O3 -Wall)
 target_link_libraries(${PROJECT_NAME} PRIVATE GSL::gsl GSL::gslcblas)
 
+# sanity check
+add_custom_target(sanity
+    COMMAND ${CMAKE_SOURCE_DIR}/sanity/check.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sanity
+    COMMENT "Running sanity check (bit-by-bit comparison)"
+)
+
+# Make 'test' depend on 'sanity' (and any other tests in the future)
+add_custom_target(test DEPENDS sanity)
+
 

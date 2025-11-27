@@ -3,4 +3,4 @@
 
 # ... but these files.
 !.gitignore
-sanityCheck.sh
+check.sh
