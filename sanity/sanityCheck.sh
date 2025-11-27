@@ -38,6 +38,7 @@ if [ $SKIP_RUN == false ]; then
       if [ ! -d "$BASE" ]; then
         mkdir "$BASE"
       fi
+      echo -e "${YELLOW}Cloning TROLL main branch (the reference)...${NC}"
       # clone TROLL main 
       git clone --depth=1 https://github.com/troll-model/TROLL.git "$BASE"
       # compile TROLL
@@ -45,6 +46,7 @@ if [ $SKIP_RUN == false ]; then
       # Detect the operating system
       OS="$(uname -s)"
       # Set GSL_PATH and compile based on the OS
+      echo -e "${YELLOW}Compiling TROLL reference version...${NC}"
       if [[ "$OS" == "Darwin" ]]; then
         # macOS
         GSL_PATH=$(brew --prefix gsl)
@@ -57,16 +59,18 @@ if [ $SKIP_RUN == false ]; then
         echo "Unsupported operating system: $OS, TROLL compilation might not work."
         g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -lgsl -lgslcblas -lm
       fi
+      echo -e "${GREEN}✔ TROLL reference compilation OK${NC}"
       # reduce nomber of time iterations to 20
       sed 's/nbiter\s\+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
       # run TROLL
+      echo -e "${YELLOW}Running TROLL reference version...${NC}"
       ./TROLLv4_exe \
         -i./global_inputs_nbiter20.txt \
         -s./example/species.txt \
         -m./example/daily_climate.txt \
         -d./example/halfhourly_climate.txt \
         -p./example/soil.txt -o./test
-      echo -e "${GREEN}✔ Refernce run complete${NC}"
+      echo -e "${GREEN}✔ TROLL reference run complete${NC}"
       # clear old cache folder
       cd $SANITY_DIR
       rm -rf .troll_cache
@@ -75,7 +79,7 @@ if [ $SKIP_RUN == false ]; then
     # ----------------------------------------
     # 2. Compile
     # ----------------------------------------
-    echo -e "${YELLOW}Compiling...${NC}"
+    echo -e "${YELLOW}Compiling current version...${NC}"
 
     cmake ..
     make clean
@@ -86,7 +90,7 @@ if [ $SKIP_RUN == false ]; then
     # ----------------------------------------
     # 3. Run model
     # ----------------------------------------
-    echo -e "${YELLOW}Running model...${NC}"
+    echo -e "${YELLOW}Running current version...${NC}"
 
     # create TEST dir if missing
       if [ ! -d "$TEST" ]; then
