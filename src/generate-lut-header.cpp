@@ -108,8 +108,9 @@ int main() {
         return 1;
     }
 
-    out << "// Auto-generated LUT header. Do not edit!\n";
-    out << "#pragma once\n";
+    out << "// Auto-generated LUT header. Do not edit! Refer to src/generate-lut-header.cpp for details. \n";
+    out << "#ifndef LUT_HPP \n";
+    out << "#define LUT_HPP \n";
     out << "#include <array>\n\n";
     out << "namespace lut {\n";
 
@@ -125,6 +126,7 @@ int main() {
         generate_lut<n_temperature_bins>(out, name, compute);
     }
 
-    out << "}\n";
+    out << "} /// namespace lut \n";
+    out << "#endif /// LUT_HPP \n";
     return 0;
 }
