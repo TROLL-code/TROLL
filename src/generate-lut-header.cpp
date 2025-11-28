@@ -41,7 +41,8 @@ void generate_lut(
     out << "    constexpr std::array<float, " << N << "> " << name << " = {\n";
     for (int i = 0; i < N; ++i) {
         float T = i * temperature_accuracy;
-        out << compute(T);
+        /// setprecision to 10 prints all significant digits of a 32-bits float without truncation
+        out << std::scientific << std::setprecision(10) << compute(T);
         if (i < N - 1) out << ", ";
         if (i % 10 == 0) out << "\n";
     }
