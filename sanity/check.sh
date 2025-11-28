@@ -61,7 +61,7 @@ if [ $SKIP_RUN == false ]; then
       fi
       echo -e "${GREEN}✔ TROLL reference compilation OK${NC}"
       # reduce nomber of time iterations to 20
-      sed 's/nbiter[[:space:]]\+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
+      sed -E 's/nbiter[[:space:]]+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
       # run TROLL
       echo -e "${YELLOW}Running TROLL reference version...${NC}"
       ./TROLLv4_exe \
@@ -101,7 +101,7 @@ if [ $SKIP_RUN == false ]; then
     rm -f "$TEST"/*
 
     # reduce nomber of time iterations to 20
-    sed 's/nbiter[[:space:]]\+365/nbiter 20/' ../example/global_inputs.txt > "$TEST"/global_inputs_nbiter20.txt
+    sed -E 's/nbiter[[:space:]]+365/nbiter 20/' ../example/global_inputs.txt > "$TEST"/global_inputs_nbiter20.txt
 
     ./TROLL \
     -i"$TEST"/global_inputs_nbiter20.txt \
