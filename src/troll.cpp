@@ -1,6 +1,6 @@
 #include "troll.hpp"
 #include "constants.hpp"
-#include "lookUpTables_cache.hpp"
+#include "lut.hpp"
 
 // #############################################
 //  Species constructor
@@ -1634,8 +1634,8 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
     // Parameters for the Farquhar model
     int convT = int(iTaccuracy * TLEAF);
-    float KmT = LookUp_KmT[convT];                        // with temperature dependencies
-    float GammaT = LookUp_GammaT[convT];                  // with temperature dependencies
+    float KmT = lut::LookUp_KmT[convT];                        // with temperature dependencies
+    float GammaT = lut::LookUp_GammaT[convT];                  // with temperature dependencies
     float Rday = t_Rdark * LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
 
     ////////////// Model of stomatal conductance for CO2 /////////////
@@ -1720,8 +1720,8 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
     // Parameters for the Farquhar model
     int convT = int(iTaccuracy * TLEAF);
-    float KmT = LookUp_KmT[convT];                        // with temperature dependencies
-    float GammaT = LookUp_GammaT[convT];                  // with temperature dependencies
+    float KmT = lut::LookUp_KmT[convT];                        // with temperature dependencies
+    float GammaT = lut::LookUp_GammaT[convT];                  // with temperature dependencies
     float Rday = t_Rdark * LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
 
     // Model of stomatal conductance for CO2
@@ -1933,8 +1933,8 @@ float Tree::GPPleaf(float PPFD, float VPD, float T)
     int convT = int(iTaccuracy * T); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
 
     // if(convT>500 || isnan(convT) || convT <0) cout << t_site << " | convT: " << convT << " | T: " << T << " | PPFD: " << PPFD << " | VPD: " << VPD << endl;
-    float KmT = LookUp_KmT[convT];
-    float GammaT = LookUp_GammaT[convT];
+    float KmT = lut::LookUp_KmT[convT];
+    float GammaT = lut::LookUp_GammaT[convT];
 
     // float g1 = -3.97 * t_wsg + 6.53 (Lin et al. 2015)
 
@@ -5554,10 +5554,6 @@ void InitialiseLookUpTables()
     iTaccuracy = 1.0 / Taccuracy;
     cout << endl
          << "Built-in maximal temperature: " << float(nbTbins) * Taccuracy << endl;
-    if (NULL == (LookUp_KmT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_KmT" << endl;
-    if (NULL == (LookUp_GammaT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_GammaT" << endl;
     if (NULL == (LookUp_VcmaxT = new float[nbTbins]))
         cerr << "!!! Mem_Alloc LookUp_VcmaxT" << endl;
     if (NULL == (LookUp_JmaxT = new float[nbTbins]))
@@ -5592,15 +5588,6 @@ void InitialiseLookUpTables()
         float temper = float(i) * Taccuracy;
         // !!!UPDATE provide references for these equations
 
-#ifdef WATER
-        LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
-                        (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)); // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-        LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4);                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-#else
-        LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
-                        (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)) * iCair; // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-        LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4) * iCair;                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-#endif
         LookUp_VcmaxT[i] = exp(26.35 - 65.33 / (0.00831 * (temper + 273.15))); // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
         LookUp_JmaxT[i] = exp(17.57 - 43.54 / (0.00831 * (temper + 273.15)));  // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
         // LookUp_Rday[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
@@ -10866,7 +10853,6 @@ void FreeMem()
 
 #endif
     delete[] LookUp_T;
-    delete[] LookUp_KmT;
     delete[] LookUp_VPD;
     delete[] LookUp_flux_absorption;
     delete[] LookUp_flux;
@@ -10875,7 +10861,6 @@ void FreeMem()
     delete[] LookUp_JmaxT;
     delete[] LookUp_Rstem;
     delete[] LookUp_Rleaf; // newIM: no redundancy anymore between LookUp_Rday and LookUp_Rleaf
-    delete[] LookUp_GammaT;
     // delete [] LookUp_Rnight; //newIM: no redundancy anymore between LookUp_Rday and LookUp_Rleaf
     delete[] LookUp_VcmaxT;
 #ifdef WATER
