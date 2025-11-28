@@ -2,6 +2,7 @@
 #include "constants.hpp"
 #include "lookUpTables_cache.hpp"
 #include "context.hpp"
+#include "params/param_registry.hpp"
 
 // #############################################
 //  Species constructor
@@ -3950,7 +3951,7 @@ int main(int argc, char *argv[])
     }
     // add context
     Context ctx;
-
+    RegisterParameters(); // Register parameters (AssignValueGlobal replacement)
     // v.3.1: removed par output, because no single parameter sheet provided anymore (in future all separate parameter sheets could be provided as outputs as well
     ReadInputGeneral(ctx); // v.3.1 has to be done before initialisation of random number generators (_NONRANDOM)
 
@@ -3976,7 +3977,8 @@ int main(int argc, char *argv[])
     if (!output_info)
         cerr << "ERROR with info file" << endl;
 
-    Initialise(ctx);           // Read global parameters
+    Initialise(ctx); // Read global parameters
+
     InitialiseOutputStreams(); // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
     AllocMem(ctx);             // Memory allocation
 
@@ -4158,64 +4160,6 @@ int main(int argc, char *argv[])
 // ######  Initialisation routines    ########
 // ###########################################
 // ###########################################
-
-//! Global function: assigns input values to parameters
-//! - Also check whether parameters are correctly specified, within limits and replace by default
-//! - !!!: TO IMPLEMENT: possibility of throwing an error instead of default value
-template <typename N>
-void SetParameter(string &parameter_name, string &parameter_value, N &parameter, N parameter_min, N parameter_max, N parameter_default, bool quiet)
-{
-    // idea for checking whether float/int from https://stackoverflow.com/questions/447206/c-isfloat-function
-    istringstream iss(parameter_value);
-    N numeric;
-    iss >> numeric;
-
-    // Check if the entire string was consumed and if either failbit or badbit is set
-    bool isnumeric = iss.eof() && !iss.fail();
-    if (isnumeric)
-    {
-        if (numeric >= parameter_min * 0.99 && numeric <= parameter_max * 1.01)
-        { // built in precision check, quite tolerant (1%)
-            if (numeric < parameter_min)
-                parameter = parameter_min;
-            else if (numeric > parameter_max)
-                parameter = parameter_max;
-            else
-                parameter = numeric;
-            if (!quiet)
-                cout << parameter_name << ": " << parameter << endl;
-        }
-        else
-        {
-            parameter = parameter_default;
-            if (!quiet)
-                cout << "Warning. Value provided for '" << parameter_name << "' (" << numeric << ") is outside the allowed range (" << parameter_min << ", " << parameter_max << "). Set to default: " << parameter_default << endl;
-        }
-    }
-    else
-    {
-        parameter = parameter_default;
-        if (!quiet)
-            cout << "Warning. Value provided for '" << parameter_name << "' (" << parameter_value << ") is not a " << typeid(numeric).name() << ". Set to default: " << parameter_default << endl;
-    }
-}
-
-//! Global function: tests input values for parameters
-//! - for strings, no minimum/maximum and no check for type necessary
-void SetParameter(string &parameter_name, string &parameter_value, string &parameter, string parameter_default, bool quiet)
-{
-    if (!parameter_value.empty())
-    {
-        parameter = parameter_value;
-        if (!quiet)
-            cout << parameter_name << ": " << parameter << endl;
-    }
-    else
-    {
-        parameter = parameter_default;
-        cout << "Warning. String for '" << parameter_name << "' is empty" << ". Set to default: '" << parameter_default << "'" << endl;
-    }
-}
 
 //! Global function: This function specifies limits and defaults for global parameters
 void AssignValueGlobal(string parameter_name, string parameter_value)
@@ -4615,33 +4559,24 @@ void ReadInputGeneral(Context &ctx)
     fstream In(inputfile, ios::in);
     if (In)
     {
-#ifdef WATER
-        string parameter_names[71] = {"cols", "rows", "HEIGHT", "length_dcell", "nbiter", "NV", "NH", "nbout", "p_nonvert", "SWtoPPFD", "klight", "absorptance_leaves", "theta", "phi", "g1", "g0", "pheno_a0", "pheno_b0", "pheno_delta", "vC", "DBH0", "H0", "CR_min", "CR_a", "CR_b", "CD_a", "CD_b", "CD0", "shape_crown", "dens", "fallocwood", "falloccanopy", "Cseedrain", "nbs0", "sigma_height", "sigma_CR", "sigma_CD", "sigma_P", "sigma_N", "sigma_LMA", "sigma_wsg", "sigma_dbhmax", "sigma_leafarea", "sigma_tlp", "corr_CR_height", "corr_N_P", "corr_N_LMA", "corr_P_LMA", "leafdem_resolution", "p_tfsecondary", "hurt_decay", "crown_gap_fraction", "m", "m1", "Cair", "PRESS", "_LL_parameterization", "_LA_regulation", "_sapwood", "_seedsadditional", "_SOIL_LAYER_WEIGHT", "_WATER_RETENTION_CURVE", "_NONRANDOM", "_GPPcrown", "_BASICTREEFALL", "_SEEDTRADEOFF", "_NDD", "_CROWN_MM", "_OUTPUT_extended", "_OUTPUT_inventory", "extent_visual"};
-        int nb_parameters = 71;
-#else
-        string parameter_names[61] = {"cols", "rows", "HEIGHT", "length_dcell", "nbiter", "NV", "NH", "nbout", "p_nonvert", "SWtoPPFD", "klight", "absorptance_leaves", "theta", "phi", "g1", "vC", "DBH0", "H0", "CR_min", "CR_a", "CR_b", "CD_a", "CD_b", "CD0", "shape_crown", "dens", "fallocwood", "falloccanopy", "Cseedrain", "nbs0", "sigma_height", "sigma_CR", "sigma_CD", "sigma_P", "sigma_N", "sigma_LMA", "sigma_wsg", "sigma_dbhmax", "corr_CR_height", "corr_N_P", "corr_N_LMA", "corr_P_LMA", "leafdem_resolution", "p_tfsecondary", "hurt_decay", "crown_gap_fraction", "m", "m1", "Cair", "_LL_parameterization", "_LA_regulation", "_sapwood", "_seedsadditional", "_NONRANDOM", "_GPPcrown", "_BASICTREEFALL", "_SEEDTRADEOFF", "_NDD", "_CROWN_MM", "_OUTPUT_extended", "extent_visual"};
-        int nb_parameters = 61;
-#endif
-        vector<string> parameter_values(nb_parameters, "");
-
         cout << endl
              << "Reading in file: " << inputfile << endl;
-        In.getline(buffer, 256, '\n');
-        string parameter_name, parameter_value;
 
-        while (In >> parameter_name >> parameter_value)
+        fstream In(inputfile, ios::in);
+        if (In)
         {
-            In.getline(buffer, 256, '\n');
-            for (int i = 0; i < nb_parameters; i++)
+            In.getline(buffer, 256, '\n'); // skip header
+            std::string parameter_name, parameter_value;
+
+            while (In >> parameter_name >> parameter_value)
             {
-                if (parameter_name == parameter_names[i])
-                    parameter_values[i] = parameter_value;
+                In.getline(buffer, 256, '\n'); // consume rest of line
+                AssignParamFromRegistry(parameter_name, parameter_value);
             }
         }
-        // now we assign values
-        for (int i = 0; i < nb_parameters; i++)
+        else
         {
-            AssignValueGlobal(parameter_names[i], parameter_values[i]);
+            cout << "ERROR. General input file could not be read." << endl;
         }
         // update derived parameters
         sites = rows * cols;    // leave global for now
