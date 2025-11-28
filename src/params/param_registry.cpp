@@ -1,10 +1,69 @@
+#// ============================================================================
+#// Parameter Registry Implementation
+#// ----------------------------------------------------------------------------
+#// This file implements the parameter registry introduced to replace the old
+#// AssignValueGlobal() system previously embedded inside troll.cpp.
+#
+#// GOALS
+#// -----
+#// - Centralize all parameter bindings and metadata (min/max/default/type)
+#// - Remove long if/else chains
+#// - Allow automated validation and conversion
+#// - Prepare the codebase for migration away from global variables
+#
+#// CURRENT STATE (TEMPORARY)
+#// -------------------------
+#// The registry still points to GLOBAL variables declared in troll.cpp/
+#// troll.hpp. This is why we temporarily forward-declare them below.
+#
+#// After the upcoming refactor:
+#//   - All globals will live inside Context or Config structs
+#//   - The registry will store pointers to those struct fields
+#//   - All the forward declarations here will be removed
+#
+#// HOW IT WORKS
+#// ------------
+#// 1. RegisterParameters() builds a map<string, ParamSpec>.
+#// 2. Each ParamSpec contains:
+#//       * parameter type (INT/FLOAT/BOOL)
+#//       * raw pointer to target variable
+#//       * min value
+#//       * max value
+#//       * default value
+#// 3. AssignParamFromRegistry() looks up an input parameter and uses the
+#//    appropriate SetParameter() overload to assign validated values.
+#
+#// NOTE:
+#// ----------
+#// - This module does NOT read files.
+#// - It only applies validated parameter values.
+#// - ReadInputGeneral() in troll.cpp performs the actual scanning.
+#
+#// ============================================================================
+
 #include "param_registry.hpp"
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
 #include "../../include/troll_defines.hpp"
 
-// Forward declarations for only the globals needed by param registry
+// NOTE (Temporary Forward Declarations):
+// -------------------------------------
+// These extern declarations exist ONLY because the current codebase still
+// relies on a large number of global variables defined in troll.hpp.
+//
+// Once TROLL is properly refactored to:
+//   (1) move all global parameters into a Context or Config struct,
+//   (2) provide proper header separation,
+//   (3) eliminate direct global access from unrelated modules,
+//
+// THIS ENTIRE FORWARD-DECLARATION SECTION WILL BE REMOVED.
+//
+// The parameter registry will then receive a reference to a parameter
+// container (e.g., ctx.params), instead of touching globals directly.
+//
+// For now, these declarations prevent circular include dependencies.
+
 extern int cols, rows, HEIGHT, length_dcell, nbiter;
 extern float NV, NH;
 extern int nbout;
