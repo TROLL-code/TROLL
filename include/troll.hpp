@@ -218,8 +218,6 @@ vector<float> DailyMeanWindSpeed;                        //!< Global vector: win
 // Complex temperature-dependent functions used in the Farquhar model are computed once at 'Taccuracy' resolution. Leaf temperature must be comprised between 0°C and 60°C, Values are stored every 0.5°C step in Tleaf, so 120 values in total
 int nbTbins;                            //!< Global variable: number of bins for the temperature lookup tables
 float iTaccuracy;                       //!< Global variable: inverse of accuracy of a temperature bin (e.g. if Taccuracy is 0.1 or 0.5 °C, then iTaccuracy is 10.0 or 2.0, respectively)
-float *LookUp_KmT(0);                   //!< Global vector: lookup table for Km(T) in Farquhar model
-float *LookUp_GammaT(0);                //!< Global vector: lookup table for Gamma(T) in Farquhar model
 float *LookUp_VcmaxT(0);                //!< Global vector: lookup table for Vcmax(T) in Farquhar model
 float *LookUp_JmaxT(0);                 //!< Global vector: lookup table for Jmax(T) in Farquhar model
 //float *LookUp_Rday(0);                  //!< Global vector: lookup table for Rday(T) in Farquhar model //new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
