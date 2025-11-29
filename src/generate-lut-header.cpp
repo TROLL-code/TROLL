@@ -30,20 +30,21 @@ constexpr float temperature_accuracy = 0.1f;
  * @tparam N Size of the lookup table.
  * @param out Output file stream.
  * @param name Name of the lookup table.
+ * @param n_bins Size of the lookup table.
  * @param compute Function to compute the value for a given temperature.
  */
-template <size_t N>
 void generate_lut(
     std::ofstream& out,
     const std::string& name,
-    const std::function<float(float)>& compute  // Use std::function here
+    const std::function<float(float)>& compute,
+    size_t n_bins
 ) {
-    out << "    constexpr std::array<float, " << N << "> " << name << " = {\n";
-    for (int i = 0; i < N; ++i) {
+    out << "    constexpr std::array<float, " << n_bins << "> " << name << " = {\n";
+    for (int i = 0; i < n_bins; ++i) {
         float T = i * temperature_accuracy;
         /// setprecision to 10 prints all significant digits of a 32-bits float without truncation
         out << std::scientific << std::setprecision(10) << compute(T);
-        if (i < N - 1) out << ", ";
+        if (i < n_bins - 1) out << ", ";
         if (i % 10 == 0) out << "\n";
     }
     out << "\n    };\n\n";
@@ -108,7 +109,7 @@ int main() {
         return 1;
     }
 
-    out << "// Auto-generated LUT header. Do not edit! Refer to src/generate-lut-header.cpp for details. \n";
+    out << "/// Auto-generated LUT header. Do not edit! Refer to src/generate-lut-header.cpp for details. \n";
     out << "#ifndef LUT_HPP \n";
     out << "#define LUT_HPP \n";
     out << "#include <array>\n\n";
@@ -123,7 +124,7 @@ int main() {
 
     // Generate all LUTs
     for (const auto& [name, compute] : lut_functions) {
-        generate_lut<n_temperature_bins>(out, name, compute);
+        generate_lut(out, name, compute, n_temperature_bins);
     }
 
     out << "} /// namespace lut \n";
