@@ -5,7 +5,8 @@
 #include <functional>
 #include <string>
 #include <cmath>
-#include "troll.hpp"
+#include <iomanip>
+#include "troll_defines.hpp"
 
 /**
  * @file generate-lut-header.cpp
