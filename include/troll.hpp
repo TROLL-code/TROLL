@@ -106,25 +106,11 @@ fstream output[40]; //!< Global variable: output files
 fstream output_track[3]; //!< Global variable: output streams for tracking of trees
 #endif
 
-// USER CONTROLS. Options that can be turned on (1) or off (0). This comes at computational cost: where routines have to be called frequently, if-conditioning should be done as far outside the loop as possible (e.g. for DAYTIMELIGHT outside voxel loops) .Options are set below, but inclusion in parameter sheet needed (for control from R)
-bool _NONRANDOM;           //!< User control: If _NONRANDOM == 1, the seeds for the random number generators will be kept fixed at 1, for bug fixing
-bool _GPPcrown;            //!< User control: This defines an option to compute only GPP from the topmost value of PPFD and GPP, instead of looping within the crown.
-bool _BASICTREEFALL;       //!< User control: if defined: treefall is a source of tree death (and if TREEFALL not defined, this is modeled through simple comparison between tree height and a threshold t_Ct, if not defined, treefall is not represented as a separated and independent source of death, but instead, all tree death are due to the deathrate value)
-bool _SEEDTRADEOFF;        //!< User control: if defined: the number of seeds produced by each tree is determined by the tree NPP allocated to reproduction and the species seed mass, otherwise the number of seeds is fixed; besides, seedling recruitment in one site is not made by randomly and 'equiprobably' picking one species among the seeds present at that site but the probability of recruitment among the present seeds is proportional to the number of seeds (in s_Seed[site]) time the seed mass of each species
-bool _NDD;                 //!< User control: if defined, negative density dependant processes affect both the probability of seedling recruitment and the local tree death rate. The term of density-dependance is computed as the sum of conspecific tree basal area divided by their distance to the focal tree within a neighbourhood (circle of radius 15m)
-bool _CROWN_MM;            //!< User control: new in v.2.4.1: Michaelis Menten allometry for crowns instead of power law, since v.2.5: not a macro anymore, but set at runtime (little overhead since queried only once at birth and once per timestep), !!!: power law is the default. If Michaelis Menten type allometry is activated, the parameters have to be changed in input sheet accordingly
-bool _OUTPUT_extended;     //!< User control: changed in v.3.1 from _OUTPUT_reduced to _OUTPUT_extended, uses extended set of output streams
-bool _OUTPUT_inventory;    //!< User control: added in v4.0 to ease stop and start from inventories.
-bool _FromInventory;       //!< User control: if defined, an additional input file can be provided to start simulations from an existing data set or a simulated data set (5 parameters are needed: x and y coordinates, dbh, species_label, species
-bool _sapwood;             //!< User control: two ways of parameterising sapwood density: constant thickness (0), Fyllas, but with lower limit (1)
-bool _seedsadditional;     //!< User control: excess carbon into seeds? no/yes=(0/1)
-bool _LL_parameterization; //!< User control: two ways for parameterising leaf lifespan: empirical (derived by Sylvain Schmitt, TODO: from which data?), Kikuzawa model (0,1)
-
-int _LA_regulation;     //!< User control: updated v.3.1: potentially three ways of parameterising leaf dynamic allocation, but currently using only two ways: no regulation (0), never exceed LAImax, i.e. the maximum LAI under full sunlight (1), adjust LAI to the current light environment (2). To switch between option 1 and 2, only one line is necessary in CalcLAmax()
-int _OUTPUT_pointcloud; //!< User control: ATTENTION! At the moment assumes a little-endian system (most personal computers, but not necessarily server systems), because LAS fles are in little-endian! If == 1, creates a point cloud from a simplified ALS simulation;
-
-int _SOIL_LAYER_WEIGHT;     // !< User control: three ways of computing the fraction of transpiration supplied by each soil layer in individual tree total transpiration, and to weight the tree average water potential in the root zone. (0: root biomass only, 1: relative root-to soil conductance, 2: relative estimated maximal transpiration as in Duursma & Medlyn 2012).
-int _WATER_RETENTION_CURVE; // !< User control: different water retention curves can be used. So far two are have been implemented: either brooks & Corey (0), either van Genuchten-Mualem (1). To each wtare retention cirve option is associated a different set of pedo-transfer functions, see Table 2 (texture-based Tomasella & Hodnett 1998
+// USER CONTROLS migrated to ctx.opt:
+// _NONRANDOM, _GPPcrown, _BASICTREEFALL, _SEEDTRADEOFF, _NDD, _CROWN_MM,
+// _OUTPUT_extended, _OUTPUT_inventory, _FromInventory, _sapwood,
+// _seedsadditional, _LL_parameterization, _LA_regulation,
+// _OUTPUT_pointcloud, _SOIL_LAYER_WEIGHT, _WATER_RETENTION_CURVE
 
 // GLOBAL PARAMETERS OF THE SIMULATION
 // (sites, cols, rows, nbspp migrated to ctx.grid)

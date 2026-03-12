@@ -58,6 +58,8 @@ struct ModelOptions
     bool _seedsadditional;
     bool _LL_parameterization;
     bool _FromInventory;
+    bool _OUTPUT_extended;
+    bool _OUTPUT_inventory;
     int _LA_regulation;
     int _OUTPUT_pointcloud;
     int _SOIL_LAYER_WEIGHT;

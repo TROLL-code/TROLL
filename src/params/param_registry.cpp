@@ -78,14 +78,8 @@ extern float corr_CR_height, corr_N_P, corr_N_LMA, corr_P_LMA;
 // leafdem_resolution migrated to ctx.grid
 extern float p_tfsecondary, hurt_decay, crown_gap_fraction;
 extern float m, m1, Cair;
-extern bool _LL_parameterization, _sapwood, _seedsadditional;
-extern bool _NONRANDOM, _GPPcrown, _BASICTREEFALL, _SEEDTRADEOFF, _NDD;
-extern bool _CROWN_MM, _OUTPUT_extended, _OUTPUT_inventory;
 extern int extent_visual;
-
-extern int _LA_regulation;
-extern int _SOIL_LAYER_WEIGHT;
-extern int _WATER_RETENTION_CURVE;
+// ModelOptions migrated to ctx.opt
 
 #ifdef G0
 extern float g0;
@@ -326,23 +320,23 @@ void RegisterParameters(Context &ctx)
     add_float("PRESS", PRESS, 10.0f, 110.0f, 101.0f);
 #endif
 
-    add_bool("_LL_parameterization", _LL_parameterization, false, true, true);
-    add_int("_LA_regulation", _LA_regulation, 0, 2, 2);
-    add_bool("_sapwood", _sapwood, false, true, true);
-    add_bool("_seedsadditional", _seedsadditional, false, true, false);
+    add_bool("_LL_parameterization", ctx.opt._LL_parameterization, false, true, true);
+    add_int("_LA_regulation", ctx.opt._LA_regulation, 0, 2, 2);
+    add_bool("_sapwood", ctx.opt._sapwood, false, true, true);
+    add_bool("_seedsadditional", ctx.opt._seedsadditional, false, true, false);
 
-    add_int("_SOIL_LAYER_WEIGHT", _SOIL_LAYER_WEIGHT, 0, 2, 2);
-    add_int("_WATER_RETENTION_CURVE", _WATER_RETENTION_CURVE, 0, 1, 0);
+    add_int("_SOIL_LAYER_WEIGHT", ctx.opt._SOIL_LAYER_WEIGHT, 0, 2, 2);
+    add_int("_WATER_RETENTION_CURVE", ctx.opt._WATER_RETENTION_CURVE, 0, 1, 0);
 
-    add_bool("_NONRANDOM", _NONRANDOM, false, true, true);
+    add_bool("_NONRANDOM", ctx.opt._NONRANDOM, false, true, true);
 
-    add_bool("_GPPcrown", _GPPcrown, false, true, false);
-    add_bool("_BASICTREEFALL", _BASICTREEFALL, false, true, true);
-    add_bool("_SEEDTRADEOFF", _SEEDTRADEOFF, false, true, false);
-    add_bool("_NDD", _NDD, false, true, false);
-    add_bool("_CROWN_MM", _CROWN_MM, false, true, false);
-    add_bool("_OUTPUT_extended", _OUTPUT_extended, false, true, false);
-    add_bool("_OUTPUT_inventory", _OUTPUT_inventory, false, true, false);
+    add_bool("_GPPcrown", ctx.opt._GPPcrown, false, true, false);
+    add_bool("_BASICTREEFALL", ctx.opt._BASICTREEFALL, false, true, true);
+    add_bool("_SEEDTRADEOFF", ctx.opt._SEEDTRADEOFF, false, true, false);
+    add_bool("_NDD", ctx.opt._NDD, false, true, false);
+    add_bool("_CROWN_MM", ctx.opt._CROWN_MM, false, true, false);
+    add_bool("_OUTPUT_extended", ctx.opt._OUTPUT_extended, false, true, false);
+    add_bool("_OUTPUT_inventory", ctx.opt._OUTPUT_inventory, false, true, false);
 
     add_int("extent_visual", extent_visual, 0, INT_MAX, 0);
 }
