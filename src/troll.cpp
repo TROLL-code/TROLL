@@ -4168,59 +4168,63 @@ int main(int argc, char *argv[])
 
 
 //! Global function: This function provides limits and defaults for species-specific parameters
-void AssignValueSpecies(Species &S, string parameter_name, string parameter_value)
-{
-    //! we set parameters to values that have been read, or to their defaults, if outside of range or not the right type
-    bool quiet = 1; // only applies to successful initialization, warnings are always given
+// ============================================================================
+//   Species parameter registry (replaces AssignSpeciesParam if/else chain)
+// ============================================================================
+static std::unordered_map<std::string, std::function<void(Species &, std::string, std::string)>> species_param_registry;
 
-    if (parameter_name == "s_name")
+static void BuildSpeciesRegistry()
+{
+    species_param_registry["s_name"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_name, std::string("indet_indet"), true);
+    };
+    species_param_registry["s_LMA"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_LMA, 0.0f, 1000.0f, 100.0f, true);
+    };
+    species_param_registry["s_Nmass"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_Nmass, 0.0f, 1.0f, 0.02f, true);
+    };
+    species_param_registry["s_Pmass"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_Pmass, 0.0f, 1.0f, 0.0005f, true);
+    };
+    species_param_registry["s_wsg"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_wsg, 0.0f, 1.5f, 0.6f, true);
+    };
+    species_param_registry["s_dbhmax"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_dbhmax, 0.0f, 2.5f, 0.5f, true);
+    };
+    species_param_registry["s_hmax"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_hmax, 0.0f, 100.0f, 50.0f, true);
+    };
+    species_param_registry["s_ah"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_ah, 0.0f, 10.0f, 0.3f, true);
+    };
+    species_param_registry["s_seedmass"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_seedmass, 0.0f, 10000.0f, 1.0f, true);
+    };
+    species_param_registry["s_regionalfreq"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_regionalfreq, 0.0f, 1.0f, 1.0f, true);
+    };
+    species_param_registry["s_tlp"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_tlp, -10.0f, 0.0f, -2.0f, true);
+    };
+    species_param_registry["s_leafarea"] = [](Species &S, std::string n, std::string v) {
+        SetParameter(n, v, S.s_leafarea, 0.0f, 800.0f, 80.0f, true);
+    };
+}
+
+void AssignSpeciesParam(Species &S, const std::string &name, const std::string &value)
+{
+    static bool built = false;
+    if (!built) { BuildSpeciesRegistry(); built = true; }
+
+    auto it = species_param_registry.find(name);
+    if (it == species_param_registry.end())
     {
-        SetParameter(parameter_name, parameter_value, S.s_name, "indet_indet", quiet);
+        std::cerr << "Warning: Unknown species parameter '" << name << "'\n";
+        return;
     }
-    else if (parameter_name == "s_LMA")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_LMA, 0.0f, 1000.0f, 100.0f, quiet);
-    }
-    else if (parameter_name == "s_Nmass")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_Nmass, 0.0f, 1.0f, 0.02f, quiet);
-    }
-    else if (parameter_name == "s_Pmass")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_Pmass, 0.0f, 1.0f, 0.0005f, quiet);
-    }
-    else if (parameter_name == "s_wsg")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_wsg, 0.0f, 1.5f, 0.6f, quiet);
-    }
-    else if (parameter_name == "s_dbhmax")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_dbhmax, 0.0f, 2.5f, 0.5f, quiet);
-    }
-    else if (parameter_name == "s_hmax")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_hmax, 0.0f, 100.0f, 50.0f, quiet);
-    }
-    else if (parameter_name == "s_ah")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_ah, 0.0f, 10.0f, 0.3f, quiet);
-    }
-    else if (parameter_name == "s_seedmass")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_seedmass, 0.0f, 10000.0f, 1.0f, quiet);
-    }
-    else if (parameter_name == "s_regionalfreq")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_regionalfreq, 0.0f, 1.0f, 1.0f, quiet);
-    }
-    else if (parameter_name == "s_tlp")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_tlp, -10.0f, 0.0f, -2.0f, quiet);
-    }
-    else if (parameter_name == "s_leafarea")
-    {
-        SetParameter(parameter_name, parameter_value, S.s_leafarea, 0.0f, 800.0f, 80.0f, quiet);
-    }
+    it->second(S, name, value);
 }
 
 // added v.3.1.6
@@ -4449,7 +4453,7 @@ void ReadInputSpecies()
             // now we assign values
             for (int i = 0; i < nb_parameters; i++)
             {
-                AssignValueSpecies(species_new, parameter_names[i], parameter_values[i]);
+                AssignSpeciesParam(species_new, parameter_names[i], parameter_values[i]);
             }
             S.push_back(species_new);
             nb_parameterlines++;
@@ -4468,7 +4472,7 @@ void ReadInputSpecies()
             Species species_default;
             for (int i = 0; i < nb_parameters; i++)
             {
-                AssignValueSpecies(species_default, parameter_names[i], parameter_values[i]);
+                AssignSpeciesParam(species_default, parameter_names[i], parameter_values[i]);
             }
             S.push_back(species_default);
         }
