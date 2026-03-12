@@ -401,3 +401,93 @@ void AssignParamFromRegistry(const std::string &name,
     }
     }
 }
+
+// ============================================================================
+// Species registry (rebuilt for each Species object)
+// ============================================================================
+static std::unordered_map<std::string, ParamSpec> species_registry;
+
+void RegisterSpeciesParameters(Species &S)
+{
+    species_registry.clear();
+
+    // float parameter helper
+    auto add_float = [&](const std::string &name, float &var,
+                         float minv, float maxv, float defv)
+    {
+        species_registry.emplace(
+            name, ParamSpec(ParamSpec::FLOAT, &var, minv, maxv, defv));
+    };
+
+    // string parameter helper
+    auto add_string = [&](const std::string &name, std::string &var,
+                          const std::string &defv)
+    {
+        // NOTE: ParamSpec currently stores numeric ranges only.
+        // We encode string params as ParamSpec::STRING with unused numeric fields.
+        species_registry.emplace(
+            name, ParamSpec(ParamSpec::STRING, &var, 0.0, 0.0, 0.0));
+    };
+
+    // ====================================================
+    // Species parameters (converted from AssignValueSpecies)
+    // ====================================================
+
+    add_string("s_name", S.s_name, "indet_indet");
+
+    add_float("s_LMA", S.s_LMA, 0.0f, 1000.0f, 100.0f);
+    add_float("s_Nmass", S.s_Nmass, 0.0f, 1.0f, 0.02f);
+    add_float("s_Pmass", S.s_Pmass, 0.0f, 1.0f, 0.0005f);
+    add_float("s_wsg", S.s_wsg, 0.0f, 1.5f, 0.6f);
+    add_float("s_dbhmax", S.s_dbhmax, 0.0f, 2.5f, 0.5f);
+    add_float("s_hmax", S.s_hmax, 0.0f, 100.0f, 50.0f);
+    add_float("s_ah", S.s_ah, 0.0f, 10.0f, 0.3f);
+    add_float("s_seedmass", S.s_seedmass, 0.0f, 10000.0f, 1.0f);
+    add_float("s_regionalfreq", S.s_regionalfreq, 0.0f, 1.0f, 1.0f);
+    add_float("s_tlp", S.s_tlp, -10.0f, 0.0f, -2.0f);
+    add_float("s_leafarea", S.s_leafarea, 0.0f, 800.0f, 80.0f);
+}
+
+void AssignSpeciesParam(Species &S,
+                        const std::string &name,
+                        const std::string &value)
+{
+    auto it = species_registry.find(name);
+    if (it == species_registry.end())
+    {
+        std::cerr << "Warning: Unknown species parameter '" << name << "'\n";
+        return;
+    }
+
+    std::string pname = name;
+    std::string pvalue = value;
+    ParamSpec &p = it->second;
+    bool quiet = true;
+
+    switch (p.type)
+    {
+    case ParamSpec::FLOAT:
+    {
+        float &ref = *static_cast<float *>(p.target);
+        SetParameter(pname, pvalue, ref,
+                     (float)p.minv,
+                     (float)p.maxv,
+                     (float)p.def,
+                     quiet);
+        break;
+    }
+
+    case ParamSpec::STRING:
+    {
+        std::string &ref = *static_cast<std::string *>(p.target);
+        SetParameter(pname, pvalue, ref,
+                     value, // default fallback
+                     quiet);
+        break;
+    }
+
+    default:
+        std::cerr << "Error: Unsupported species parameter type\n";
+        break;
+    }
+}
