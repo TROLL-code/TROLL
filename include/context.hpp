@@ -78,6 +78,13 @@ struct Grid
     float i_sites_per_dcell;
     int HEIGHT;
     int SBORD;
+    float NV;
+    float NH;
+    float LV;
+    float LH;
+    int RMAX;
+    int dbhmaxincm;
+    int leafdem_resolution;
 };
 
 struct TimeState

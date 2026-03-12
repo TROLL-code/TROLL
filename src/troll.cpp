@@ -37,7 +37,7 @@ void Species::Init()
     if (_SEEDTRADEOFF)
         s_nbext = (int(s_regionalfreq * Cseedrain * s_iseedmass) + 1);
     else
-        s_nbext = int(s_regionalfreq * Cseedrain * (sites * LH * LH / 10000));
+        s_nbext = int(s_regionalfreq * Cseedrain * (ctx.grid.sites * ctx.grid.LH * ctx.grid.LH / 10000));
 
     s_nbind = 0;
 
@@ -78,8 +78,8 @@ Tree::Tree()
 
     if (_NDD)
     {
-        t_NDDfield.reserve(nbspp + 1);
-        for (int sp = 0; sp < (nbspp + 1); sp++)
+        t_NDDfield.reserve(ctx.grid.nbspp + 1);
+        for (int sp = 0; sp < (ctx.grid.nbspp + 1); sp++)
             t_NDDfield.push_back(0.0);
     }
 #if defined(WATER)
@@ -120,7 +120,7 @@ void Tree::Birth(int nume, int site0)
     int index_LAImax = dev_rand + (nume - 1) * 10000;
     float LAImax_precomputed = LookUpLAImax[index_LAImax];
 
-    if (LAI3D[0][site0 + SBORD] < LAImax_precomputed)
+    if (LAI3D[0][site0 + ctx.grid.SBORD] < LAImax_precomputed)
     {
 
 #endif
@@ -333,8 +333,8 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         parameter_name = "s_name";
         parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
         int species_exists = 0;
-        // species run from 1 to nbspp!
-        for (int s = 1; s <= nbspp; s++)
+        // species run from 1 to ctx.grid.nbspp!
+        for (int s = 1; s <= ctx.grid.nbspp; s++)
         {
             if (parameter_value == S[s].s_name)
             {
@@ -344,7 +344,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         }
         if (species_exists == 0)
         {
-            t_sp_lab = int(gsl_rng_uniform_int(gslrand, nbspp)) + 1;
+            t_sp_lab = int(gsl_rng_uniform_int(gslrand, ctx.grid.nbspp)) + 1;
             nb_speciesrandom++;
             // cout << "Species: " << parameter_value << " not found. Initializing as random species: " << S[t_sp_lab].s_name << endl;
         }
@@ -630,7 +630,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         {
             parameter_name = "Ct";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
-            SetParameter(parameter_name, parameter_value, t_Ct, 0.0f, float(HEIGHT), 0.0f, quiet); // the default is a height fall threshold of maximum height (so sth the tree never reaches)
+            SetParameter(parameter_name, parameter_value, t_Ct, 0.0f, float(ctx.grid.HEIGHT), 0.0f, quiet); // the default is a height fall threshold of maximum height (so sth the tree never reaches)
             if (t_Ct == 0.0)
                 t_Ct = CalcCt();
         }
@@ -880,8 +880,8 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //        // 2. allocate the leaves to the LAI3D field
 //        // nota bene: we here use the same function as CalcLAI3D, with one exception: LAI2dens_cumulated instead of LAI2dens; this means that we allocate the cumulated LAI in each layer and do not require any summation afterwards
 //        int site_crowncenter = t_site + t_CrownDisplacement;
-//        int row_crowncenter = site_crowncenter/cols;
-//        int col_crowncenter = site_crowncenter%cols;
+//        int row_crowncenter = site_crowncenter/ctx.grid.cols;
+//        int col_crowncenter = site_crowncenter%ctx.grid.cols;
 //
 //        float LA_cumulated = 0.0;   //Currently, an output variable is required by LoopLayerUpdateCrownStatistic_template, we here use LA_cumulated as control variable
 //
@@ -908,8 +908,8 @@ void Tree::CalcLAI()
     if (t_age > 0)
     {
         int site_crowncenter = t_site + t_CrownDisplacement;
-        int row_crowncenter = site_crowncenter / cols;
-        int col_crowncenter = site_crowncenter % cols;
+        int row_crowncenter = site_crowncenter / ctx.grid.cols;
+        int col_crowncenter = site_crowncenter % ctx.grid.cols;
 
         float LA_cumulated = 0.0; // Currently, an output variable is required by LoopLayerUpdateCrownStatistic_template, we here use LA_cumulated as control variable
 
@@ -932,8 +932,8 @@ void Tree::CalcLAI()
         int crown_base = int(t_height - t_CD),
             crown_top = int(t_height);
         int site_crowncenter = t_site + t_CrownDisplacement;
-        int row_crowncenter = site_crowncenter / cols;
-        int col_crowncenter = site_crowncenter % cols;
+        int row_crowncenter = site_crowncenter / ctx.grid.cols;
+        int col_crowncenter = site_crowncenter % ctx.grid.cols;
 
         float fraction_abovetop = t_height - float(crown_top);
         float fraction_belowbase = float(crown_base + 1) - (t_height - t_CD);
@@ -972,9 +972,9 @@ void Tree::CalcLAI()
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
 
-                    if (row >= 0 && row < rows && col >= 0 && col < cols)
+                    if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
                     {
-                        int site = col + cols * row + SBORD;
+                        int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
                         LAI3D[h][site] += dens_layer;
                     }
                 }
@@ -1040,23 +1040,23 @@ void Tree::Water_availability()
                 if (_SOIL_LAYER_WEIGHT == 0)
                 { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
                     t_soil_layer_weight[l] = t_root_biomass[l];
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][site_DCELL[t_site]];
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (_SOIL_LAYER_WEIGHT == 1)
                 {
-                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 * Ks[l][site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][site_DCELL[t_site]];                                                                // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 * Ks[l][ctx.grid.site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];                                                                // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 }
                 else if (_SOIL_LAYER_WEIGHT == 2)
                 { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
 
-                    // if (soil_phi3D[l][site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)))*(soil_phi3D[l][site_DCELL[t_site]]+3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
-                    // if (soil_phi3D[l][site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0/(length_dcell*length_dcell*layer_thickness))*0.001)))*(soil_phi3D[l][site_DCELL[t_site]]+3);
-                    if (soil_phi3D[l][site_DCELL[t_site]] > (-3.0))
-                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) * Ks[l][site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][site_DCELL[t_site]] + 3);
+                    // if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][ctx.grid.site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)))*(soil_phi3D[l][ctx.grid.site_DCELL[t_site]]+3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
+                    // if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][ctx.grid.site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0/(ctx.grid.length_dcell*ctx.grid.length_dcell*layer_thickness))*0.001)))*(soil_phi3D[l][ctx.grid.site_DCELL[t_site]]+3);
+                    if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] > (-3.0))
+                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) * Ks[l][ctx.grid.site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] + 3);
                     else
                         t_soil_layer_weight[l] = 0.0;
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 }
             }
             else if (_WATER_RETENTION_CURVE == 0)
@@ -1065,30 +1065,30 @@ void Tree::Water_availability()
                 if (_SOIL_LAYER_WEIGHT == 0)
                 { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
                     t_soil_layer_weight[l] = t_root_biomass[l];
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][site_DCELL[t_site]];
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (_SOIL_LAYER_WEIGHT == 1)
                 {
                     t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
-                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][site_DCELL[t_site]];                                         // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
-                    t_soil_layer_weight[l] *= Ks[l][site_DCELL[t_site]];
+                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]];                                         // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_soil_layer_weight[l] *= Ks[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (_SOIL_LAYER_WEIGHT == 2)
                 { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
 
-                    if (soil_phi3D[l][site_DCELL[t_site]] > (-3.0))
-                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][site_DCELL[t_site]] + 3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
+                    if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] > (-3.0))
+                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] + 3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
                     else
                         t_soil_layer_weight[l] = 0.0;
-                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][site_DCELL[t_site]]*soil_phi3D[l][site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
-                    t_soil_layer_weight[l] *= Ks[l][site_DCELL[t_site]];
+                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_soil_layer_weight[l] *= Ks[l][ctx.grid.site_DCELL[t_site]];
                 }
             }
 
             if (isnan(t_phi_root))
             {
                 cout << "nan t_phi_root: " << endl;
-                cout << l << "\t" << t_soil_layer_weight[l] << "\t" << KsPhi[l][site_DCELL[t_site]] << soil_phi3D[l][site_DCELL[t_site]] << "\t" << endl;
+                cout << l << "\t" << t_soil_layer_weight[l] << "\t" << KsPhi[l][ctx.grid.site_DCELL[t_site]] << soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << "\t" << endl;
             }
         }
         else
@@ -1096,23 +1096,23 @@ void Tree::Water_availability()
             if (l == 0)
             {
                 t_soil_layer_weight[l] = 1;
-                t_phi_root += soil_phi3D[l][site_DCELL[t_site]];
+                t_phi_root += soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
             }
             else
                 t_soil_layer_weight[l] = 0;
         }
 
-        // if(t_soil_layer_weight[l]<=0) cout << "t_soil_layer_weight[l]=" << t_soil_layer_weight[l] << " t_root_biomass[l]=" << t_root_biomass[l] << " Ks=" << Ks[l][site_DCELL[t_site]] << " Ks*Phi soil =" << KsPhi[l][site_DCELL[t_site]] << " phi soil=" <<   soil_phi3D[l][site_DCELL[t_site]] << endl;
+        // if(t_soil_layer_weight[l]<=0) cout << "t_soil_layer_weight[l]=" << t_soil_layer_weight[l] << " t_root_biomass[l]=" << t_root_biomass[l] << " Ks=" << Ks[l][ctx.grid.site_DCELL[t_site]] << " Ks*Phi soil =" << KsPhi[l][ctx.grid.site_DCELL[t_site]] << " phi soil=" <<   soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << endl;
         // t_soil_layer_weight[l]=t_root_biomass[l]*10/(-log(sqrt(PI*t_root_biomass[l]*10)*0.001));
-        // t_phi_root+=t_soil_layer_weight[l]*fmaxf(0.0,(KsPhi2[l][site_DCELL[t_site]]-KsPhi[l][site_DCELL[t_site]]*t_s->s_tlp));  //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer
-        // t_soil_layer_weight[l]*=fmaxf(0.0,(KsPhi[l][site_DCELL[t_site]]-Ks[l][site_DCELL[t_site]]*t_s->s_tlp));
+        // t_phi_root+=t_soil_layer_weight[l]*fmaxf(0.0,(KsPhi2[l][ctx.grid.site_DCELL[t_site]]-KsPhi[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));  //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer
+        // t_soil_layer_weight[l]*=fmaxf(0.0,(KsPhi[l][ctx.grid.site_DCELL[t_site]]-Ks[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));
         sumG += t_soil_layer_weight[l];
         shallow_bound = deep_bound;
 
         if (t_soil_layer_weight[l] < 0.0 || isnan(t_soil_layer_weight[l]))
         {
             cout << "incorrect soil_layer_weight: " << endl;
-            cout << l << "\t" << site_DCELL[t_site] << "\t" << t_soil_layer_weight[l] << "\t" << t_root_biomass[l] << "\t" << Ks[l][site_DCELL[t_site]] << "\t" << KsPhi[l][site_DCELL[t_site]] << "\t" << -log(sqrt(PI * t_root_biomass[l] * 10) * 0.001) << "\t" << deep_bound << "\t" << shallow_bound << "\t" << SWC3D[l][site_DCELL[t_site]] << "\t" << (SWC3D[l][site_DCELL[t_site]] - Min_SWC[l]) / (Max_SWC[l] - Min_SWC[l]) << "\t" << Ksat[l] << "\t" << soil_phi3D[l][site_DCELL[t_site]];
+            cout << l << "\t" << ctx.grid.site_DCELL[t_site] << "\t" << t_soil_layer_weight[l] << "\t" << t_root_biomass[l] << "\t" << Ks[l][ctx.grid.site_DCELL[t_site]] << "\t" << KsPhi[l][ctx.grid.site_DCELL[t_site]] << "\t" << -log(sqrt(PI * t_root_biomass[l] * 10) * 0.001) << "\t" << deep_bound << "\t" << shallow_bound << "\t" << SWC3D[l][ctx.grid.site_DCELL[t_site]] << "\t" << (SWC3D[l][ctx.grid.site_DCELL[t_site]] - Min_SWC[l]) / (Max_SWC[l] - Min_SWC[l]) << "\t" << Ksat[l] << "\t" << soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
             cout << endl;
         }
     }
@@ -1136,11 +1136,11 @@ void Tree::Water_availability()
         float iRootB = 1.0 / total_root_biomass;
         for (int l = 0; l < nblayers_soil; l++)
         {
-            t_phi_root += t_root_biomass[l] * soil_phi3D[l][site_DCELL[t_site]];
+            t_phi_root += t_root_biomass[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
             if (isnan(t_phi_root))
             {
                 cout << "nan t_phi_root" << endl;
-                cout << t_root_biomass[l] << "\t" << soil_phi3D[l][site_DCELL[t_site]] << endl;
+                cout << t_root_biomass[l] << "\t" << soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << endl;
             }
             t_soil_layer_weight[l] = t_root_biomass[l] * iRootB;
         }
@@ -1174,7 +1174,7 @@ void Tree::Water_availability()
         cout << "soil_phi: ";
         for (int l = 0; l < nblayers_soil; l++)
         {
-            cout << soil_phi3D[l][site_DCELL[t_site]] << "\t";
+            cout << soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << "\t";
         }
         cout << endl;
     }
@@ -1189,7 +1189,7 @@ void Tree::Water_availability()
 
     //! Tree water stress factors
 
-    // t_WSF=fminf(1.0, fmaxf(0.0, ((SWC3D[0][site_DCELL[t_site]]-Min_SWC[0])/(Max_SWC[0]-Min_SWC[0])))); // this is the simple linear WSF, with SWC as independent varible, used in lots of model (see Powell et al. 2013 New Phytol, De Kauwe et al. 2015 Biogeosciences, Laio et al. 2001 Advances in Water resources, Egea et al. 2011 AFM....)
+    // t_WSF=fminf(1.0, fmaxf(0.0, ((SWC3D[0][ctx.grid.site_DCELL[t_site]]-Min_SWC[0])/(Max_SWC[0]-Min_SWC[0])))); // this is the simple linear WSF, with SWC as independent varible, used in lots of model (see Powell et al. 2013 New Phytol, De Kauwe et al. 2015 Biogeosciences, Laio et al. 2001 Advances in Water resources, Egea et al. 2011 AFM....)
     // t_WSF=fminf(1.0, fmaxf(0.0, (t_phi_root-(t_s->s_tlp))*(t_s->s_dWSF))); // this is the linear WSF, with wtare potential as independent variable, used in CLM model (see Powell et al. 2013 New Phytologist, Verhoef & Egea 2011 AFM)
     // t_WSF=exp((log(0.05)/t_s->s_tlp)*t_phi_root); // this is the WSF, to simulate stomatal limitation (ie. hinder g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences. If this version of WSF is finally adopted, the parameter b=log(0.05)/t_s->s_tlp, should be declare as species variable (instead of s_dWSF).
     t_WSF = exp(t_b * t_phi_root); // this is the WSF shape used to simulate stomatal limitation (ie. hinder g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences, but with a different parameterization for the parameter b (using the relationship between phi_gs90 and tlp from Martin-StPaul et al. 2017 Ecology letters, and assuming the WSF=0.9 at phi_gs90).
@@ -1226,7 +1226,7 @@ void Tree::Water_uptake()
         float sum_weights = 0.0;
         while (sum_weights < 1.0 && l < nblayers_soil)
         {
-            Transpiration[l][site_DCELL[t_site]] += t_soil_layer_weight[l] * t_transpiration;
+            Transpiration[l][ctx.grid.site_DCELL[t_site]] += t_soil_layer_weight[l] * t_transpiration;
             if (t_soil_layer_weight[l] < 0.0 || t_transpiration < 0.0)
             {
                 cout << setprecision(10);
@@ -1259,8 +1259,8 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 #endif
 
     int site_crowncenter = t_site + t_CrownDisplacement;
-    int row_crowncenter = site_crowncenter / cols;
-    int col_crowncenter = site_crowncenter % cols;
+    int row_crowncenter = site_crowncenter / ctx.grid.cols;
+    int col_crowncenter = site_crowncenter % ctx.grid.cols;
     int shell_fromtop = int(t_height) + 1 - h;
 
 #ifdef WATER
@@ -1298,8 +1298,8 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 {
 
     int site_crowncenter = t_site + t_CrownDisplacement;
-    int row_crowncenter = site_crowncenter / cols;
-    int col_crowncenter = site_crowncenter % cols;
+    int row_crowncenter = site_crowncenter / ctx.grid.cols;
+    int col_crowncenter = site_crowncenter % ctx.grid.cols;
 
     float crown_area = fmaxf(PI * t_CR * t_CR, 0.0);
     int crown_intarea = int(crown_area);      // floor of crown_area to bound area accumulation
@@ -1327,9 +1327,9 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
             int row = row_crowncenter + site_relative / 51 - 25;
             int col = col_crowncenter + site_relative % 51 - 25;
 
-            if (row >= 0 && row < rows && col >= 0 && col < cols)
+            if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
             {
-                int site = col + cols * row + SBORD;
+                int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
                 float absorb_prev = LAI3D[h][site];
                 float absorb_current = LAI3D[h - 1][site];
                 float absorb_delta = absorb_current - absorb_prev;
@@ -2052,15 +2052,15 @@ float Tree::dailyRdayleaf(float T)
 float Tree::CalcAGB()
 {
     // allometric equations from Chave et al. 2014 Global Change Biology to compute above ground biomass (conversion from dbh^2 in cm2 to m2, ie. factor e4)
-    // float agb = 0.0673*pow(t_wsg*t_height*LV*t_dbh*t_dbh*LH*LH*10000.0, 0.976);
-    float agb = 0.0559 * t_wsg * t_height * LV * t_dbh * t_dbh * LH * LH * 10000.0; // simplified assumption of cylinder, 0.0559 accounts for stem taper cf. Chave et al. 2014)
+    // float agb = 0.0673*pow(t_wsg*t_height*ctx.grid.LV*t_dbh*t_dbh*ctx.grid.LH*ctx.grid.LH*10000.0, 0.976);
+    float agb = 0.0559 * t_wsg * t_height * ctx.grid.LV * t_dbh * t_dbh * ctx.grid.LH * ctx.grid.LH * 10000.0; // simplified assumption of cylinder, 0.0559 accounts for stem taper cf. Chave et al. 2014)
     return (agb);
 }
 
 // Calculation of the increment of dbh from assimilated carbon/biomass (in m)
 float Tree::CalcIncrementDBH(float delta_agb)
 {
-    float ddbh = fmaxf((delta_agb / (0.559 * t_wsg * 1.0e6 * t_dbh * LH * t_height * LV * (3.0 - t_dbh / (t_dbh + t_ah)))), 0.0) * NH;
+    float ddbh = fmaxf((delta_agb / (0.559 * t_wsg * 1.0e6 * t_dbh * ctx.grid.LH * t_height * ctx.grid.LV * (3.0 - t_dbh / (t_dbh + t_ah)))), 0.0) * ctx.grid.NH;
     return (ddbh);
 }
 
@@ -2081,7 +2081,7 @@ float Tree::CalcCt()
     float dbhrealmax = t_dbhmax * 1.5;
     float hrealmax = t_mult_height * CalcHeightBaseline(t_ah, t_hmax, dbhrealmax); // realized maximum height
     float vC_intraspecific = vC / 1.5 - 1.0 / (2.3 * t_mult_height) + 1.0 / 2.3;   //! since v.2.5: adjusting vC to intraspecific height variation. If vC was not modified, tall trees would start falling at much larger heights than smaller trees of the same species and with the same dbh, despite a much worse height/dbh ratio. The default assumption is now that the minimum onset of treefalls should be around the same height threshold irrespective of the height multiplier, but stronger assumptions would be justified too (i.e. tall trees falling more easily). The formula is derived as follows: assuming that the onset of treefall can be described by the 99.5 percentile of the sqrt(-log(uniform)) distribution, which is 2.3, we calculate the corresponding Ct_min and impose the condition that it stays equal irrespective of t_mult_height. In this case, we can solve for vC_intraspecific. This is a conservative assumption, likely a stronger dependence on dbh/height ratio would be found, but probably superseded by E-Ping's module anyways
-    float Ct = fminf(float(HEIGHT - 1), hrealmax * fmaxf(1.0 - vC_intraspecific * sqrt(-log(gsl_rng_uniform_pos(gslrand))), 0.0));
+    float Ct = fminf(float(ctx.grid.HEIGHT - 1), hrealmax * fmaxf(1.0 - vC_intraspecific * sqrt(-log(gsl_rng_uniform_pos(gslrand))), 0.0));
     return (Ct);
 }
 
@@ -2153,7 +2153,7 @@ void Tree::UpdateSapwoodArea(float ddbh)
 void Tree::UpdateHeight()
 {
     float height_baseline = CalcHeightBaseline(t_ah, t_hmax, t_dbh);
-    t_height = fminf(t_mult_height * height_baseline, HEIGHT - 1);
+    t_height = fminf(t_mult_height * height_baseline, ctx.grid.HEIGHT - 1);
 }
 
 // Updates t_CR, based on t_dbh
@@ -2280,8 +2280,8 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
     else
     {
         int site_crowncenter = t_site + t_CrownDisplacement;
-        int row_crowncenter = site_crowncenter / cols;
-        int col_crowncenter = site_crowncenter % cols;
+        int row_crowncenter = site_crowncenter / ctx.grid.cols;
+        int col_crowncenter = site_crowncenter % ctx.grid.cols;
 
 #ifdef CROWN_UMBRELLA
         // get the PPFD that the tree experiences and the area that is looped
@@ -2319,11 +2319,11 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
                 int row = row_crowncenter + site_relative / 51 - 25;
                 int col = col_crowncenter + site_relative % 51 - 25;
 
-                if (row >= 0 && row < rows && col >= 0 && col < cols)
+                if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
                 {
-                    int site = col + cols * row + SBORD;
+                    int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
                     // first get voxel field densities
-                    float absorb_prev = LAI3D[height_abovetop][site + SBORD];
+                    float absorb_prev = LAI3D[height_abovetop][site + ctx.grid.SBORD];
                     int intabsorb = CalcIntabsorb(absorb_prev);
 
                     // obtain PPFD for the voxel, and also record the circled area
@@ -2609,7 +2609,7 @@ void Tree::CalcRespGPP()
 
 #ifdef WATER
         float leafarea_toprounding = 0.0; // newIM
-        float MeanDCELLHeight = Canopy_height_DCELL[site_DCELL[t_site]];
+        float MeanDCELLHeight = Canopy_height_DCELL[ctx.grid.site_DCELL[t_site]];
 #endif
 
         for (int h = crown_above_top; h >= h_stop; h--)
@@ -2617,15 +2617,15 @@ void Tree::CalcRespGPP()
             float PPFD = 0.0, VPD = 0.0, Tmp = 0.0, leafarea_layer = 0;
 #ifdef WATER
             float PPFD_incident = 0.0, ExtinctLW = 0.0;
-            // float W=WS*exp(-0.5*LAI_DCELL[h][site_DCELL[t_site]]); // computation of wind speed, which is here assumed to declined exponentially with the cumulative LAI within a given neighborhood (here taken as the tree's dcell) (see equation B11 in Medvigy et al. 2009; see Leuning et al. 1995 PCE equ. E2). We could alternatively used the aerodynamic momentum transfer model (Monteith and Unsworth 2008) using Lorey'sheight (see E-Ping's second manuscript) -- to be discussed. // to be computed with a lookup table maybe, and within Fluxh probably.
+            // float W=WS*exp(-0.5*LAI_DCELL[h][ctx.grid.site_DCELL[t_site]]); // computation of wind speed, which is here assumed to declined exponentially with the cumulative LAI within a given neighborhood (here taken as the tree's dcell) (see equation B11 in Medvigy et al. 2009; see Leuning et al. 1995 PCE equ. E2). We could alternatively used the aerodynamic momentum transfer model (Monteith and Unsworth 2008) using Lorey'sheight (see E-Ping's second manuscript) -- to be discussed. // to be computed with a lookup table maybe, and within Fluxh probably.
             int convHratio = int(iHaccuracy * h / MeanDCELLHeight);
-            float W = TopWindSpeed_DCELL[site_DCELL[t_site]] * LookUp_Wind[convHratio];
+            float W = TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] * LookUp_Wind[convHratio];
             if (W <= 0)
             {
                 cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight << " convHratio=" << convHratio << " LookUp_Wind[convHratio]=" << LookUp_Wind[convHratio] << endl;
             }
 
-            // cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight <<" convHratio=" << convHratio << " LookUp_Wind[convHratio]=" << LookUp_Wind[convHratio] << " TopWindSpeed_DCELL[site_DCELL[t_site]]=" << TopWindSpeed_DCELL[site_DCELL[t_site]] << endl;
+            // cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight <<" convHratio=" << convHratio << " LookUp_Wind[convHratio]=" << LookUp_Wind[convHratio] << " TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]]=" << TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] << endl;
 
             Fluxh(h, PPFD, VPD, Tmp, leafarea_layer, PPFD_incident, ExtinctLW);
 #else
@@ -2751,7 +2751,7 @@ void Tree::UpdateLeafDynamics()
 {
     float SLA = 1.0 / t_LMA; // newIM, but should be added as a tree variable to avoid multiple computation
 
-    float ileafdem_resolution = 1.0 / float(leafdem_resolution);
+    float ileafdem_resolution = 1.0 / float(ctx.grid.leafdem_resolution);
     float flush = 2.0 * fmaxf(t_NPP, 0.0) * falloccanopy * 0.68 * SLA; // 0.68 is the fraction of NPP allocated to leaves (the other 32% being allocated to twigs and fruits), retrieved from Chave et al. 2008, 2010.
     // fine resolution of flush
     float flush_fine = ileafdem_resolution * flush;
@@ -2764,7 +2764,7 @@ void Tree::UpdateLeafDynamics()
         // leaf demography, without any dynamic leaf area regulation
         t_litter = 0.0;
 
-        for (int i = 0; i < leafdem_resolution; i++)
+        for (int i = 0; i < ctx.grid.leafdem_resolution; i++)
         {
             float new_litter = lambda_old * t_oldLA;
             float new_young = flush_fine;
@@ -2839,7 +2839,7 @@ void Tree::UpdateLeafDynamics()
         // given that we assume that the leaf density environment only changes once every iteration, this can also be calculated only once every iteration
 
         // float new_young = 0.0;
-        for (int i = 0; i < leafdem_resolution; i++)
+        for (int i = 0; i < ctx.grid.leafdem_resolution; i++)
         {
             float new_litter = lambda_old * t_oldLA;
 
@@ -2962,7 +2962,7 @@ void Tree::UpdateTreeBiometry()
 {
 
     //! taking into account wood elements recycling (ex. fallen branches etc...)
-    //! t_ddbh = flor( volume* 4.0/( 3.0*PI*t_dbh*LH*t_height*LV ) )* NH;
+    //! t_ddbh = flor( volume* 4.0/( 3.0*PI*t_dbh*ctx.grid.LH*t_height*ctx.grid.LV ) )* ctx.grid.NH;
 
     float delta_agb;
     if (_LA_regulation == 0)
@@ -3029,7 +3029,7 @@ void Tree::Death()
 #ifdef MIP_Lichstein
     if (_FromInventory || (!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)))
     {
-        if (t_dbh * LH >= 0.01 && t_inInventory == 1)
+        if (t_dbh * ctx.grid.LH >= 0.01 && t_inInventory == 1)
         {
             float agb = 0.5 * CalcAGB(); // in kg C
             output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
@@ -3044,19 +3044,19 @@ void Tree::Death()
     nblivetrees--;
     if ((S[t_sp_lab].s_nbind) > 0)
         (S[t_sp_lab].s_nbind)--;
-    if (t_dbh * LH > 0.1)
+    if (t_dbh * ctx.grid.LH > 0.1)
     {
         nbdead_n10++;
         if ((S[t_sp_lab].s_nbind10) > 0)
             (S[t_sp_lab].s_nbind10)--;
 #ifdef Output_ABC
-        int row = t_site / cols;
-        int col = t_site % cols;
+        int row = t_site / ctx.grid.cols;
+        int col = t_site % ctx.grid.cols;
         if (row >= row_start && row < row_end && col >= col_start && col < col_end)
             nbdead_n10_abc++;
 #endif
     }
-    if (t_dbh * LH > 0.3)
+    if (t_dbh * ctx.grid.LH > 0.3)
     {
         nbdead_n30++;
         if ((S[t_sp_lab].s_nbind30) > 0)
@@ -3114,8 +3114,8 @@ void Tree::DisperseSeed()
             // for the moment, we do not use the crown radius as an additional dispersal kernel. This would lead to a loss of large tree species locally, because they will have much less seeds within the plot
             float rho = gsl_ran_rayleigh(gslrand, S[t_sp_lab].s_ds);
             float theta_angle = float(twoPi * gsl_rng_uniform(gslrand)); // Dispersal angle theta
-            int col_tree = t_site % cols;
-            int row_tree = t_site / cols;
+            int col_tree = t_site % ctx.grid.cols;
+            int row_tree = t_site / ctx.grid.cols;
             int dist_cols = int(rho * cos(theta_angle));
             int dist_rows = int(rho * sin(theta_angle));
             int col_dispersal = dist_cols + col_tree;
@@ -3187,51 +3187,51 @@ void Tree::Treefall(float angle)
     // treefall statistics
     nbTreefall1++;
 #ifdef Output_ABC
-    if (t_dbh * LH > 0.1)
+    if (t_dbh * ctx.grid.LH > 0.1)
     {
         nbTreefall10++;
-        int row = t_site / cols;
-        int col = t_site % cols;
+        int row = t_site / ctx.grid.cols;
+        int col = t_site % ctx.grid.cols;
         if (row >= row_start && row < row_end && col >= col_start && col < col_end)
             nbTreefall10_abc++;
     }
 #else
-    if (t_dbh * LH > 0.1)
+    if (t_dbh * ctx.grid.LH > 0.1)
         nbTreefall10++;
 #endif
-    if (t_dbh * LH > 0.3)
+    if (t_dbh * ctx.grid.LH > 0.3)
         nbTreefall30++;
     int xx, yy;
     int row0, col0, h_int, r_int;
-    float h_true = t_height * LV;
-    h_int = int(h_true * NH);
-    row0 = t_site / cols;
-    col0 = t_site % cols;
+    float h_true = t_height * ctx.grid.LV;
+    h_int = int(h_true * ctx.grid.NH);
+    row0 = t_site / ctx.grid.cols;
+    col0 = t_site % ctx.grid.cols;
 
     // update of Thurt field at the site of the tree, for consistency
-    // Thurt[0][t_site+sites] = max(int(t_height),Thurt[0][t_site+sites]);
+    // Thurt[0][t_site+ctx.grid.sites] = max(int(t_height),Thurt[0][t_site+ctx.grid.sites]);
     // fallen stem destructs other trees
     for (int h = 1; h < h_int; h++)
     {                                                // loop on the fallen stem (horizontally)
         xx = int(fmaxf(col0 + h * cos(angle), 0.0)); // get projection in col (= xx) direction, where xx is absolute location
-        if (xx < cols)
+        if (xx < ctx.grid.cols)
         {
             yy = int(row0 + h * sin(angle)); // get projection in row (= yy) direction, where yy is absolute location
-            Thurt[0][xx + (yy + rows) * cols] = max(int(t_height), int(Thurt[0][xx + (yy + rows) * cols]));
-            // Thurt[0] where the stem fell, calculation: xx+(yy+rows)*cols= xx + yy*cols + rows*cols = xx + yy*cols + sites / NEW in v.2.4: addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
+            Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols] = max(int(t_height), int(Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols]));
+            // Thurt[0] where the stem fell, calculation: xx+(yy+ctx.grid.rows)*ctx.grid.cols= xx + yy*ctx.grid.cols + ctx.grid.rows*ctx.grid.cols = xx + yy*ctx.grid.cols + ctx.grid.sites / NEW in v.2.4: addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
         }
     }
 
     // fallen crown destructs other trees, less damaging than stem
-    xx = col0 + int((h_true * NH - t_CR) * cos(angle));
-    yy = row0 + int((h_true * NH - t_CR) * sin(angle));
+    xx = col0 + int((h_true * ctx.grid.NH - t_CR) * cos(angle));
+    yy = row0 + int((h_true * ctx.grid.NH - t_CR) * sin(angle));
     r_int = int(t_CR);
-    for (int col = max(0, xx - r_int); col < min(cols, xx + r_int + 1); col++)
+    for (int col = max(0, xx - r_int); col < min(ctx.grid.cols, xx + r_int + 1); col++)
     { // loop on the fallen crown (horizontally)
-        for (int row = max(0, yy - r_int); row < min(rows, yy + r_int + 1); row++)
+        for (int row = max(0, yy - r_int); row < min(ctx.grid.rows, yy + r_int + 1); row++)
         {
             if ((col - xx) * (col - xx) + (row - yy) * (row - yy) < r_int * r_int)
-                Thurt[0][col + (row + rows) * cols] = max(int((t_height - t_CR * NV * LH) * 0.5), int(Thurt[0][col + (row + rows) * cols])); // less severe damage than stem / NEW in v.2.4: max() or addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
+                Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols] = max(int((t_height - t_CR * ctx.grid.NV * ctx.grid.LH) * 0.5), int(Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols])); // less severe damage than stem / NEW in v.2.4: max() or addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
         }
     }
     // v.2.4.0: outputs have been moved to Death() function
@@ -3246,14 +3246,14 @@ void Tree::Average()
 {
     if (t_age > 0)
     {
-        if (t_dbh * LH >= 0.1)
+        if (t_dbh * ctx.grid.LH >= 0.1)
         {
             (S[t_sp_lab].s_sum10)++;
-            S[t_sp_lab].s_ba10 += t_dbh * LH * t_dbh * LH * 3.1415 * 0.25;
+            S[t_sp_lab].s_ba10 += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
         }
-        if (t_dbh * LH >= 0.3)
+        if (t_dbh * ctx.grid.LH >= 0.3)
             (S[t_sp_lab].s_sum30)++;
-        S[t_sp_lab].s_ba += t_dbh * LH * t_dbh * LH * 3.1415 * 0.25;
+        S[t_sp_lab].s_ba += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
         S[t_sp_lab].s_npp += t_NPP * 1.0e-6;
         S[t_sp_lab].s_gpp += t_GPP * 1.0e-6;
         float agb = CalcAGB();
@@ -3275,7 +3275,7 @@ void Tree::Average()
         }
 
         abund_phi_root += t_phi_root;
-        if (t_dbh * LH >= 0.1)
+        if (t_dbh * ctx.grid.LH >= 0.1)
             abund10_phi_root += t_phi_root;
         agb_phi_root += agb * t_phi_root;
 #endif
@@ -3283,7 +3283,7 @@ void Tree::Average()
 #ifdef MIP_Lichstein
         if (ctx.time.iter % ctx.time.iterperyear == 364 && (_FromInventory || (!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear))))
         {
-            if (t_dbh * LH >= 0.01)
+            if (t_dbh * ctx.grid.LH >= 0.01)
             {
                 t_inInventory = 1;
                 output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
@@ -3297,7 +3297,7 @@ void Tree::Average()
 void Tree::histdbh()
 {
     if (t_age)
-        nbdbh[int(100. * t_dbh * LH)]++;
+        nbdbh[int(100. * t_dbh * ctx.grid.LH)]++;
     // where dbh is in cm (it is in number of horizontal cells throughout the code)
     // values are always rounded down (so nbdbh[30] gives you trees with more than 30 cm dbh, and less than 31))
 }
@@ -3306,7 +3306,7 @@ void Tree::histdbh()
 // Standard outputs during the simulation -- written to file
 void Tree::OutputTreeStandard(fstream &output)
 {
-    output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
+    output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
     for (int l = 0; l < nblayers_soil; l++)
         output << "\t" << t_root_biomass[l];
     for (int l = 0; l < nblayers_soil; l++)
@@ -3316,7 +3316,7 @@ void Tree::OutputTreeStandard(fstream &output)
 // Standard outputs during the simulation -- written to screen in real time
 void Tree::OutputTreeStandard()
 {
-    cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
+    cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
     for (int l = 0; l < nblayers_soil; l++)
         cout << "\t" << t_root_biomass[l];
     for (int l = 0; l < nblayers_soil; l++)
@@ -3403,7 +3403,7 @@ float Tree::StartTracking()
         t_CR_tracked = t_CR;
         t_agb_tracked = 1000.0 * CalcAGB();
 
-        output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site % cols << "\t" << t_site / cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
+        output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site % ctx.grid.cols << "\t" << t_site / ctx.grid.cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
     }
 }
 #endif
@@ -3558,9 +3558,9 @@ void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int
             //            if(direction == 0 || direction == 2){col = col_center + site_relative%51 - 25;}
             //            else {col = col_center - site_relative%51 + 25;}
 
-            if (row >= 0 && row < rows && col >= 0 && col < cols)
+            if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
             {
-                int site = col + cols * row;
+                int site = col + ctx.grid.cols * row;
                 UpdateCrownStatistic(height_layer, site, CrownStatistic_input, CrownStatistic_output);
             }
         }
@@ -3719,7 +3719,7 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
 // Global function: update of LAI3D field, called by CalcLAI()
 void UpdateLAI3D(int height, int site, float dens, float &LA_cumulated)
 {
-    LAI3D[height][site + SBORD] += dens;
+    LAI3D[height][site + ctx.grid.SBORD] += dens;
     LA_cumulated += dens;
 }
 
@@ -3740,8 +3740,8 @@ void UpdateCHM(int height, int site, float noinput, int *chm)
 
 void OutputCrownSliced(int height, int site, int row_slice, vector<float> &output_statistics)
 {
-    int row_current = site / cols;
-    int col_current = site % cols;
+    int row_current = site / ctx.grid.cols;
+    int col_current = site % ctx.grid.cols;
     if (row_current == row_slice && col_current >= mincol_visual && col_current < maxcol_visual)
     {
         output_visual[1] << ctx.time.iter << "\t" << row_current << "\t" << col_current << "\t" << height;
@@ -3757,7 +3757,7 @@ void OutputCrownSliced(int height, int site, int row_slice, vector<float> &outpu
 void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
 {
     // First get voxel field densities
-    float absorb_prev = LAI3D[height + 1][site + SBORD];
+    float absorb_prev = LAI3D[height + 1][site + ctx.grid.SBORD];
     int intabsorb = CalcIntabsorb(absorb_prev);
 
     // Obtain PPFD for the voxel, and also record the circled area
@@ -3776,8 +3776,8 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 {
 #endif
     // first get voxel field densities
-    float absorb_prev = LAI3D[height + 1][site + SBORD];
-    float absorb_curr = LAI3D[height][site + SBORD];
+    float absorb_prev = LAI3D[height + 1][site + ctx.grid.SBORD];
+    float absorb_curr = LAI3D[height][site + ctx.grid.SBORD];
     float absorb_delta = absorb_curr - absorb_prev;
     if (absorb_delta < 0.0)
         absorb_delta = 0.0; // eliminate rounding errors
@@ -4003,7 +4003,7 @@ int main(int argc, char *argv[])
 
     cout << "klight is: " << klight << endl;
     cout << "CO2 concentration is: " << Cair << endl;
-    cout << "Number of species: " << nbspp << endl
+    cout << "Number of species: " << ctx.grid.nbspp << endl
          << endl;
 #ifdef WATER
     cout << "Atmospheric pressure is: " << PRESS << endl;
@@ -4039,14 +4039,14 @@ int main(int argc, char *argv[])
     if (!mpi_rank)
     {
         output_info << "\nTROLL simulator\n\n";
-        output_info << "\n   2D discrete network: horizontal step = " << LH
-                    << " m, one tree per " << LH * LH << " m^2 \n\n";
+        output_info << "\n   2D discrete network: horizontal step = " << ctx.grid.LH
+                    << " m, one tree per " << ctx.grid.LH * ctx.grid.LH << " m^2 \n\n";
         output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
         output_info << "\n            + one species label \n\n";
-        output_info << " Number of sites      : " << rows << "x" << cols << "\n";
+        output_info << " Number of sites      : " << ctx.grid.rows << "x" << ctx.grid.cols << "\n";
         output_info << " Number of iterations : " << ctx.time.nbiter << "\n";
         output_info << " Duration of timestep : " << ctx.time.timestep << " years\n";
-        output_info << " Number of Species    : " << nbspp << "\n\n";
+        output_info << " Number of Species    : " << ctx.grid.nbspp << "\n\n";
         output_info.flush();
     }
 
@@ -4120,7 +4120,7 @@ int main(int argc, char *argv[])
     }
     if (_OUTPUT_inventory)
     {
-        for (int d = 0; d < nbdcells; d = d + 1)
+        for (int d = 0; d < ctx.grid.nbdcells; d = d + 1)
         {
             output_basic[3] << d;
             for (int l = 0; l < nblayers_soil; l = l + 1)
@@ -4280,25 +4280,24 @@ void ReadInputGeneral(Context &ctx)
             cout << "ERROR. General input file could not be read." << endl;
         }
         // update derived parameters
-        sites = rows * cols;    // leave global for now
-        ctx.grid.sites = sites; // set context variable
-        sites_per_dcell = length_dcell * length_dcell;
-        nbdcells = int(sites / sites_per_dcell);
-        linear_nb_dcells = int(cols / length_dcell);
-        cout << "rows: " << rows << " cols: " << cols << " HEIGHT: " << HEIGHT << endl;
-        cout << "Number of dcells: " << nbdcells << endl;
-        cout << "Lin number of dcells: " << linear_nb_dcells << endl;
+        ctx.grid.sites = ctx.grid.rows * ctx.grid.cols;    // leave global for now
+        ctx.grid.sites_per_dcell = ctx.grid.length_dcell * ctx.grid.length_dcell;
+        ctx.grid.nbdcells = int(ctx.grid.sites / ctx.grid.sites_per_dcell);
+        ctx.grid.linear_nb_dcells = int(ctx.grid.cols / ctx.grid.length_dcell);
+        cout << "ctx.grid.rows: " << ctx.grid.rows << " ctx.grid.cols: " << ctx.grid.cols << " ctx.grid.HEIGHT: " << ctx.grid.HEIGHT << endl;
+        cout << "Number of dcells: " << ctx.grid.nbdcells << endl;
+        cout << "Lin number of dcells: " << ctx.grid.linear_nb_dcells << endl;
         cout << _WATER_RETENTION_CURVE << " " << _SOIL_LAYER_WEIGHT << " " << Cair << endl;
 
 #ifdef WATER
-        i_sites_per_dcell = 1.0 / float(sites_per_dcell);
+        ctx.grid.i_sites_per_dcell = 1.0 / float(ctx.grid.sites_per_dcell);
         PPFDtoSW = 1 / SWtoPPFD;
 #ifdef G0
         g0 *= 0.001 * GSVGSC; // g0 is provided in mmolH20 m-2 s-1, but will be used in Photosyn function for stomatal conductance to CO2 in molCO2 m-2 s-1 (and then converted back to flux of H20 in FluxesLeaf)
 #endif
 #endif
-        LV = 1.0 / NV;
-        LH = 1.0 / NH;
+        ctx.grid.LV = 1.0 / ctx.grid.NV;
+        ctx.grid.LH = 1.0 / ctx.grid.NH;
         if (ctx.time.nbout)
             ctx.time.freqout = ctx.time.nbiter / ctx.time.nbout;
 
@@ -4345,10 +4344,10 @@ void ReadInputGeneral(Context &ctx)
         }
         crown_gap_fraction = fmaxf(crown_gap_fraction, 0.000001); // crown_gap_fraction is prevented from becoming zero in order to avoid division by zero. Given that crown area is currently limited to 1963 (int(3.14 * 25.0 * 25.0), the lowest crown_gap_fraction that could potentially have an effect would be 1/1963, which is ~ 0.0005
         iCair = 1.0 / Cair;
-        DBH0 *= NH;
-        H0 *= NV;
-        CR_min *= NH;
-        CD0 *= NV;
+        DBH0 *= ctx.grid.NH;
+        H0 *= ctx.grid.NV;
+        CR_min *= ctx.grid.NH;
+        CD0 *= ctx.grid.NV;
 #ifdef WATER
         // alpha = absorptance_leaves*(1-LSQ)*0.5; // apparent quantum yield to electron transport. 0.5 because each photosystem absorbs half of the photons (von Caemmerer 2000, p 35). Note that, alpha was previously computed as 4*the apparent quantum yield for C fixation, phi in molC/mol photons, with phi=0.06 (in Marechaux & Chave 2017) or 0.075 (in FFischer's version), which provided alpha=0.3 and 0.24 respectively. This now gives alpha=0.37. Duursma et al. 2015 used alpha=0.24, while values reported or used by von Caemmerer 2000, Medlyn et al. 2002 are typically 0.3-0.37. Domingues et al. 2014 Plant Ecology & Diversity reported values for phi ranging from 0.041 to 0.098 (ie alpha ranging from 0.164 to 0.392, within a same tropical forest community (Tapajos, Brazil).
         alpha = (1 - LSQ) * 0.5; // no need of absorptance_leaves since PPFD provided in argument to Photosyn is already the absorbed flux
@@ -4357,19 +4356,19 @@ void ReadInputGeneral(Context &ctx)
 #endif
 
         // new in v.3.1.2: visual extent
-        int maxextent_visual = min(rows, cols);
+        int maxextent_visual = min(ctx.grid.rows, ctx.grid.cols);
         if (extent_visual > maxextent_visual)
             extent_visual = maxextent_visual; // make sure visualization does not exceed boundaries of simulation
         if (extent_visual > 0)
         {
             // define boundaries
             int rowextent_slice = 10;
-            mincol_visual = cols / 2 - extent_visual / 2;
-            maxcol_visual = cols / 2 + extent_visual / 2;
-            minrow_visual = rows / 2 - extent_visual / 2;
-            maxrow_visual = rows / 2 + extent_visual / 2;
-            minrow_visual_slice = max(rows / 2 - rowextent_slice / 2, minrow_visual);
-            maxrow_visual_slice = min(rows / 2 + rowextent_slice / 2, maxrow_visual);
+            mincol_visual = ctx.grid.cols / 2 - extent_visual / 2;
+            maxcol_visual = ctx.grid.cols / 2 + extent_visual / 2;
+            minrow_visual = ctx.grid.rows / 2 - extent_visual / 2;
+            maxrow_visual = ctx.grid.rows / 2 + extent_visual / 2;
+            minrow_visual_slice = max(ctx.grid.rows / 2 - rowextent_slice / 2, minrow_visual);
+            maxrow_visual_slice = min(ctx.grid.rows / 2 + rowextent_slice / 2, maxrow_visual);
         }
     }
     else
@@ -4458,12 +4457,12 @@ void ReadInputSpecies()
 
         if (nb_parameterlines > 0)
         {
-            nbspp = nb_parameterlines;
-            cout << "Successfully initialised " << nbspp << " species from file." << endl;
+            ctx.grid.nbspp = nb_parameterlines;
+            cout << "Successfully initialised " << ctx.grid.nbspp << " species from file." << endl;
         }
         else
         {
-            nbspp = 1;
+            ctx.grid.nbspp = 1;
             cout << "WARNING! Species file was empty. A default species is initialized." << endl;
             vector<string> parameter_values(nb_parameters, "");
             Species species_default;
@@ -4474,7 +4473,7 @@ void ReadInputSpecies()
             S.push_back(species_default);
         }
 
-        for (int sp = 1; sp <= nbspp; sp++)
+        for (int sp = 1; sp <= ctx.grid.nbspp; sp++)
         {
 
             S[sp].Init();
@@ -4915,8 +4914,8 @@ void ReadInputSoil()
             {
                 Sat_SWC[l] = 0.01 * (40.61 + (0.165 * proportion_Silt[l]) + (0.162 * proportion_Clay[l]) + (0.00137 * proportion_Silt[l] * proportion_Silt[l]) + (0.000018 * proportion_Silt[l] * proportion_Silt[l] * proportion_Clay[l])); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
             }
-            Max_SWC[l] = Sat_SWC[l] * sites_per_dcell * LH * LH * layer_thickness[l]; // in m3
-            cout << "layer " << l << " Vol=" << sites_per_dcell * LH * LH * layer_thickness[l] << " m3; Sat_SWC =" << Sat_SWC[l] << " MAX_SWC =" << Max_SWC[l] << " m3." << endl;
+            Max_SWC[l] = Sat_SWC[l] * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // in m3
+            cout << "layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << " m3; Sat_SWC =" << Sat_SWC[l] << " MAX_SWC =" << Max_SWC[l] << " m3." << endl;
         }
 
         if (NULL == (Ksat = new float[nblayers_soil]))
@@ -4943,9 +4942,9 @@ void ReadInputSoil()
             {
                 Res_SWC[l] = 0.01 * fmaxf(0.0, (-2.094 + (0.047 * proportion_Silt[l]) + (0.431 * proportion_Clay[l]) - (0.00827 * proportion_Silt[l] * proportion_Clay[l]))); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014.
             }
-            Min_SWC[l] = Res_SWC[l] * sites_per_dcell * LH * LH * layer_thickness[l]; // in m3
+            Min_SWC[l] = Res_SWC[l] * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // in m3
 
-            cout << "layer " << l << " Vol=" << sites_per_dcell * LH * LH * layer_thickness[l] << "m3; Res=" << Res_SWC[l] << " MIN_SWC =" << Min_SWC[l] << " m3" << endl;
+            cout << "layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << "m3; Res=" << Res_SWC[l] << " MIN_SWC =" << Min_SWC[l] << " m3" << endl;
         }
 
         if (_WATER_RETENTION_CURVE == 1)
@@ -4969,7 +4968,7 @@ void ReadInputSoil()
                 b_vgm[l] = 1.0 / m_vgm[l];
                 c_vgm[l] = 1.0 - m_vgm[l];
 
-                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow((pow(0.01 * alpha, 1 / c_vgm[l]) + 1), -(1 / b_vgm[l]))) * sites_per_dcell * LH * LH * layer_thickness[l]; // this is the layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
+                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow((pow(0.01 * alpha, 1 / c_vgm[l]) + 1), -(1 / b_vgm[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
 
                 cout << "layer " << l << " alpha=" << alpha << "\t" << "n_vgm=" << n_vgm << " FC_SWC=" << FC_SWC[l] << endl;
             }
@@ -4987,7 +4986,7 @@ void ReadInputSoil()
                 // phi_e[l]=-0.00000001*pow(10.0,(2.17-(0.0063*proportion_Clay[l])-(0.0158*proportion_Sand[l])))*(1000*9.80665); // according to Cosby et al. 1984, non -tropical and texture-based but widely used, as reported in Table 2 in Marthews et al. 2014. In MPa.
                 // b[l]=3.10+0.157*proportion_Clay[l]-0.003*proportion_Sand[l]; // according to Cosby et al. 1984, non -tropical and texture-based but widely used, as reported in Table 2 in Marthews et al. 2014. Dimensionless.
 
-                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow(-0.01 / phi_e[l], -(1 / b[l]))) * sites_per_dcell * LH * LH * layer_thickness[l]; // this is the layer water content at filed capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
+                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow(-0.01 / phi_e[l], -(1 / b[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the layer water content at filed capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
 
                 cout << "layer " << l << " phi_e=" << phi_e[l] << "\t" << "b=" << b[l] << " FC_SWC=" << FC_SWC[l] << endl;
             }
@@ -5132,7 +5131,7 @@ void InitialiseIntraspecific()
 // v.3.1.5: create a LookUp table based on species identity and intraspecific deviation
 void InitialiseLookUpLAImax()
 {
-    LookUpLAImax.reserve(10000 * nbspp); // 10000 is the possible number of combinations for intraspecific variation
+    LookUpLAImax.reserve(10000 * ctx.grid.nbspp); // 10000 is the possible number of combinations for intraspecific variation
 
     // since LAImax is defined at Tree level, we create pseudo trees (i.e. trees with only information on Pmass, Nmass and LMA) to calculate it from
     // for control purposes output min and max LAImax
@@ -5141,7 +5140,7 @@ void InitialiseLookUpLAImax()
     float maxLAImax = 0.0;
     float avgLAImax = 0.0;
 
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
     {
         for (int dev = 0; dev < 10000; dev++)
         {
@@ -5176,7 +5175,7 @@ void InitialiseLookUpLAImax()
         }
     }
 
-    avgLAImax *= 1.0 / float(10000 * nbspp);
+    avgLAImax *= 1.0 / float(10000 * ctx.grid.nbspp);
     cout << "Calculated LookUp table for LAImax. Min LAImax is: " << minLAImax << " | max LAImax is: " << maxLAImax << " avg LAImax is: " << avgLAImax << endl;
 }
 #endif
@@ -5185,7 +5184,7 @@ void InitialiseLookUpLAImax()
 //! - this contains a number of empirical functions including:
 //! -# temperature dependence on Farquhar model parameters (following von Caemmerer 2000 and Bernacchi et al. 2003 PCE)
 //! -# flux averaging with the canopy
-//! -# sites within a crown in order of distance from the center
+//! -# ctx.grid.sites within a crown in order of distance from the center
 void InitialiseLookUpTables()
 {
 
@@ -5356,7 +5355,7 @@ void InitialiseLookUpTables()
         }
     }
 
-    // new in v.2.4: LookUp table that gives the sites within a crown in order of distance from the center
+    // new in v.2.4: LookUp table that gives the ctx.grid.sites within a crown in order of distance from the center
     // crowns can thus be assembled from inside out, in a radial fashion
     int Crown_dist[2601]; // this saves the distances from the center of the crown
     int extent = 25;      // maximum extent of crowns (after test: either enlarge or allocate dynamically)
@@ -5592,7 +5591,7 @@ void InitialiseOutputStreams()
         output[22] << "iter";
         output[23] << "iter";
         output[24] << "iter";
-        for (int l = 0; l < HEIGHT + 1; l++)
+        for (int l = 0; l < ctx.grid.HEIGHT + 1; l++)
         {
             output[22] << "\t" << "h_" << l;
             output[23] << "\t" << "h_" << l;
@@ -5612,7 +5611,7 @@ void InitialiseOutputStreams()
         output[18] << "variable";
         output[19] << "variable";
         output[20] << "variable";
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
             output[1] << "\t" << "dcell_" << d;
             output[2] << "\t" << "dcell_" << d;
@@ -5803,8 +5802,8 @@ void InitialiseABC()
     margin = 0;
     row_start = margin;
     col_start = margin;
-    row_end = rows - margin;
-    col_end = cols - margin;
+    row_end = ctx.grid.rows - margin;
+    col_end = ctx.grid.cols - margin;
     sites_abc = (row_end - row_start) * (col_end - col_start);
     isites_abc = 1.0 / float(sites_abc);
     cout << "row start: " << row_start << " | row end: " << row_end << " | sites_abc: " << sites_abc << endl;
@@ -5812,19 +5811,19 @@ void InitialiseABC()
     nbvisited = 0;
     // distributions for simulated and empirical CHM
     // precomputed, not directly deduced from empirical fields, as a separate algorithm is used (from LAStools)
-    if (NULL == (chm_field_previous = new int[sites]))
+    if (NULL == (chm_field_previous = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (chm_field_current = new int[sites]))
+    if (NULL == (chm_field_current = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (chm_field_previous_ALS = new int[sites]))
+    if (NULL == (chm_field_previous_ALS = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (chm_field_current_ALS = new int[sites]))
+    if (NULL == (chm_field_current_ALS = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (chm_field_changes = new int[sites]))
+    if (NULL == (chm_field_changes = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (chm_field_changes_ALS = new int[sites]))
+    if (NULL == (chm_field_changes_ALS = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         chm_field_previous[s] = 0;
         chm_field_current[s] = 0;
@@ -5834,31 +5833,31 @@ void InitialiseABC()
         chm_field_changes_ALS[s] = 0;
     }
     // field for simulated transmittance
-    if (NULL == (transmittance_simulatedALS = new float *[HEIGHT + 1]))
+    if (NULL == (transmittance_simulatedALS = new float *[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (transmittance_direct = new float *[HEIGHT + 1]))
+    if (NULL == (transmittance_direct = new float *[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (transmittance_simulatedALS_sampling = new int *[HEIGHT + 1]))
+    if (NULL == (transmittance_simulatedALS_sampling = new int *[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
-        if (NULL == (transmittance_simulatedALS[h] = new float[sites]))
+        if (NULL == (transmittance_simulatedALS[h] = new float[ctx.grid.sites]))
             cerr << "!!! Mem_Alloc\n";
-        if (NULL == (transmittance_direct[h] = new float[sites]))
+        if (NULL == (transmittance_direct[h] = new float[ctx.grid.sites]))
             cerr << "!!! Mem_Alloc\n";
-        if (NULL == (transmittance_simulatedALS_sampling[h] = new int[sites]))
+        if (NULL == (transmittance_simulatedALS_sampling[h] = new int[ctx.grid.sites]))
             cerr << "!!! Mem_Alloc\n";
     }
     // set it to default 1 (full visibility)
-    for (int row = 0; row < rows; row++)
+    for (int row = 0; row < ctx.grid.rows; row++)
     {
-        for (int col = 0; col < cols; col++)
+        for (int col = 0; col < ctx.grid.cols; col++)
         {
-            for (int h = 0; h < (HEIGHT + 1); h++)
+            for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                transmittance_simulatedALS[h][col + row * cols] = 1.0;
-                transmittance_direct[h][col + row * cols] = 1.0;
-                transmittance_simulatedALS_sampling[h][col + row * cols] = 0;
+                transmittance_simulatedALS[h][col + row * ctx.grid.cols] = 1.0;
+                transmittance_direct[h][col + row * ctx.grid.cols] = 1.0;
+                transmittance_simulatedALS_sampling[h][col + row * ctx.grid.cols] = 0;
             }
         }
     }
@@ -6045,10 +6044,10 @@ void ReadInputInventory()
             int radius_max = 5;
             int area_max = int(radius_max * radius_max * PI);
 
-            // define an array of randomly permuted sites so that random number generator does not have to be called too often
+            // define an array of randomly permuted ctx.grid.sites so that random number generator does not have to be called too often
             vector<int> sites_shuffled;
-            sites_shuffled.reserve(sites);
-            for (int s = 0; s < sites; s++)
+            sites_shuffled.reserve(ctx.grid.sites);
+            for (int s = 0; s < ctx.grid.sites; s++)
             {
                 sites_shuffled.push_back(s);
             }
@@ -6083,13 +6082,13 @@ void ReadInputInventory()
                 bool quiet = 1;
                 if (flag_col == 0 && flag_row == 0)
                 {
-                    SetParameter(parameter_names[pcol], parameter_values[pcol], col, 0, cols - 1, -1, quiet);
-                    SetParameter(parameter_names[prow], parameter_values[prow], row, 0, rows - 1, -1, quiet);
+                    SetParameter(parameter_names[pcol], parameter_values[pcol], col, 0, ctx.grid.cols - 1, -1, quiet);
+                    SetParameter(parameter_names[prow], parameter_values[prow], row, 0, ctx.grid.rows - 1, -1, quiet);
                 }
 
                 if (col >= 0 && row >= 0)
                 {
-                    int site = col + row * cols;
+                    int site = col + row * ctx.grid.cols;
                     int i = 0;
                     while (T[site].t_age != 0.0 && i < area_max)
                     {
@@ -6097,9 +6096,9 @@ void ReadInputInventory()
                         int site_relative = LookUp_Crown_site[i];
                         int row_new = row + site_relative / 51 - 25;
                         int col_new = col + site_relative % 51 - 25;
-                        if (row_new >= 0 && row_new < rows && col_new >= 0 && col_new < cols)
+                        if (row_new >= 0 && row_new < ctx.grid.rows && col_new >= 0 && col_new < ctx.grid.cols)
                         {
-                            site = col_new + row_new * cols;
+                            site = col_new + row_new * ctx.grid.cols;
                         }
                     }
 
@@ -6117,10 +6116,10 @@ void ReadInputInventory()
                 else
                 {
                     // find a random free site
-                    while (sites_shuffled_index < sites && T[sites_shuffled[sites_shuffled_index]].t_age != 0.0)
+                    while (sites_shuffled_index < ctx.grid.sites && T[sites_shuffled[sites_shuffled_index]].t_age != 0.0)
                         sites_shuffled_index++;
 
-                    if (sites_shuffled_index < sites)
+                    if (sites_shuffled_index < ctx.grid.sites)
                     {
                         // as long as the search has stopped and the index has not run outside the range, the tree can be initialized
                         int site = sites_shuffled[sites_shuffled_index];
@@ -6141,7 +6140,7 @@ void ReadInputInventory()
                 cout << "Successfully initialised " << nb_individuals << " out of " << nb_parameterlines << " trees from file." << endl;
                 cout << "Coordinates: " << nb_moved << " trees were moved due to overlapping coordinates, and " << nb_random << " were placed randomly on the grid as coordinates were incomplete or could not be read in." << endl;
                 cout << "Species: " << nb_speciesrandom << " trees were assigned a random species." << endl;
-                if (sites_shuffled_index == sites)
+                if (sites_shuffled_index == ctx.grid.sites)
                     cout << "WARNING: shuffle index: " << sites_shuffled_index << " is equal site number. This means that random placement of trees has stopped early as the algorithm has run out of grid cells to place trees. This may indicate that there were more trees than grid cells." << endl;
             }
             else
@@ -6184,7 +6183,7 @@ void ReadInputInventory()
             dcell++;
         }
 
-        if (dcell != nbdcells)
+        if (dcell != ctx.grid.nbdcells)
             cout << "Error in SWC input file (number of dcells) " << endl;
     }
     else
@@ -6195,7 +6194,7 @@ void ReadInputInventory()
     InSWC.close();
 
     // compute soil_phi3D for RecruitTree function
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         for (int l = 0; l < nblayers_soil; l++)
         {
@@ -6225,16 +6224,16 @@ void ReadInputInventory()
     }
 
     // compute LAID for RecruitTree function
-    for (int h = 0; h < (HEIGHT + 1); h++)
-        for (int sbsite = 0; sbsite < sites + 2 * SBORD; sbsite++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+        for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             LAI3D[h][sbsite] = 0.0;
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
         T[site].CalcLAI(); // Each tree contribues to LAI3D
-    for (int h = HEIGHT; h > 0; h--)
+    for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
-        for (int site = 0; site < sites; site++)
+        for (int site = 0; site < ctx.grid.sites; site++)
         {
-            int sbsite = site + SBORD;
+            int sbsite = site + ctx.grid.SBORD;
             LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
         }
     }
@@ -6247,10 +6246,10 @@ void ReadInputInventory()
     //     vector<float> heights_trees;
     //     vector<int> sites_trees;
     //
-    //     heights_trees.reserve(sites);
-    //     sites_trees.reserve(sites);
+    //     heights_trees.reserve(ctx.grid.sites);
+    //     sites_trees.reserve(ctx.grid.sites);
     //
-    //     for(int site = 0; site < sites; site++){
+    //     for(int site = 0; site < ctx.grid.sites; site++){
     //        // Only consider non-initialized trees (i.e. t_LA < 0.0)
     //        if(T[site].t_age > 0.0 & T[site].t_LA < 0.0){
     //            float height = T[site].t_height;
@@ -6271,8 +6270,8 @@ void ReadInputInventory()
     //     }
     //
     //     // clear voxel field
-    //     for(int h=0;h<(HEIGHT+1);h++)
-    //         for(int sbsite=0;sbsite<sites+2*SBORD;sbsite++)
+    //     for(int h=0;h<(ctx.grid.HEIGHT+1);h++)
+    //         for(int sbsite=0;sbsite<ctx.grid.sites+2*ctx.grid.SBORD;sbsite++)
     //             LAI3D[h][sbsite] = 0.0;
     //
     //     // allocate and compute leaf area
@@ -6290,116 +6289,116 @@ void AllocMem(Context &ctx)
 {
     // this needs better commenting and probably a rethink (mainly has to do with MPI)
     float d = 0.0; // maximum diameter possible
-    for (int spp = 1; spp <= nbspp; spp++)
+    for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
     {
         d = fmaxf(d, S[spp].s_dbhmax * 1.5);
     }
     float r = 25.0; // simply set to maximum crown radius possible in simulations
 
-    RMAX = int(r + p_nonvert * NH * LV * HEIGHT);
-    //  RMAX = int(r);
-    SBORD = cols * RMAX;
-    dbhmaxincm = int(100. * d);
-    cout << "SBORD: " << SBORD << endl;
+    ctx.grid.RMAX = int(r + p_nonvert * ctx.grid.NH * ctx.grid.LV * ctx.grid.HEIGHT);
+    //  ctx.grid.RMAX = int(r);
+    ctx.grid.SBORD = ctx.grid.cols * ctx.grid.RMAX;
+    ctx.grid.dbhmaxincm = int(100. * d);
+    cout << "ctx.grid.SBORD: " << ctx.grid.SBORD << endl;
     if (!mpi_rank)
     {
-        // cout << "HEIGHT : " << HEIGHT << " RMAX : " << RMAX << " DBH : " << DBH <<"\n"; cout.flush();
-        if (RMAX > rows)
+        // cout << "ctx.grid.HEIGHT : " << ctx.grid.HEIGHT << " ctx.grid.RMAX : " << ctx.grid.RMAX << " DBH : " << DBH <<"\n"; cout.flush();
+        if (ctx.grid.RMAX > ctx.grid.rows)
         {
             // Consistency tests
-            cerr << "Error : RMAX > rows \n";
+            cerr << "Error : ctx.grid.RMAX > ctx.grid.rows \n";
             exit(-1);
         }
-        if (HEIGHT > rows)
+        if (ctx.grid.HEIGHT > ctx.grid.rows)
         {
-            cerr << "Error : HEIGHT > rows \n";
+            cerr << "Error : ctx.grid.HEIGHT > ctx.grid.rows \n";
             exit(-1);
         }
     }
 
     //** Initialization of dynamic Fields **
     //**************************************
-    if (NULL == (nbdbh = new int[dbhmaxincm]))
+    if (NULL == (nbdbh = new int[ctx.grid.dbhmaxincm]))
         cerr << "!!! Mem_Alloc\n"; // Field for DBH histogram
-    if (NULL == (layer = new float[HEIGHT + 1]))
+    if (NULL == (layer = new float[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n"; // Field for variables averaged by vertical layer
 #ifdef Output_ABC
-    if (NULL == (abundances_species = new int[nbspp + 1]))
+    if (NULL == (abundances_species = new int[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep
-    if (NULL == (abundances_species10 = new int[nbspp + 1]))
+    if (NULL == (abundances_species10 = new int[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep (dbh > 10cm)
-    if (NULL == (biomass_species = new float[nbspp + 1]))
+    if (NULL == (biomass_species = new float[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep (dbh > 10cm)
 
-    if (NULL == (traits_species = new float *[nbspp + 1]))
+    if (NULL == (traits_species = new float *[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded ctx.time.timestep
 
-    for (int spp = 0; spp < (nbspp + 1); spp++)
+    for (int spp = 0; spp < (ctx.grid.nbspp + 1); spp++)
         if (NULL == (traits_species[spp] = new float[10]))
             cerr << "!!! Mem_Alloc\n";
-    if (NULL == (traits_species10 = new float *[nbspp + 1]))
+    if (NULL == (traits_species10 = new float *[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded ctx.time.timestep  (dbh > 10cm)
-    for (int spp = 0; spp < (nbspp + 1); spp++)
+    for (int spp = 0; spp < (ctx.grid.nbspp + 1); spp++)
         if (NULL == (traits_species10[spp] = new float[10]))
             cerr << "!!! Mem_Alloc\n";
 #endif
-    if (NULL == (SPECIES_GERM = new int[nbspp + 1]))
+    if (NULL == (SPECIES_GERM = new int[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // Field for democratic seed germination
-    if (NULL == (SPECIES_SEEDS = new int *[sites]))
+    if (NULL == (SPECIES_SEEDS = new int *[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";                              // Field of seeds
-    for (int site = 0; site < sites; site++)                    // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is SBORD in width.
-        if (NULL == (SPECIES_SEEDS[site] = new int[nbspp + 1])) // ALL the sites need to be updated.
+    for (int site = 0; site < ctx.grid.sites; site++)                    // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is ctx.grid.SBORD in width.
+        if (NULL == (SPECIES_SEEDS[site] = new int[ctx.grid.nbspp + 1])) // ALL the ctx.grid.sites need to be updated.
             cerr << "!!! Mem_Alloc\n";
-    for (int site = 0; site < sites; site++)
-        for (int spp = 0; spp <= nbspp; spp++)
+    for (int site = 0; site < ctx.grid.sites; site++)
+        for (int spp = 0; spp <= ctx.grid.nbspp; spp++)
             SPECIES_SEEDS[site][spp] = 0;
-    if (NULL == (p_seed = new double[sites]))
+    if (NULL == (p_seed = new double[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (n_seed = new unsigned int[sites]))
+    if (NULL == (n_seed = new unsigned int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
 
-    double prob_seed = 1.0 / double(sites);
-    for (int i = 0; i < sites; i++)
+    double prob_seed = 1.0 / double(ctx.grid.sites);
+    for (int i = 0; i < ctx.grid.sites; i++)
         p_seed[i] = prob_seed;
-    for (int i = 0; i < sites; i++)
+    for (int i = 0; i < ctx.grid.sites; i++)
         n_seed[i] = 0;
 
-    if (NULL == (p_species = new double[nbspp]))
+    if (NULL == (p_species = new double[ctx.grid.nbspp]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (n_species = new unsigned int[nbspp]))
+    if (NULL == (n_species = new unsigned int[ctx.grid.nbspp]))
         cerr << "!!! Mem_Alloc\n";
 
-    for (int spp = 1; spp <= nbspp; spp++)
+    for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
     {
         double prob_species = double(S[spp].s_nbext);
         // cout << "prob_species: " << prob_species << endl;
         p_species[spp - 1] = prob_species;
     }
 
-    for (int i = 0; i < nbspp; i++)
+    for (int i = 0; i < ctx.grid.nbspp; i++)
         n_species[i] = 0;
 
     if (_SEEDTRADEOFF)
-        if (NULL == (PROB_S = new float[nbspp + 1]))
+        if (NULL == (PROB_S = new float[ctx.grid.nbspp + 1]))
             cerr << "!!! Mem_Alloc\n";
     if (_NDD)
-        if (NULL == (PROB_S = new float[nbspp + 1]))
+        if (NULL == (PROB_S = new float[ctx.grid.nbspp + 1]))
             cerr << "!!! Mem_Alloc\n";
     //  if (NULL==(persist=new long int[ctx.time.nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
-    //  if (NULL==(distr=new int[cols])) cerr<<"!!! Mem_Alloc\n";
+    //  if (NULL==(distr=new int[ctx.grid.cols])) cerr<<"!!! Mem_Alloc\n";
 
-    if (NULL == (LAI3D = new float *[HEIGHT + 1]))             // Field 3D
+    if (NULL == (LAI3D = new float *[ctx.grid.HEIGHT + 1]))             // Field 3D
         cerr << "!!! Mem_Alloc\n";                             // Trees at the border of the simulated forest need to know the canopy occupancy by trees in the neighboring processor.
-    for (int h = 0; h < (HEIGHT + 1); h++)                     // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is SBORD in width.
-        if (NULL == (LAI3D[h] = new float[sites + 2 * SBORD])) // ALL the sites need to be updated.
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)                     // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is ctx.grid.SBORD in width.
+        if (NULL == (LAI3D[h] = new float[ctx.grid.sites + 2 * ctx.grid.SBORD])) // ALL the ctx.grid.sites need to be updated.
             cerr << "!!! Mem_Alloc\n";
-    for (int h = 0; h < (HEIGHT + 1); h++)
-        for (int site = 0; site < sites + 2 * SBORD; site++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+        for (int site = 0; site < ctx.grid.sites + 2 * ctx.grid.SBORD; site++)
             LAI3D[h][site] = 0.0;
-    if (NULL == (Thurt[0] = new unsigned short[3 * sites])) // Field for treefall impacts
+    if (NULL == (Thurt[0] = new unsigned short[3 * ctx.grid.sites])) // Field for treefall impacts
         cerr << "!!! Mem_Alloc\n";
     for (int i = 1; i < 3; i++)
-        if (NULL == (Thurt[i] = new unsigned short[sites]))
+        if (NULL == (Thurt[i] = new unsigned short[ctx.grid.sites]))
             cerr << "!!! Mem_Alloc\n";
 
 #ifdef WATER
@@ -6416,18 +6415,18 @@ void AllocMem(Context &ctx)
         cerr << "!!! Mem_Alloc\n";
     for (int l = 0; l < nblayers_soil; l++)
     {
-        if (NULL == (SWC3D[l] = new float[nbdcells]))
+        if (NULL == (SWC3D[l] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
-        if (NULL == (soil_phi3D[l] = new float[nbdcells]))
+        if (NULL == (soil_phi3D[l] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
-        if (NULL == (Ks[l] = new float[nbdcells]))
+        if (NULL == (Ks[l] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
-        if (NULL == (KsPhi[l] = new float[nbdcells]))
+        if (NULL == (KsPhi[l] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
-        // if (NULL==(KsPhi2[l]=new float[nbdcells])) cerr<<"!!! Mem_Alloc\n";
-        if (NULL == (Transpiration[l] = new float[nbdcells]))
+        // if (NULL==(KsPhi2[l]=new float[ctx.grid.nbdcells])) cerr<<"!!! Mem_Alloc\n";
+        if (NULL == (Transpiration[l] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
-        for (int dcell = 0; dcell < nbdcells; dcell++)
+        for (int dcell = 0; dcell < ctx.grid.nbdcells; dcell++)
         {
             // SWC3D[l][dcell]=Max_SWC[l];
             SWC3D[l][dcell] = FC_SWC[l];
@@ -6442,38 +6441,38 @@ void AllocMem(Context &ctx)
             }
         }
     }
-    if (NULL == (LAI_DCELL = new float *[HEIGHT + 1]))
+    if (NULL == (LAI_DCELL = new float *[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
-        if (NULL == (LAI_DCELL[h] = new float[nbdcells]))
+        if (NULL == (LAI_DCELL[h] = new float[ctx.grid.nbdcells]))
             cerr << "!!! Mem_Alloc\n";
     }
-    if (NULL == (LAI_young = new float[HEIGHT + 1]))
+    if (NULL == (LAI_young = new float[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (LAI_mature = new float[HEIGHT + 1]))
+    if (NULL == (LAI_mature = new float[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (LAI_old = new float[HEIGHT + 1]))
+    if (NULL == (LAI_old = new float[ctx.grid.HEIGHT + 1]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Canopy_height_DCELL = new float[nbdcells]))
+    if (NULL == (Canopy_height_DCELL = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (TopWindSpeed_DCELL = new float[nbdcells]))
+    if (NULL == (TopWindSpeed_DCELL = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (HSum_DCELL = new int[nbdcells]))
+    if (NULL == (HSum_DCELL = new int[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Interception = new float[nbdcells]))
+    if (NULL == (Interception = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Throughfall = new float[nbdcells]))
+    if (NULL == (Throughfall = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Runoff = new float[nbdcells]))
+    if (NULL == (Runoff = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Leakage = new float[nbdcells]))
+    if (NULL == (Leakage = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (Evaporation = new float[nbdcells]))
+    if (NULL == (Evaporation = new float[ctx.grid.nbdcells]))
         cerr << "!!! Mem_Alloc\n";
-    for (int dcell = 0; dcell < nbdcells; dcell++)
+    for (int dcell = 0; dcell < ctx.grid.nbdcells; dcell++)
     {
-        for (int h = 0; h < (HEIGHT + 1); h++)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             LAI_DCELL[h][dcell] = 0.0;
         Canopy_height_DCELL[dcell] = 0.0;
         HSum_DCELL[dcell] = 0;
@@ -6484,32 +6483,32 @@ void AllocMem(Context &ctx)
         Leakage[dcell] = 0.0;
         Evaporation[dcell] = 0.0;
     }
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         LAI_young[h] = 0.0;
         LAI_mature[h] = 0.0;
         LAI_old[h] = 0.0;
     }
 
-    if (NULL == (site_DCELL = new int[sites]))
+    if (NULL == (ctx.grid.site_DCELL = new int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
-        int x = site % cols;
-        int y = site / cols;
-        int dcol = x / length_dcell;
-        int drow = y / length_dcell;
-        site_DCELL[site] = dcol + linear_nb_dcells * drow;
+        int x = site % ctx.grid.cols;
+        int y = site / ctx.grid.cols;
+        int dcol = x / ctx.grid.length_dcell;
+        int drow = y / ctx.grid.length_dcell;
+        ctx.grid.site_DCELL[site] = dcol + ctx.grid.linear_nb_dcells * drow;
     }
 #endif
 
 #ifdef MPI // Fields for MPI operations
     for (i = 0; i < 2; i++)
     {                                                             //  Two fields: one for the CL north (0) one for the CL south (1)
-        if (NULL == (LAIc[i] = new unsigned short *[HEIGHT + 1])) // These fields contain the light info in the neighboring procs (2*SBORD in width, not SBORD !). They are used to update local fields
+        if (NULL == (LAIc[i] = new unsigned short *[ctx.grid.HEIGHT + 1])) // These fields contain the light info in the neighboring procs (2*ctx.grid.SBORD in width, not ctx.grid.SBORD !). They are used to update local fields
             cerr << "!!! Mem_Alloc\n";
-        for (h = 0; h < (HEIGHT + 1); h++)
-            if (NULL == (LAIc[i][h] = new unsigned short[2 * SBORD]))
+        for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+            if (NULL == (LAIc[i][h] = new unsigned short[2 * ctx.grid.SBORD]))
                 cerr << "!!! Mem_Alloc\n";
     }
 #endif
@@ -6546,20 +6545,20 @@ void Evolution(Context &ctx)
         TriggerTreefall();          // Compute and distribute Treefall events, caused by wind drag
     }
 
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         //**** Tree evolution: Growth or death ****
         T[site].Update();
     }
 
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         for (int l = 0; l < nblayers_soil; l++)
         {
             Transpiration[l][d] = 0.0;
         }
     }
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         T[site].Water_uptake();
     }
@@ -6575,22 +6574,22 @@ void Evolution(Context &ctx)
 // #################################
 void UpdateSeeds()
 {
-    // With MPI option: Pass seeds across processors => two more fields to be communicated between n.n. (nearest neighbor) processors. NB: dispersal distance is bounded by the value of 'rows'. At least 99 % of the seeds should be dispersed within the stripe or on the n.n. stripe. Hence rows > 4.7*max(dist_moy_dissemination),for an exponential dispersal kernel.
+    // With MPI option: Pass seeds across processors => two more fields to be communicated between n.n. (nearest neighbor) processors. NB: dispersal distance is bounded by the value of 'ctx.grid.rows'. At least 99 % of the seeds should be dispersed within the stripe or on the n.n. stripe. Hence ctx.grid.rows > 4.7*max(dist_moy_dissemination),for an exponential dispersal kernel.
     // dispersal only once a year
     if (ctx.time.iter % ctx.time.iterperyear == 0)
     {
         // acceleration, using the multinomial distribution
-        int ha = sites / 10000;
-        gsl_ran_multinomial(gslrand, sites, Cseedrain * ha, p_seed, n_seed);
-        cout << sites << " Seedrain: " << Cseedrain * ha << endl;
+        int ha = ctx.grid.sites / 10000;
+        gsl_ran_multinomial(gslrand, ctx.grid.sites, Cseedrain * ha, p_seed, n_seed);
+        cout << ctx.grid.sites << " Seedrain: " << Cseedrain * ha << endl;
         int seedsadded = 0;
-        for (int s = 0; s < sites; s++)
+        for (int s = 0; s < ctx.grid.sites; s++)
         {
             // if(T[s].t_age == 0){
             int nbseeds = n_seed[s];
-            // cout << "Site: " << s << " nbseeds: " << nbseeds << " nbspp: " << nbspp << endl;
-            gsl_ran_multinomial(gslrand, nbspp, nbseeds, p_species, n_species);
-            for (int spp = 1; spp <= nbspp; spp++)
+            // cout << "Site: " << s << " nbseeds: " << nbseeds << " ctx.grid.nbspp: " << ctx.grid.nbspp << endl;
+            gsl_ran_multinomial(gslrand, ctx.grid.nbspp, nbseeds, p_species, n_species);
+            for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             {
                 int nbseeds_species = n_species[spp - 1];
                 // cout << "Site: " << s << " Species: " << spp << " nbseeds: " << nbseeds_species << endl;
@@ -6608,7 +6607,7 @@ void UpdateSeeds()
         // now disperse seeds from the trees on site
         // dispersion comes after seedrain calculation, because seedrain automatically removes seeds from places where there was no incoming seed
         int trees_mature = 0;
-        for (int site = 0; site < sites; site++)
+        for (int site = 0; site < ctx.grid.sites; site++)
         { // disperse seeds produced by mature trees
             if (T[site].t_age)
             {
@@ -6620,10 +6619,10 @@ void UpdateSeeds()
 
         int nbspecies_affected = 0;
         int seedsadded_effective = 0;
-        for (int spp = 1; spp <= nbspp; spp++)
+        for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
         {
             int seedsadded_species = 0;
-            for (int s = 0; s < sites; s++)
+            for (int s = 0; s < ctx.grid.sites; s++)
             {
                 seedsadded_species += SPECIES_SEEDS[s][spp];
             }
@@ -6669,28 +6668,28 @@ void UpdateField()
         // Evolution of the field NDDfield
 
         float normBA = 10000.0 / (0.001 + PI * Rndd * Rndd * BAtot);
-        for (int site = 0; site < sites; site++)
+        for (int site = 0; site < ctx.grid.sites; site++)
         {
 
-            for (int spp = 1; spp <= nbspp; spp++)
+            for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             {
                 // if ((ctx.time.iter == int(ctx.time.nbiter-1))&&(site>80000)&&(site<85000))  { sor[142]<< T[site].t_NDDfield[spp] << "\t" ;}
                 T[site].t_NDDfield[spp] = 0;
             }
             // if (ctx.time.iter == int(ctx.time.nbiter-1))  sor[142]<< "\n";
 
-            int row0 = T[site].t_site / cols;
-            int col0 = T[site].t_site % cols;
-            for (int col = max(0, int(col0 - Rndd)); col <= min(cols - 1, int(col0 + Rndd)); col++)
+            int row0 = T[site].t_site / ctx.grid.cols;
+            int col0 = T[site].t_site % ctx.grid.cols;
+            for (int col = max(0, int(col0 - Rndd)); col <= min(ctx.grid.cols - 1, int(col0 + Rndd)); col++)
             {
-                for (int row = max(0, int(row0 - Rndd)); row <= min(rows - 1, int(row0 + Rndd)); row++)
+                for (int row = max(0, int(row0 - Rndd)); row <= min(ctx.grid.rows - 1, int(row0 + Rndd)); row++)
                 { // loop over the neighbourhood
                     int xx = col0 - col;
                     int yy = row0 - row;
                     float d = sqrt(xx * xx + yy * yy);
                     if ((d <= Rndd) && (d > 0))
                     { // is the voxel within the neighbourhood?
-                        int j = cols * row + col;
+                        int j = ctx.grid.cols * row + col;
                         if (T[j].t_age)
                             T[site].t_NDDfield[T[j].t_sp_lab] += PI * T[j].t_dbh * T[j].t_dbh * 0.25 * normBA;
                     }
@@ -6705,28 +6704,28 @@ void UpdateField()
 #ifdef MPI
     // Reinitialize field LAI3D
     for (int i = 0; i < 2; i++)
-        for (int h = 0; h < (HEIGHT + 1); h++)
-            for (int site = 0; site < 2 * SBORD; site++)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+            for (int site = 0; site < 2 * ctx.grid.SBORD; site++)
                 LAIc[i][h][site] = 0;
 #endif
 
-    for (int h = 0; h < (HEIGHT + 1); h++)
-        for (int sbsite = 0; sbsite < sites + 2 * SBORD; sbsite++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+        for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             LAI3D[h][sbsite] = 0.0;
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
         T[site].CalcLAI(); // Each tree contribues to LAI3D
 
-    for (int h = HEIGHT; h > 0; h--)
+    for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
-        for (int site = 0; site < sites; site++)
+        for (int site = 0; site < ctx.grid.sites; site++)
         {
-            int sbsite = site + SBORD;
+            int sbsite = site + ctx.grid.SBORD;
             LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
         }
     }
 
 #ifdef WATER
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         Runoff[d] = 0.0;
         Interception[d] = 0.0;
@@ -6736,7 +6735,7 @@ void UpdateField()
         // for (int l=0;l<nblayers_soil;l++) {
         //     Transpiration[l][d]=0.0;
         // }
-        for (int h = 0; h < (HEIGHT + 1); h++)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
             LAI_DCELL[h][d] = 0.0;
         }
@@ -6746,19 +6745,19 @@ void UpdateField()
     }
 
     // LAI_DCELL[h][dcell] provide the average LAI at height h in dcell, to estimate water interception and evaporation in each dcell at each ctx.time.timestep, as well as wind speed for a given height (this latter is new and was added simultaneously to BOUNDARY LAYER_ITERATIVE_SCHEME (IM June 2021).
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
 
-        for (int h = 0; h < (HEIGHT + 1); h++)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
-            LAI_DCELL[h][site_DCELL[site]] += LAI3D[h][site + SBORD];
+            LAI_DCELL[h][ctx.grid.site_DCELL[site]] += LAI3D[h][site + ctx.grid.SBORD];
         }
 
         float Htop = 0.0;
-        int H = HEIGHT;
+        int H = ctx.grid.HEIGHT;
         while (Htop == 0.0 && H > 0)
         {
-            if (LAI3D[H][site + SBORD] > 0.0)
+            if (LAI3D[H][site + ctx.grid.SBORD] > 0.0)
             {
                 Htop = H;
             }
@@ -6767,16 +6766,16 @@ void UpdateField()
 
         if (Htop > 0)
         {
-            Canopy_height_DCELL[site_DCELL[site]] += Htop;
-            HSum_DCELL[site_DCELL[site]]++;
+            Canopy_height_DCELL[ctx.grid.site_DCELL[site]] += Htop;
+            HSum_DCELL[ctx.grid.site_DCELL[site]]++;
         }
     }
 
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
 
-        for (int h = 0; h < (HEIGHT + 1); h++)
-            LAI_DCELL[h][d] *= i_sites_per_dcell;
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+            LAI_DCELL[h][d] *= ctx.grid.i_sites_per_dcell;
         if (HSum_DCELL[d] > 0)
         {
             Canopy_height_DCELL[d] *= 1.0 / float(HSum_DCELL[d]);
@@ -6814,28 +6813,28 @@ void UpdateField()
 
 #ifdef MPI
     // Communicate border of field
-    // MPI_ShareField(LAI3D,LAIc,2*SBORD);
+    // MPI_ShareField(LAI3D,LAIc,2*ctx.grid.SBORD);
     This MPI command no longer exists in openMPI
             Action 20 /
-        01 / 2016 TODO : FIX THIS MPI_ShareField(LAI3D, LAIc, 2 * SBORD);
-    for (int h = 0; h < (HEIGHT + 1); h++)
+        01 / 2016 TODO : FIX THIS MPI_ShareField(LAI3D, LAIc, 2 * ctx.grid.SBORD);
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         //! Add border effects in local fields
         if (mpi_rank)
-            for (site = 0; site < 2 * SBORD; site++)
+            for (site = 0; site < 2 * ctx.grid.SBORD; site++)
                 LAI3D[h][site] += LAIc[0][h][site];
         if (mpi_rank < mpi_size - 1)
-            for (int site = 0; site < 2 * SBORD; site++)
-                LAI3D[h][site + sites] += LAIc[1][h][site];
+            for (int site = 0; site < 2 * ctx.grid.SBORD; site++)
+                LAI3D[h][site + ctx.grid.sites] += LAIc[1][h][site];
     }
 #endif
 
 #ifdef WATER
     //**  Evolution of belowground hydraulic fields: Soil bucket model
 
-    // for(int site=0;site<sites;site++) T[site].Water_uptake(); // Update of Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one ctx.time.timestep)
+    // for(int site=0;site<ctx.grid.sites;site++) T[site].Water_uptake(); // Update of Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one ctx.time.timestep)
 
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         //****   BUCKET MODEL in each dcell   ****
         // the unit used for water volume throughout the bucket model is m3.
@@ -6867,11 +6866,11 @@ void UpdateField()
 
         // here, we use a phenomenological approach, following Granier et al. 1999 Ecological Modelling and Wagner et al. 2011 AFM, which assumed that evaporation is proportional to the energy reaching the soil.[this is an approximation as as the soil gets drier, more energy would be needed to remove the same amount of water from the soil as water molecules should be more tighly bound to soil particules and cavitation also occur in the soil...] ==> see if a model under which evaporation also depends on the soil water potential would not be better -- I guess so.
         // parameter values are not so clear, so TO BE CHECKED.
-        // float e_factor=PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * sites_per_dcell*LH*LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
+        // float e_factor=PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
         // float e_Granier = e_factor* WDailyMean * exp(-klight*LAI_DCELL[0][d]);
         // 3600*0.000001*ctx.time.nbhours_covered to convert Wmax in micromol of PAR /s /m2 into  Joule, and 10^-6 to MJoule as in Wagner et al. 2011 (however the value provided by Wagner et al. 2011 seems really weird -too high-, and the values we obtained here are in agreement with the ones reported in Marthews et al. 2014.
         // the value 0.1 is drawn from Wagner et al. 2011, but not really explained... to be checked!
-        // sites_per_dcell*LH*LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
+        // ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
 
         // in this newer version, we used the framework provided by Sellers et al. 1992, which is better mechanistically grounded: depends on the soil layer resistance, which varies with its water potential, and the aerodynamic resistance in series and the differences of vapour pressure between the top soil layer and air just above
         float absorb_prev = LAI_DCELL[1][d];
@@ -6893,7 +6892,7 @@ void UpdateField()
         float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #endif
         float Rtot = r_soil + r_aero;                                                                                 // in s m-1
-        float e = ctx.time.nbhours_covered * sites_per_dcell * LH * LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*sites_per_dcell*LH*LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
+        float e = ctx.time.nbhours_covered * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
 
         // if (soil_phi3D[0][d] < -1) {
         //  cout << "r_soil=" << r_soil << " r_soil_sellers=" << r_soil_sellers <<" r_aero=" <<r_aero << " VPDground=" << VPDground << " esat_ground=" << esat_ground << " esoil=" << esoil << " eair=" << eair << " soil_phi3D[0][d]=" << soil_phi3D[0][d] << " Tsoil=" << Tsoil << " TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d] << " Wind ground level=" << exp(-alphaInoue*(1-1/Canopy_height_DCELL[d]))*TopWindSpeed_DCELL[d] << " evaporation S92=" << e  << " evaporation S92_sellers=" << e_sellers << " e_granier=" << e_Granier << " SWC3D[0][d]-Min_SWC[0]=" << SWC3D[0][d]-Min_SWC[0] << endl;
@@ -6911,7 +6910,7 @@ void UpdateField()
 
         Interception[d] = fminf(precip, 0.2 * LAI_DCELL[0][d]); // This is the amount of rainfall - in mm, as rainfall -, intercepted by vegetation cover, following the approach used in Liang et al. 1994 Journal of Geophysical Reserach, and also used by Laio et al. 2001 Advances in Water Resources and Fischer et al. 2014 Environmental Modelling & Software (FORMIX3, Madagascar). More complex approach can be used however - see eg. Gutierrez et al. 2014 Plos One (FORMIND, Chili), or Wagner et al. 2011 AFM (Paracou)
         Throughfall[d] = precip - Interception[d];
-        Throughfall[d] *= sites_per_dcell * LH * LH * 0.001; // to convert in absolute amount of water entering the soil voxel in m3
+        Throughfall[d] *= ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.001; // to convert in absolute amount of water entering the soil voxel in m3
 
         if (isnan(Throughfall[d]) || (Throughfall[d]) < 0)
         {
@@ -6981,7 +6980,7 @@ void UpdateField()
     // END of the BUCKET MODEL.
 
     // Update of soil water potential field
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         for (int l = 0; l < nblayers_soil; l++)
         {
@@ -7024,11 +7023,11 @@ void UpdateField()
 // #############################
 void FillSeed(int col, int row, int spp)
 {
-    if ((col >= 0) && (col < cols))
+    if ((col >= 0) && (col < ctx.grid.cols))
     {
-        if ((row >= 0) && (row < rows))
+        if ((row >= 0) && (row < ctx.grid.rows))
         {
-            int site = col + cols * row;
+            int site = col + ctx.grid.cols * row;
             // if(T[site].t_age == 0){
             if (_SEEDTRADEOFF)
                 SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
@@ -7045,12 +7044,12 @@ void FillSeed(int col, int row, int spp)
 // #############################
 void RecruitTree()
 {
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     { //**** Local germination ****
         if (T[site].t_age == 0)
         {
             int spp_withseeds = 0;
-            for (int spp = 1; spp <= nbspp; spp++)
+            for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             { // lists all the species with a seed present at given site...
                 if (SPECIES_SEEDS[site][spp] > 0)
                 {
@@ -7070,7 +7069,7 @@ void RecruitTree()
 #ifdef LCP_alternative
 
 #ifdef WATER
-                if (soil_phi3D[0][site_DCELL[site]] > 0.5 * S[spp].s_tlp)
+                if (soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
                     T[site].Birth(spp, site); // in this version, the light environment is checked within Birth() function
                 }
@@ -7082,9 +7081,9 @@ void RecruitTree()
 
 #else // LCP_alternative
 
-                float flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + SBORD], 0.0) * kpar);
+                float flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
 #ifdef WATER
-                if (flux > (S[spp].s_LCP) && soil_phi3D[0][site_DCELL[site]] > 0.5 * S[spp].s_tlp)
+                if (flux > (S[spp].s_LCP) && soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
                     T[site].Birth(spp, site);
                     SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
@@ -7111,7 +7110,7 @@ void RecruitTree()
 //! change in v.2.4: resetting Thurt[0] field is done in TriggerSecondaryTreefall() at the beginning of each iteration. Further changes: rewriting of Tree::FallTree() which is now Tree::Treefall(angle). t_hurt can now persist longer, so new treefall events are added to older damages (that, in turn are decaying)
 void TriggerTreefall()
 {
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
         if (T[site].t_age)
         {
             // treefall is triggered given a certain flexural force
@@ -7130,14 +7129,14 @@ void TriggerTreefall()
         }
 #ifdef MPI
     // Treefall field passed to the n.n. procs
-    MPI_ShareTreefall(Thurt, sites);
+    MPI_ShareTreefall(Thurt, ctx.grid.sites);
 #endif
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         // Update of Field hurt
         if (T[site].t_age)
         {
-            T[site].t_hurt = max(Thurt[0][site + sites], T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
+            T[site].t_hurt = max(Thurt[0][site + ctx.grid.sites], T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
 #ifdef MPI
             if (mpi_rank)
                 T[site].t_hurt = max(T[site].t_hurt, Thurt[1][site]); // ? v.2.4: Update needed, Thurt[1], why max?
@@ -7162,12 +7161,12 @@ void TriggerTreefallSecondary()
 #ifdef Output_ABC
     nbTreefall10_abc = 0;
 #endif
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
-        Thurt[0][site] = Thurt[0][site + 2 * sites] = 0;
-        Thurt[0][site + sites] = 0;
+        Thurt[0][site] = Thurt[0][site + 2 * ctx.grid.sites] = 0;
+        Thurt[0][site + ctx.grid.sites] = 0;
     }
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         if (T[site].t_age)
         {
@@ -7193,7 +7192,7 @@ void TriggerTreefallSecondary()
 
 #ifdef MPI
     //! Treefall field passed to the n.n. procs
-    MPI_ShareTreefall(Thurt, sites);
+    MPI_ShareTreefall(Thurt, ctx.grid.sites);
 #endif
 }
 
@@ -7278,8 +7277,8 @@ void Average(void)
     int site, spp;
     float sum1 = 0.0, sum10 = 0.0, sum30 = 0.0, ba = 0.0, npp = 0.0, gpp = 0.0, ba10 = 0.0, agb = 0.0, rday = 0.0, rnight = 0.0, rstem = 0.0, litterfall = 0.0;
 
-    float inbcells = 1.0 / float(sites * mpi_size);
-    float inbhectares = inbcells * NH * NH * 10000.0;
+    float inbcells = 1.0 / float(ctx.grid.sites * mpi_size);
+    float inbhectares = inbcells * ctx.grid.NH * ctx.grid.NH * 10000.0;
 
 #ifdef WATER
     abund_phi_root = 0.0;
@@ -7289,13 +7288,13 @@ void Average(void)
 
     if (!mpi_rank)
     {
-        for (spp = 1; spp <= nbspp; spp++)
+        for (spp = 1; spp <= ctx.grid.nbspp; spp++)
             S[spp].s_sum10 = S[spp].s_sum30 = S[spp].s_ba = S[spp].s_ba10 = S[spp].s_agb = S[spp].s_gpp = S[spp].s_npp = S[spp].s_rday = S[spp].s_rnight = S[spp].s_rstem = S[spp].s_litterfall = 0;
 
-        for (site = 0; site < sites; site++)
+        for (site = 0; site < ctx.grid.sites; site++)
             T[site].Average();
 
-        for (spp = 1; spp <= nbspp; spp++)
+        for (spp = 1; spp <= ctx.grid.nbspp; spp++)
         {
             float s_sum1 = float(S[spp].s_nbind) * inbhectares;
             S[spp].s_sum10 *= inbhectares;
@@ -7350,14 +7349,14 @@ void Average(void)
         if (_OUTPUT_extended)
         {
             float tototest = 0.0, tototest2 = 0.0, flux;
-            for (int site = 0; site < sites; site++)
+            for (int site = 0; site < ctx.grid.sites; site++)
             {
-                flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + SBORD], 0.0) * kpar);
+                flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
                 tototest += flux;
                 tototest2 += flux * flux;
             }
-            tototest /= float(sites * LH * LH); // Average light flux (PPFD) on the ground
-            tototest2 /= float(sites * LH * LH);
+            tototest /= float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH); // Average light flux (PPFD) on the ground
+            tototest2 /= float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH);
             if (ctx.time.iter)
                 output_extended[1] << ctx.time.iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
 
@@ -7371,7 +7370,7 @@ void Average(void)
     if (_NDD)
         BAtot = ba;
 
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         if (T[site].t_age > 0)
         {
@@ -7404,7 +7403,7 @@ void Average(void)
     carbon_stored_leaves = 0.0;
     carbon_stored_trunk = 0.0;
     carbon_stored_free = 0.0;
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         if (T[s].t_age > 0)
         {
@@ -7436,7 +7435,7 @@ void Average(void)
 #ifdef WATER
 
     float evapo = 0.0, runoff = 0.0, leak = 0.0, interception = 0.0, throughfall = 0.0, lai = 0.0;
-    for (int d = 0; d < nbdcells; d++)
+    for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
         evapo += Evaporation[d];         // in m3
         interception += Interception[d]; // in mm, as rainfall
@@ -7446,8 +7445,8 @@ void Average(void)
         lai += LAI_DCELL[0][d];
     }
 
-    float isites = 1.0 / float(sites * LH * LH);
-    float icells = 1.0 / float(nbdcells);
+    float isites = 1.0 / float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH);
+    float icells = 1.0 / float(ctx.grid.nbdcells);
     evapo *= isites;                // in m
     runoff *= isites;               // in m
     leak *= isites;                 // in m
@@ -7466,7 +7465,7 @@ void Average(void)
     for (int l = 0; l < nblayers_soil; l++)
     {
         float transpi = 0.0;
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
             transpi += Transpiration[l][d]; // in m3
         }
@@ -7498,7 +7497,7 @@ void Average(void)
     for (int l = 0; l < nblayers_soil; l++)
     {
         float soilWC = 0.0;
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
             soilWC += SWC3D[l][d]; // in m3
         }
@@ -7547,7 +7546,7 @@ void Average(void)
     for (int l = 0; l < nblayers_soil; l++)
     {
         float soilPhi = 0.0;
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
             soilPhi += soil_phi3D[l][d]; // in MPa
         }
@@ -7593,16 +7592,16 @@ void Average(void)
         }
 
         output[o_wfluxes] << "LAI" << "\t";
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
             output[o_wfluxes] << LAI_DCELL[0][d] << "\t";
         }
         output[o_wfluxes] << endl;
 
         output[o_wfluxes] << "Evaporation" << "\t";
-        for (int d = 0; d < nbdcells; d++)
+        for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
-            output[o_wfluxes] << Evaporation[d] * i_sites_per_dcell << "\t"; // in m
+            output[o_wfluxes] << Evaporation[d] * ctx.grid.i_sites_per_dcell << "\t"; // in m
         }
         output[o_wfluxes] << endl;
 
@@ -7611,15 +7610,15 @@ void Average(void)
         {
             float layer_depth_current = layer_depth[l];
             float layer_thickness = layer_depth_current - layer_depth_previous;
-            float norm = i_sites_per_dcell / layer_thickness;
+            float norm = ctx.grid.i_sites_per_dcell / layer_thickness;
             output[o_swc] << l << "\t";
             output[o_swp] << l << "\t";
             output[o_wfluxes] << "Transpiration_" << l << "\t";
-            for (int d = 0; d < nbdcells; d++)
+            for (int d = 0; d < ctx.grid.nbdcells; d++)
             {
                 output[o_swc] << SWC3D[l][d] * norm << "\t"; // in m3/m3
                 output[o_swp] << soil_phi3D[l][d] << "\t";
-                output[o_wfluxes] << Transpiration[l][d] * i_sites_per_dcell << "\t";
+                output[o_wfluxes] << Transpiration[l][d] * ctx.grid.i_sites_per_dcell << "\t";
             }
             layer_depth_previous = layer_depth_current;
             output[o_swc] << endl;
@@ -7631,7 +7630,7 @@ void Average(void)
     output[22] << ctx.time.iter << "\t";
     output[23] << ctx.time.iter << "\t";
     output[24] << ctx.time.iter << "\t";
-    for (int l = 0; l < HEIGHT + 1; l++)
+    for (int l = 0; l < ctx.grid.HEIGHT + 1; l++)
     {
         LAI_young[l] *= isites;
         LAI_mature[l] *= isites;
@@ -7680,33 +7679,33 @@ void OutputField()
     {
         // output fields, ctx.time.nbout times during simulation (every ctx.time.freqout iterations)
         int d;
-        for (d = 0; d < dbhmaxincm; d++)
+        for (d = 0; d < ctx.grid.dbhmaxincm; d++)
             nbdbh[d] = 0;
-        for (site = 0; site < sites; site++)
+        for (site = 0; site < ctx.grid.sites; site++)
             T[site].histdbh();
 
-        for (h = 0; h < (HEIGHT + 1); h++)
+        for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
             layer[h] = 0;
-            for (site = 0; site < sites; site++)
-                layer[h] += LAI3D[h][site + SBORD];
+            for (site = 0; site < ctx.grid.sites; site++)
+                layer[h] += LAI3D[h][site + ctx.grid.SBORD];
         }
 
 #ifdef MPI
         MPI_Status status;
-        MPI_Reduce(nbdbh, nbdbh, dbhmaxincm, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(layer, layer, HEIGHT, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(nbdbh, nbdbh, ctx.grid.dbhmaxincm, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(layer, layer, ctx.grid.HEIGHT, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
         if (!mpi_rank)
         {
             // output of the dbh histograms (output[31])
-            for (d = 1; d < dbhmaxincm; d++)
+            for (d = 1; d < ctx.grid.dbhmaxincm; d++)
                 output[31] << d << "\t" << nbdbh[d] << "\n";
             output[31] << "\n";
             // output of the mean LAI per height class (output[32])
-            float norm = 1.0 / float(sites * LH * LH * mpi_size);
-            for (h = 0; h < (HEIGHT + 1); h++)
-                output[32] << ctx.time.iter << "\t" << h * LV << "\t" << layer[h] * norm << "\n";
+            float norm = 1.0 / float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH * mpi_size);
+            for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+                output[32] << ctx.time.iter << "\t" << h * ctx.grid.LV << "\t" << layer[h] * norm << "\n";
             output[32] << "\n";
         }
     }
@@ -7750,20 +7749,20 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
     }
 
     // reset the canopy to make sure that it is well-constructed
-    for (int h = 0; h < (HEIGHT + 1); h++)
-        for (int sbsite = 0; sbsite < sites + 2 * SBORD; sbsite++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+        for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             LAI3D[h][sbsite] = 0.0;
 
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     { // Each tree contribues to LAI3D
         T[site].CalcLAI();
     }
 
-    for (int h = HEIGHT; h > 0; h--)
+    for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
-        for (int site = 0; site < sites; site++)
+        for (int site = 0; site < ctx.grid.sites; site++)
         {
-            int sbsite = site + SBORD;
+            int sbsite = site + ctx.grid.SBORD;
             LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
         }
     }
@@ -7777,11 +7776,11 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
     {
         output.precision(5);
     }
-    for (int row = 0; row < rows; row++)
+    for (int row = 0; row < ctx.grid.rows; row++)
     {
-        for (int col = 0; col < cols; col++)
+        for (int col = 0; col < ctx.grid.cols; col++)
         {
-            int site = col + cols * row;
+            int site = col + ctx.grid.cols * row;
             if (T[site].t_age > 0 && T[site].t_dbh >= dbh_limit)
             {
                 // recalculate photosynthesis and respiration
@@ -7831,8 +7830,8 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
 void MakeCHMspikefree(vector<int> &chm_spikefree)
 {
     chm_spikefree.clear();
-    chm_spikefree.reserve(sites);
-    for (int s = 0; s < sites; s++)
+    chm_spikefree.reserve(ctx.grid.sites);
+    for (int s = 0; s < ctx.grid.sites; s++)
         chm_spikefree.push_back(0);
 
 #ifdef Output_ABC // IM2023 added, otherwise row_start, row_end, col_start, col_end are not necessarily decalred, and this blocks code building.
@@ -7841,7 +7840,7 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             if (T[s].t_age > 0)
             {
 #ifdef CROWN_UMBRELLA
@@ -7857,17 +7856,17 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
                 int crown_top = int(T[s].t_height);
                 int crown_intarea = GetCrownIntarea(T[s].t_CR);
 
-                int row_crowncenter = s / cols;
-                int col_crowncenter = s % cols;
+                int row_crowncenter = s / ctx.grid.cols;
+                int col_crowncenter = s % ctx.grid.cols;
 
                 for (int i = 0; i < crown_intarea; i++)
                 {
                     int site_relative = LookUp_Crown_site[i];
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
-                    if (row >= 0 && row < rows && col >= 0 && col < cols)
+                    if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
                     {
-                        int site = col + row * cols;
+                        int site = col + row * ctx.grid.cols;
                         if (chm_spikefree[site] < crown_top)
                             chm_spikefree[site] = crown_top;
                     }
@@ -7895,14 +7894,14 @@ void OutputVisual()
     {
         for (int row = minrow_visual; row < maxrow_visual; row++)
         {
-            int site = col + row * cols;
+            int site = col + row * ctx.grid.cols;
             int height_canopy = 0;
-            for (int h = 0; h < (HEIGHT + 1); h++)
+            for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][site + SBORD] > 0.0)
+                if (LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site + SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #else
@@ -7910,14 +7909,14 @@ void OutputVisual()
     {
         for (int row = minrow_visual; row < maxrow_visual; row++)
         {
-            int site = col + row * cols;
+            int site = col + row * ctx.grid.cols;
             int height_canopy = 0;
-            for (int h = 0; h < (HEIGHT + 1); h++)
+            for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][site + SBORD] > 0.0)
+                if (LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << LAI3D[0][site + SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #endif
@@ -7925,9 +7924,9 @@ void OutputVisual()
     // now the sliced output
     for (int row = minrow_visual_slice; row < maxrow_visual_slice; row++)
     {
-        for (int col = 0; col < cols; col++)
+        for (int col = 0; col < ctx.grid.cols; col++)
         {
-            int s = col + row * cols;
+            int s = col + row * ctx.grid.cols;
             if (T[s].t_age > 0)
             {
                 int row_slice = row;
@@ -7980,7 +7979,7 @@ void OutputVisual()
                         int site_relative = LookUp_Crown_site[i];
                         int row_crown = row + site_relative / 51 - 25;
                         int col_crown = col + site_relative % 51 - 25;
-                        int site_crown = col_crown + row_crown * cols;
+                        int site_crown = col_crown + row_crown * ctx.grid.cols;
                         OutputCrownSliced(h, s, row_slice, output_statistics);
                     }
                 }
@@ -8000,26 +7999,26 @@ void OutputCHM(fstream &output_CHM)
     MakeCHMspikefree(chm_spikefree);
 
     output_CHM << "site" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl;
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         int height_canopy = 0;
-        for (int h = 0; h < (HEIGHT + 1); h++)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
-            if (LAI3D[h][s + SBORD] > 0.0)
+            if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                 height_canopy = max(h, height_canopy);
         }
-        output_CHM << s << "\t" << int(s / cols) << "\t" << int(s % cols) << "\t" << height_canopy + 1 << "\t" << chm_spikefree[s] << "\t" << LAI3D[0][s + SBORD] << endl;
+        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << chm_spikefree[s] << "\t" << LAI3D[0][s + ctx.grid.SBORD] << endl;
     }
 
 #else
     output_CHM << "site" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "LAI" << endl;
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         int height_canopy = 0;
-        for (int h = 0; h < (HEIGHT + 1); h++)
-            if (LAI3D[h][s + SBORD] > 0.0)
+        for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
+            if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                 height_canopy = max(h, height_canopy);
-        output_CHM << s << "\t" << int(s / cols) << "\t" << int(s % cols) << "\t" << height_canopy + 1 << "\t" << LAI3D[0][s + SBORD] << endl;
+        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << LAI3D[0][s + ctx.grid.SBORD] << endl;
     }
 #endif
 }
@@ -8030,9 +8029,9 @@ void OutputCHM(fstream &output_CHM)
 void OutputLAI(fstream &output_transmLAI3D)
 {
     output_transmLAI3D << "s\trow\tcol\th\tLAI3D" << endl;
-    for (int s = 0; s < sites; s++)
-        for (int h = 0; h < HEIGHT; h++)
-            output_transmLAI3D << s << "\t" << int(s / cols) << "\t" << int(s % cols) << "\t" << h << "\t" << LAI3D[h][s + SBORD] << endl;
+    for (int s = 0; s < ctx.grid.sites; s++)
+        for (int h = 0; h < ctx.grid.HEIGHT; h++)
+            output_transmLAI3D << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << h << "\t" << LAI3D[h][s + ctx.grid.SBORD] << endl;
 }
 
 // ##############################################
@@ -8050,17 +8049,17 @@ void OutputLAI(fstream &output_transmLAI3D)
 void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, float mean_beam, float sd_beam, float klaser, float transmittance_laser)
 {
 
-    int beams_expected = int(sites * mean_beam * 1.01); // reserve a bit more
+    int beams_expected = int(ctx.grid.sites * mean_beam * 1.01); // reserve a bit more
     int returns_maximum = beams_expected * 5;           // if every laser had 5 returns
     beams.reserve(beams_expected);
     beams_returns.reserve(returns_maximum);
 
     // loop through the whole array by site first, then by height, then by return number
-    for (int r = 0; r < rows; r++)
+    for (int r = 0; r < ctx.grid.rows; r++)
     {
-        for (int c = 0; c < cols; c++)
+        for (int c = 0; c < ctx.grid.cols; c++)
         {
-            int site = c + r * cols;
+            int site = c + r * ctx.grid.cols;
             int nbbeams = int(mean_beam + gsl_ran_gaussian(gslrand, sd_beam)); // always rounding up
             nbbeams = max(nbbeams, 1);
 
@@ -8072,7 +8071,7 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
 
                 int beam_continues = 1;
                 int beam_return = 0;
-                int h = HEIGHT - 1; // starting point to sample from
+                int h = ctx.grid.HEIGHT - 1; // starting point to sample from
 
                 while (h >= -1 && beam_continues && beam_return < 5)
                 {
@@ -8081,8 +8080,8 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
                     if (h >= 0)
                     {
                         // returns due to vegetation
-                        float LAI_above = LAI3D[h + 1][site + SBORD];
-                        float LAI_current = LAI3D[h][site + SBORD];
+                        float LAI_above = LAI3D[h + 1][site + ctx.grid.SBORD];
+                        float LAI_current = LAI3D[h][site + ctx.grid.SBORD];
 
                         float LAD = LAI_current - LAI_above;
 
@@ -8254,19 +8253,19 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
         output_pointcloud.write(reinterpret_cast<const char *>(&xyz_offset), 8); // hardcoded 8 bytes
     }
 
-    double max_x = cols;
+    double max_x = ctx.grid.cols;
     output_pointcloud.write(reinterpret_cast<const char *>(&max_x), 8); // hardcoded 8 bytes
 
     double min_x = 0;
     output_pointcloud.write(reinterpret_cast<const char *>(&min_x), 8); // hardcoded 8 bytes
 
-    double max_y = rows;
+    double max_y = ctx.grid.rows;
     output_pointcloud.write(reinterpret_cast<const char *>(&max_y), 8); // hardcoded 8 bytes
 
     double min_y = 0;
     output_pointcloud.write(reinterpret_cast<const char *>(&min_y), 8); // hardcoded 8 bytes
 
-    double max_z = HEIGHT;
+    double max_z = ctx.grid.HEIGHT;
     output_pointcloud.write(reinterpret_cast<const char *>(&max_z), 8); // hardcoded 8 bytes
 
     double min_z = 0;
@@ -8292,8 +8291,8 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
         int site_beam = beams[0 + beam * 2];
         int nb_returns_beam = beams[1 + beam * 2];
 
-        int row = site_beam/cols;
-        int col = site_beam%cols;
+        int row = site_beam/ctx.grid.cols;
+        int col = site_beam%ctx.grid.cols;
 
         // long format + 0.01 scaling (1cm precision)
         int32_t x_hit = round((float(col) + gsl_rng_uniform(gslrand)) * 100.0);
@@ -8416,7 +8415,7 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
 // ##############################################
 void TrackingData_andOutput()
 {
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         // we start the accounting the year after the trees have been born
         if (T[site].t_age > 0)
@@ -8491,7 +8490,7 @@ void UpdateMovingAveragesABC()
     {
         for (int col = col_start; col < col_end; col++)
         {
-            int site = col + row * cols;
+            int site = col + row * ctx.grid.cols;
             GPP_abc += T[site].t_GPP * 1.0e-6;
             litter_abc += T[site].t_litter * 1.0e-6;
             if (T[site].t_dbh >= 0.1)
@@ -8548,7 +8547,7 @@ void UpdateDBHtrackingABC()
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             if (T[s].t_age > 0)
                 T[s].t_dbh_previous = T[s].t_dbh;
         }
@@ -8571,14 +8570,14 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int site = c + r * cols;
+            int site = c + r * ctx.grid.cols;
             int nbbeams = int(mean_beam + gsl_ran_gaussian(gslrand, sd_beam)); // always rounding up
             nbbeams = max(nbbeams, 1);
 
             // loop over the field from maximum height to 0 and iteratively update voxels from top to bottom, following the beam. An alternative version, also allowing for ground returns, can be activated to extending the loop to h >= -1. In this case, when a beam is not extinguished before it reaches the ground (h >= 0), then it is counted as a ground return
-            for (int h = HEIGHT - 1; h >= 0; h--)
+            for (int h = ctx.grid.HEIGHT - 1; h >= 0; h--)
             {
-                // for(int h = HEIGHT - 1; h >= -1; h--){
+                // for(int h = ctx.grid.HEIGHT - 1; h >= -1; h--){
                 int hits;
                 float transmittance;
                 transmittance_simulatedALS_sampling[h][site] = nbbeams;
@@ -8593,8 +8592,8 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                     if (h >= 0)
                     {
                         // returns due to vegetation
-                        float LAI_above = LAI3D[h + 1][site + SBORD];
-                        float LAI_current = LAI3D[h][site + SBORD];
+                        float LAI_above = LAI3D[h + 1][site + ctx.grid.SBORD];
+                        float LAI_current = LAI3D[h][site + ctx.grid.SBORD];
 
                         float prob_hit;
                         if (LAI_above == 100.0 & LAI_current == 100.0)
@@ -8643,16 +8642,16 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     }
     // Also output the "direct"/"actual" transmittance of each voxel, i.e. simply based on inversing the Beer Lambert law and estimating transmittance from the leaf area density
     // This can be used to compare actual vs. lidar-derived transmittance estimates
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         for (int r = row_start; r < row_end; r++)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int s = c + r * cols;
+                int s = c + r * ctx.grid.cols;
                 float LAD = 0.0;
-                if (h < HEIGHT)
-                    LAD = LAI3D[h][s + SBORD] - LAI3D[h + 1][s + SBORD];
+                if (h < ctx.grid.HEIGHT)
+                    LAD = LAI3D[h][s + ctx.grid.SBORD] - LAI3D[h + 1][s + ctx.grid.SBORD];
                 transmittance_direct[h][s] = exp(-klight * LAD);
             }
         }
@@ -8664,7 +8663,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             chm_field_previous[s] = chm_field_current[s];
             chm_field_previous_ALS[s] = chm_field_current_ALS[s];
             chm_field_current[s] = 0;
@@ -8677,7 +8676,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             if (T[s].t_age > 0)
             {
 #ifdef CROWN_UMBRELLA
@@ -8697,17 +8696,17 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                 crown_intarea = max(crown_intarea, 1);         // minimum area of crown (1)
                 crown_intarea = min(crown_intarea, 1963);      // maximum area of crown (radius 25), int(3.14*25*25)
 
-                int row_crowncenter = s / cols;
-                int col_crowncenter = s % cols;
+                int row_crowncenter = s / ctx.grid.cols;
+                int col_crowncenter = s % ctx.grid.cols;
 
                 for (int i = 0; i < crown_intarea; i++)
                 {
                     int site_relative = LookUp_Crown_site[i];
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
-                    if (row >= 0 && row < rows && col >= 0 && col < cols)
+                    if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
                     {
-                        int site = col + row * cols;
+                        int site = col + row * ctx.grid.cols;
                         if (chm_field_current[site] < crown_top)
                             chm_field_current[site] = crown_top;
                     }
@@ -8723,11 +8722,11 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_canopy = 0;
-            for (int h = 0; h < (HEIGHT + 1); h++)
+            for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][s + SBORD] > 0.0)
+                if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
             chm_field_current[s] = height_canopy;
@@ -8740,9 +8739,9 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_canopy_ALS = 0;
-            for (int h = 0; h < (HEIGHT + 1); h++)
+            for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
                 if (transmittance_simulatedALS[h][s] >= 0.0 && transmittance_simulatedALS[h][s] < 1.0)
                     height_canopy_ALS = max(h, height_canopy_ALS);
@@ -8752,7 +8751,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
     }
 
     // compute CHM changes, both for full simulation and simulated ALS
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         chm_field_changes[s] = chm_field_previous[s] - chm_field_current[s];
         chm_field_changes_ALS[s] = chm_field_previous_ALS[s] - chm_field_current_ALS[s];
@@ -8958,7 +8957,7 @@ void OutputABCWriteHeaders(fstream &output_traitconservation, fstream &output_fi
     //    output_traits10 << "Iter\tTrait";
     output_biomass << "Iter";
 
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
     {
         output_species << "\t" << S[spp].s_name;
         output_species10 << "\t" << S[spp].s_name;
@@ -8995,7 +8994,7 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
     float moment2_height_varoutput = 0.0, moment2_CR_varoutput = 0.0, moment2_CD_varoutput = 0.0, moment2_P_varoutput = 0.0, moment2_N_varoutput = 0.0, moment2_LMA_varoutput = 0.0, moment2_wsg_varoutput = 0.0, moment2_dbhmax_varoutput = 0.0;
 
     // Means and 2nd moment for calculation of sd later on
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         if (T[s].t_age > 0 && T[s].t_dbh >= 0.1)
         {
@@ -9117,11 +9116,11 @@ void OutputABC_ground(fstream &output_field)
     float mean_LMA10 = 0.0, mean_Nmass10 = 0.0, mean_Pmass10 = 0.0, mean_wsg10 = 0.0, mean_CR10 = 0.0;
 
     // This is just a check whether the initialized species are preserved in the model
-    for (int spp = 1; spp <= nbspp; spp++)
+    for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
         if (S[spp].s_dbhmax_realized > 0.1)
             NBspecies_realized10++;
     // and calculate the number of species
-    for (int spp = 0; spp < nbspp + 1; spp++)
+    for (int spp = 0; spp < ctx.grid.nbspp + 1; spp++)
     {
         abundances_species[spp] = 0;
         abundances_species10[spp] = 0;
@@ -9131,7 +9130,7 @@ void OutputABC_ground(fstream &output_field)
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             if (T[s].t_age > 0)
             {
                 Abu++;
@@ -9214,7 +9213,7 @@ void OutputABC_ground(fstream &output_field)
     Abu30_retained = Abu30 - Abu30_prev;
 
     // Now calculate the first three orders of diversity
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
     {
         int abu_spp = abundances_species[spp];
         int abu_spp10 = abundances_species10[spp];
@@ -9281,7 +9280,7 @@ void OutputABC_ground(fstream &output_field)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int s = c + r * cols;
+                int s = c + r * ctx.grid.cols;
                 float dbh_tree = T[s].t_dbh;
                 if (T[s].t_age > 0 && dbh_tree >= 0.1)
                 {
@@ -9298,7 +9297,7 @@ void OutputABC_ground(fstream &output_field)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int s = c + r * cols;
+                int s = c + r * ctx.grid.cols;
                 float dbh_tree = T[s].t_dbh;
                 if (T[s].t_age > 0 && dbh_tree >= 0.1)
                 {
@@ -9338,7 +9337,7 @@ void OutputABC_ground(fstream &output_field)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int s = c + r * cols;
+                int s = c + r * ctx.grid.cols;
                 float dbh_previous = T[s].t_dbh_previous;
                 // Errors taken from Chave et al. 2004 (all given in cm). See also Réjou-Méchain 2017
                 //  slight modification by assuming that measurement errors cannot go beyond a third of the diameter, e.g. for a stem of 10cm not be above or below 3.3 cm, and for a stem of 100cm not be below or above 33cm), also prevents negative diameters
@@ -9440,7 +9439,7 @@ void OutputABC_ground(fstream &output_field)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int s = c + r * cols;
+                int s = c + r * ctx.grid.cols;
 
                 float dbh_previous = T[s].t_dbh_previous;
 
@@ -9464,7 +9463,7 @@ void OutputABC_ground(fstream &output_field)
 
     // Ripley's K(r), transformed to L estimator through L(r) = sqrt(K/Pi) - r
     //    float itrees_ripley = 0.0;
-    //    int area_ripley = cols * rows;
+    //    int area_ripley = ctx.grid.cols * ctx.grid.rows;
     //    int sum_ripley[25] = {0};
     //
     //    if(Abu10 > 0){
@@ -9473,18 +9472,18 @@ void OutputABC_ground(fstream &output_field)
     //
     //        for(int r=row_start;r<row_end;r++){
     //            for(int c=col_start;c<col_end;c++){
-    //                int site = c + r*cols;
+    //                int site = c + r*ctx.grid.cols;
     //                if(T[site].t_age > 0 && T[site].t_dbh > 0.1){
     //
     //                    for(int r = 0; r < 25; r++){
     //                        int t = r + 1;
     //                        int t_squared = t * t;
-    //                        for(int site_compare = 0; site_compare < sites; site_compare++){
+    //                        for(int site_compare = 0; site_compare < ctx.grid.sites; site_compare++){
     //                            if(T[site_compare].t_age > 0 && T[site_compare].t_dbh > 0.1 && site != site_compare){
-    //                                int row = site/cols;
-    //                                int col = site%cols;
-    //                                int row_compare = site_compare/cols;
-    //                                int col_compare = site_compare%cols;
+    //                                int row = site/ctx.grid.cols;
+    //                                int col = site%ctx.grid.cols;
+    //                                int row_compare = site_compare/ctx.grid.cols;
+    //                                int col_compare = site_compare%ctx.grid.cols;
     //                                int dist_squared = (row - row_compare) * (row - row_compare) + (col - col_compare) * (col - col_compare);
     //                                if(dist_squared < t_squared){
     //                                    sum_ripley[r]++;
@@ -9563,7 +9562,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
 {
 
     // Empty the vectors
-    for (int spp = 0; spp < nbspp + 1; spp++)
+    for (int spp = 0; spp < ctx.grid.nbspp + 1; spp++)
     {
         abundances_species[spp] = 0;
         abundances_species10[spp] = 0;
@@ -9580,7 +9579,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             if (T[s].t_age > 0)
             {
                 // First abundance, then mean and standard deviation of the variation in the 5 traits (leaf level traits, wood density, crown radius), mean and standard deviation are calculated in one pass from sum of traits and sum of squares of traits
@@ -9646,7 +9645,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
     trait_names.push_back("crown_sd");
 
     // Now calculate the means and sds properly
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
     {
         int abu = abundances_species[spp];
         int abu10 = abundances_species10[spp];
@@ -9683,28 +9682,28 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
 
     // Now create outputs
     output_species << ctx.time.iter;
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
         output_species << "\t" << abundances_species[spp];
     output_species << endl;
 
     output_species10 << ctx.time.iter;
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
         output_species10 << "\t" << abundances_species10[spp];
     output_species10 << endl;
 
     output_biomass << ctx.time.iter;
-    for (int spp = 1; spp < nbspp + 1; spp++)
+    for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
         output_biomass << "\t" << biomass_species[spp];
     output_biomass << endl;
 
     //    for(int trait = 0; trait < 10; trait++){
     //
     //        output_traits << ctx.time.iter << "\t" << trait_names[trait];
-    //        for(int spp = 1; spp < nbspp+1; spp++) output_traits  << "\t" << traits_species[spp][trait];
+    //        for(int spp = 1; spp < ctx.grid.nbspp+1; spp++) output_traits  << "\t" << traits_species[spp][trait];
     //        output_traits << endl;
     //
     //        output_traits10 << ctx.time.iter << "\t" << trait_names[trait];
-    //        for(int spp = 1; spp < nbspp+1; spp++) output_traits10  << "\t" << traits_species10[spp][trait];
+    //        for(int spp = 1; spp < ctx.grid.nbspp+1; spp++) output_traits10  << "\t" << traits_species10[spp][trait];
     //        output_traits10 << endl;
     //    }
 }
@@ -9715,7 +9714,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
 void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output_chmpotential)
 {
     // Compute CHM changes
-    for (int s = 0; s < sites; s++)
+    for (int s = 0; s < ctx.grid.sites; s++)
     {
         chm_field_changes[s] = chm_field_previous[s] - chm_field_current[s];
         chm_field_changes_ALS[s] = chm_field_previous_ALS[s] - chm_field_current_ALS[s];
@@ -9730,7 +9729,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_chm = chm_field_current[s];
             mean_chm += float(height_chm);
             chm_abc[height_chm]++;
@@ -9747,7 +9746,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_chm = chm_field_current[s];
             sd_chm += (height_chm - mean_chm) * (height_chm - mean_chm);
             int height_chm_ALS = chm_field_current_ALS[s];
@@ -9767,7 +9766,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_chmchange = chm_field_changes[s];
             mean_chmchange += float(height_chmchange);
             chmchange_abc[height_chmchange + 70]++;
@@ -9784,7 +9783,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int s = c + r * cols;
+            int s = c + r * ctx.grid.cols;
             int height_chmchange = chm_field_changes[s];
             sd_chmchange += (height_chmchange - mean_chmchange) * (height_chmchange - mean_chmchange);
             int height_chmchange_ALS = chm_field_changes_ALS[s];
@@ -9805,19 +9804,19 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     //
     //    for(int r=row_start;r<row_end;r++){
     //        for(int c=col_start;c<col_end;c++){
-    //            int height_canopy = chm_field_current[c + r * cols];
-    //            int height_canopychange = chm_field_changes[c + r * cols];
-    //            int height_canopy_ALS = chm_field_current_ALS[c + r * cols];
-    //            int height_canopychange_ALS = chm_field_changes_ALS[c + r * cols];
+    //            int height_canopy = chm_field_current[c + r * ctx.grid.cols];
+    //            int height_canopychange = chm_field_changes[c + r * ctx.grid.cols];
+    //            int height_canopy_ALS = chm_field_current_ALS[c + r * ctx.grid.cols];
+    //            int height_canopychange_ALS = chm_field_changes_ALS[c + r * ctx.grid.cols];
     //
     //            for(int r_compare=row_start;r_compare<row_end;r_compare++){
     //                for(int c_compare=col_start;c_compare<col_end;c_compare++){
     //                    //! only compare if you have not already compared
     //                    if(r_compare > r && c_compare > c){
-    //                        int height_canopy_compare = chm_field_current[c_compare + r_compare * cols];
-    //                        int height_canopychange_compare = chm_field_changes[c_compare + r_compare * cols];
-    //                        int height_canopy_compare_ALS = chm_field_current_ALS[c_compare + r_compare * cols];
-    //                        int height_canopychange_compare_ALS = chm_field_changes_ALS[c_compare + r_compare * cols];
+    //                        int height_canopy_compare = chm_field_current[c_compare + r_compare * ctx.grid.cols];
+    //                        int height_canopychange_compare = chm_field_changes[c_compare + r_compare * ctx.grid.cols];
+    //                        int height_canopy_compare_ALS = chm_field_current_ALS[c_compare + r_compare * ctx.grid.cols];
+    //                        int height_canopychange_compare_ALS = chm_field_changes_ALS[c_compare + r_compare * ctx.grid.cols];
     //
     //                        int dist = int(sqrt(float((r_compare - r) * (r_compare - r) + (c_compare - c) * (c_compare - c))));
     //
@@ -9898,12 +9897,12 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
 
     // Calculate the volume filled by crowns (for packing densities)
     //  to be consistent with other estimates, we do not only use leaf-filled area, but the whole area used up by the crown (even when overlapping)
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
     {
         if (T[site].t_age > 0)
         {
-            int row_center = site / cols;
-            int col_center = site % cols;
+            int row_center = site / ctx.grid.cols;
+            int col_center = site % ctx.grid.cols;
 
             AddCrownVolumeLayer(row_center, col_center, T[site].t_height, T[site].t_CR, T[site].t_CD, voxcrown);
         }
@@ -9920,13 +9919,13 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     }
 
     // Update statistics based on 3D fields, including the simulated transmittance field
-    for (int h = min(70, HEIGHT) - 1; h >= 0; h--)
+    for (int h = min(70, ctx.grid.HEIGHT) - 1; h >= 0; h--)
     {
         for (int r = row_start; r < row_end; r++)
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int site = c + r * cols;
+                int site = c + r * ctx.grid.cols;
                 int height_canopy = chm_field_current[site];
                 int height_canopy_ALS = chm_field_current_ALS[site];
 
@@ -10008,7 +10007,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
         {
             for (int c = col_start; c < col_end; c++)
             {
-                int site = c + r * cols;
+                int site = c + r * ctx.grid.cols;
 
                 float transmittance = transmittance_direct[h][site];
                 float transmittanceALS = transmittance_simulatedALS[h][site];
@@ -10050,7 +10049,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int site = c + r * cols;
+            int site = c + r * ctx.grid.cols;
             int height_canopy = chm_field_current[site];
             int height_canopy_ALS = chm_field_current_ALS[site];
 
@@ -10144,7 +10143,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
             nb_aggregates++;
 
             // Loop over the whole canopy except for 0 height where there is no transmittance value
-            for (int h = HEIGHT; h > 0; h--)
+            for (int h = ctx.grid.HEIGHT; h > 0; h--)
             {
                 int nbvoxels = 0;
                 float transmittance_avg = 0.0, transmittance_avgALS = 0.0;
@@ -10156,7 +10155,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
 
                         if (r_avg >= row_start && r_avg < row_end && c_avg >= col_start && c_avg < col_end)
                         {
-                            int site_avg = c_avg + r_avg * cols;
+                            int site_avg = c_avg + r_avg * ctx.grid.cols;
                             float transmittance = transmittance_direct[h][site_avg];
                             float transmittanceALS = transmittance_simulatedALS[h][site_avg];
 
@@ -10204,7 +10203,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     {
         for (int c = col_start; c < col_end; c++)
         {
-            int site = c + r * cols;
+            int site = c + r * ctx.grid.cols;
             int height_canopy = chm_field_current[site];
             if (height_max < height_canopy)
                 height_max = height_canopy;
@@ -10353,7 +10352,7 @@ void MPI_ShareField(unsigned short **cl, unsigned short ***cp, int n)
 {
 
     MPI_Status status;
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         if (p_rank == 0)
             MPI_Sendrecv(cl[h], n, MPI_UNSIGNED_SHORT, size - 1, h, cp[1][h], n, MPI_UNSIGNED_SHORT, 1, h, MPI_COMM_WORLD, &status);
@@ -10363,11 +10362,11 @@ void MPI_ShareField(unsigned short **cl, unsigned short ***cp, int n)
             MPI_Sendrecv(cl[h], n, MPI_UNSIGNED_SHORT, p_rank - 1, h, cp[1][h], n, MPI_UNSIGNED_SHORT, p_rank + 1, h, MPI_COMM_WORLD, &status);
 
         if (p_rank == 0)
-            MPI_Sendrecv(cl[h] + sites, n, MPI_UNSIGNED_SHORT, 1, h + HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, size - 1, h + HEIGHT, MPI_COMM_WORLD, &status);
+            MPI_Sendrecv(cl[h] + ctx.grid.sites, n, MPI_UNSIGNED_SHORT, 1, h + ctx.grid.HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, size - 1, h + ctx.grid.HEIGHT, MPI_COMM_WORLD, &status);
         if (p_rank == size - 1)
-            MPI_Sendrecv(cl[h] + sites, n, MPI_UNSIGNED_SHORT, 0, h + HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, size - 2, h + HEIGHT, MPI_COMM_WORLD, &status);
+            MPI_Sendrecv(cl[h] + ctx.grid.sites, n, MPI_UNSIGNED_SHORT, 0, h + ctx.grid.HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, size - 2, h + ctx.grid.HEIGHT, MPI_COMM_WORLD, &status);
         if ((p_rank) && (p_rank < size - 1))
-            MPI_Sendrecv(cl[h] + sites, n, MPI_UNSIGNED_SHORT, p_rank + 1, h + HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, p_rank - 1, h + HEIGHT, MPI_COMM_WORLD, &status);
+            MPI_Sendrecv(cl[h] + ctx.grid.sites, n, MPI_UNSIGNED_SHORT, p_rank + 1, h + ctx.grid.HEIGHT, cp[0][h], n, MPI_UNSIGNED_SHORT, p_rank - 1, h + ctx.grid.HEIGHT, MPI_COMM_WORLD, &status);
     }
 }
 
@@ -10455,9 +10454,9 @@ void FreeMem()
     delete[] layer;
     delete[] SPECIES_GERM;
 #ifdef WATER
-    delete[] site_DCELL;
+    delete[] ctx.grid.site_DCELL;
 #endif
-    for (int site = 0; site < sites; site++)
+    for (int site = 0; site < ctx.grid.sites; site++)
         delete[] SPECIES_SEEDS[site];
     delete[] SPECIES_SEEDS;
     delete[] p_seed;
@@ -10467,7 +10466,7 @@ void FreeMem()
 
     if (_SEEDTRADEOFF || _NDD)
         delete[] PROB_S;
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         delete[] LAI3D[h];
     delete[] LAI3D;
 
@@ -10481,7 +10480,7 @@ void FreeMem()
     delete[] chm_field_current_ALS;
     delete[] chm_field_changes;
 
-    for (int h = 0; h < (HEIGHT + 1); h++)
+    for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         delete[] transmittance_simulatedALS[h];
         delete[] transmittance_direct[h];
@@ -10496,7 +10495,7 @@ void FreeMem()
     delete[] abundances_species10;
     delete[] biomass_species;
 
-    for (int spp = 0; spp < (nbspp + 1); spp++)
+    for (int spp = 0; spp < (ctx.grid.nbspp + 1); spp++)
     {
         delete[] traits_species[spp];
         delete[] traits_species10[spp];

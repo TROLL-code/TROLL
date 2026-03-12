@@ -64,8 +64,8 @@
 //
 // For now, these declarations prevent circular include dependencies.
 
-extern int cols, rows, HEIGHT, length_dcell;
-extern float NV, NH;
+// cols, rows, HEIGHT, length_dcell migrated to ctx.grid
+// NV, NH migrated to ctx.grid
 extern float p_nonvert, SWtoPPFD, klight;
 extern float absorptance_leaves, theta, phi, g1;
 extern float vC, DBH0, H0, CR_min, CR_a, CR_b, CD_a, CD_b, CD0;
@@ -75,7 +75,7 @@ extern float sigma_height, sigma_CR, sigma_CD, sigma_P, sigma_N, sigma_LMA;
 extern float sigma_wsg, sigma_dbhmax;
 extern float sigma_leafarea, sigma_tlp;
 extern float corr_CR_height, corr_N_P, corr_N_LMA, corr_P_LMA;
-extern int leafdem_resolution;
+// leafdem_resolution migrated to ctx.grid
 extern float p_tfsecondary, hurt_decay, crown_gap_fraction;
 extern float m, m1, Cair;
 extern bool _LL_parameterization, _sapwood, _seedsadditional;
@@ -249,14 +249,14 @@ void RegisterParameters(Context &ctx)
     //  FULL registry table from your AssignValueGlobal()
     // ============================================
 
-    add_int("cols", cols, 0, INT_MAX, 400);
-    add_int("rows", rows, 0, INT_MAX, 400);
-    add_int("HEIGHT", HEIGHT, 0, 150, 70);
-    add_int("length_dcell", length_dcell, 0, INT_MAX, 25);
+    add_int("cols", ctx.grid.cols, 0, INT_MAX, 400);
+    add_int("rows", ctx.grid.rows, 0, INT_MAX, 400);
+    add_int("HEIGHT", ctx.grid.HEIGHT, 0, 150, 70);
+    add_int("length_dcell", ctx.grid.length_dcell, 0, INT_MAX, 25);
     add_int("nbiter", ctx.time.nbiter, 0, INT_MAX, 6000);
 
-    add_float("NV", NV, 0.0f, float(INT_MAX), 1.0f);
-    add_float("NH", NH, 0.0f, float(INT_MAX), 1.0f);
+    add_float("NV", ctx.grid.NV, 0.0f, float(INT_MAX), 1.0f);
+    add_float("NH", ctx.grid.NH, 0.0f, float(INT_MAX), 1.0f);
 
     add_int("nbout", ctx.time.nbout, 0, INT_MAX, 4);
     add_float("p_nonvert", p_nonvert, 0.0f, 1.0f, 0.05f);
@@ -312,7 +312,7 @@ void RegisterParameters(Context &ctx)
     add_float("corr_N_LMA", corr_N_LMA, -1.0f, 1.0f, -0.43f);
     add_float("corr_P_LMA", corr_P_LMA, -1.0f, 1.0f, -0.39f);
 
-    add_int("leafdem_resolution", leafdem_resolution, 0, INT_MAX, 30);
+    add_int("leafdem_resolution", ctx.grid.leafdem_resolution, 0, INT_MAX, 30);
 
     add_float("p_tfsecondary", p_tfsecondary, 0.0f, 1.0f, 1.0f);
     add_float("hurt_decay", hurt_decay, 0.0f, 1.0f, 0.0f);
