@@ -50,18 +50,19 @@ if [ $SKIP_RUN == false ]; then
       if [[ "$OS" == "Darwin" ]]; then
         # macOS
         GSL_PATH=$(brew --prefix gsl)
-        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PATH"/include -L "$GSL_PATH"/lib -lgsl -lgslcblas -lm
+        g++ -w -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PATH"/include -L "$GSL_PATH"/lib -lgsl -lgslcblas -lm
       elif [[ "$OS" == "Linux" ]]; then
         # Ubuntu/Linux
         GSL_PREFIX=$(pkg-config --variable=prefix gsl)
-        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PREFIX"/include/gsl -L "$GSL_PREFIX"/lib/libgsl* -lgsl -lgslcblas -lm
+        g++ -w -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -I "$GSL_PREFIX"/include/gsl -L "$GSL_PREFIX"/lib/libgsl* -lgsl -lgslcblas -lm
       else
         echo "Unsupported operating system: $OS, TROLL compilation might not work."
-        g++ -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -lgsl -lgslcblas -lm
+        g++ -w -O3 -Wall -o TROLLv4_exe mainTROLL4.0.cpp -lgsl -lgslcblas -lm
       fi
       echo -e "${GREEN}✔ TROLL reference compilation OK${NC}"
       # reduce nomber of time iterations to 20
-      sed 's/nbiter[[:space:]]\+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
+      sed -E 's/nbiter[[:space:]]+365/nbiter 20/' ./example/global_inputs.txt > global_inputs_nbiter20.txt
+      
       # run TROLL
       echo -e "${YELLOW}Running TROLL reference version...${NC}"
       ./TROLLv4_exe \
@@ -101,7 +102,7 @@ if [ $SKIP_RUN == false ]; then
     rm -f "$TEST"/*
 
     # reduce nomber of time iterations to 20
-    sed 's/nbiter[[:space:]]\+365/nbiter 20/' ../example/global_inputs.txt > "$TEST"/global_inputs_nbiter20.txt
+    sed -E 's/nbiter[[:space:]]+365/nbiter 20/' ../example/global_inputs.txt > "$TEST"/global_inputs_nbiter20.txt
 
     ./TROLL \
     -i"$TEST"/global_inputs_nbiter20.txt \
