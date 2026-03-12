@@ -72,10 +72,7 @@ extern float vC, DBH0, H0, CR_min, CR_a, CR_b, CD_a, CD_b, CD0;
 extern float dens, fallocwood, falloccanopy, Cseedrain;
 // shape_crown migrated to ctx.crown
 extern float nbs0;
-extern float sigma_height, sigma_CR, sigma_CD, sigma_P, sigma_N, sigma_LMA;
-extern float sigma_wsg, sigma_dbhmax;
-extern float sigma_leafarea, sigma_tlp;
-extern float corr_CR_height, corr_N_P, corr_N_LMA, corr_P_LMA;
+// sigma/corr/cov intraspecific variation parameters migrated to ctx.intra
 // leafdem_resolution migrated to ctx.grid
 extern float p_tfsecondary, hurt_decay;
 // crown_gap_fraction migrated to ctx.crown
@@ -291,22 +288,22 @@ void RegisterParameters(Context &ctx)
 
     add_float("nbs0", nbs0, 0.0f, 10000.0f, 10.0f);
 
-    add_float("sigma_height", sigma_height, 0.0f, 1.0f, 0.19f);
-    add_float("sigma_CR", sigma_CR, 0.0f, 1.0f, 0.29f);
-    add_float("sigma_CD", sigma_CD, 0.0f, 1.0f, 0.0f);
-    add_float("sigma_P", sigma_P, 0.0f, 1.0f, 0.24f);
-    add_float("sigma_N", sigma_N, 0.0f, 1.0f, 0.12f);
-    add_float("sigma_LMA", sigma_LMA, 0.0f, 1.0f, 0.24f);
-    add_float("sigma_wsg", sigma_wsg, 0.0f, 0.5f, 0.06f);
-    add_float("sigma_dbhmax", sigma_dbhmax, 0.0f, 1.0f, 0.05f);
+    add_float("sigma_height", ctx.intra.sigma_height, 0.0f, 1.0f, 0.19f);
+    add_float("sigma_CR", ctx.intra.sigma_CR, 0.0f, 1.0f, 0.29f);
+    add_float("sigma_CD", ctx.intra.sigma_CD, 0.0f, 1.0f, 0.0f);
+    add_float("sigma_P", ctx.intra.sigma_P, 0.0f, 1.0f, 0.24f);
+    add_float("sigma_N", ctx.intra.sigma_N, 0.0f, 1.0f, 0.12f);
+    add_float("sigma_LMA", ctx.intra.sigma_LMA, 0.0f, 1.0f, 0.24f);
+    add_float("sigma_wsg", ctx.intra.sigma_wsg, 0.0f, 0.5f, 0.06f);
+    add_float("sigma_dbhmax", ctx.intra.sigma_dbhmax, 0.0f, 1.0f, 0.05f);
 
-    add_float("sigma_leafarea", sigma_leafarea, 0.0f, 1.0f, 0.05f);
-    add_float("sigma_tlp", sigma_tlp, 0.0f, 1.0f, 0.05f);
+    add_float("sigma_leafarea", ctx.intra.sigma_leafarea, 0.0f, 1.0f, 0.05f);
+    add_float("sigma_tlp", ctx.intra.sigma_tlp, 0.0f, 1.0f, 0.05f);
 
-    add_float("corr_CR_height", corr_CR_height, -1.0f, 1.0f, 0.0f);
-    add_float("corr_N_P", corr_N_P, -1.0f, 1.0f, 0.65f);
-    add_float("corr_N_LMA", corr_N_LMA, -1.0f, 1.0f, -0.43f);
-    add_float("corr_P_LMA", corr_P_LMA, -1.0f, 1.0f, -0.39f);
+    add_float("corr_CR_height", ctx.intra.corr_CR_height, -1.0f, 1.0f, 0.0f);
+    add_float("corr_N_P", ctx.intra.corr_N_P, -1.0f, 1.0f, 0.65f);
+    add_float("corr_N_LMA", ctx.intra.corr_N_LMA, -1.0f, 1.0f, -0.43f);
+    add_float("corr_P_LMA", ctx.intra.corr_P_LMA, -1.0f, 1.0f, -0.39f);
 
     add_int("leafdem_resolution", ctx.grid.leafdem_resolution, 0, INT_MAX, 30);
 

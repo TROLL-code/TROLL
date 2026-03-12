@@ -4307,30 +4307,30 @@ void ReadInputGeneral(Context &ctx)
 
         kpar = klight * absorptance_leaves; // kpar is the klight factor times the absorptance of leaves
         // convert correlations to covariances
-        cov_N_P = corr_N_P * sigma_N * sigma_P;
-        cov_N_LMA = corr_N_LMA * sigma_N * sigma_LMA;
-        cov_P_LMA = corr_P_LMA * sigma_P * sigma_LMA;
+        ctx.intra.cov_N_P = ctx.intra.corr_N_P * ctx.intra.sigma_N * ctx.intra.sigma_P;
+        ctx.intra.cov_N_LMA = ctx.intra.corr_N_LMA * ctx.intra.sigma_N * ctx.intra.sigma_LMA;
+        ctx.intra.cov_P_LMA = ctx.intra.corr_P_LMA * ctx.intra.sigma_P * ctx.intra.sigma_LMA;
 
-        if (cov_N_P == 0.0 || cov_N_LMA == 0.0 || cov_P_LMA == 0.0)
+        if (ctx.intra.cov_N_P == 0.0 || ctx.intra.cov_N_LMA == 0.0 || ctx.intra.cov_P_LMA == 0.0)
         {
             cerr << "\nCovariance matrix N,P,LMA could not be decomposed. Using uncorrelated variation of trait values instead" << endl;
             ctx.rng.covariance_status = 0;
         }
         else
         {
-            cout << "Correlation status. corr_N_P: " << corr_N_P << " cov_N_LMA: " << corr_N_LMA << " corr_P_LMA: " << corr_P_LMA << endl;
+            cout << "Correlation status. ctx.intra.corr_N_P: " << ctx.intra.corr_N_P << " ctx.intra.cov_N_LMA: " << ctx.intra.corr_N_LMA << " ctx.intra.corr_P_LMA: " << ctx.intra.corr_P_LMA << endl;
             ctx.rng.covariance_status = 1;
             // Initialise covariance matrix for N, P, LMA
             ctx.rng.mcov_N_P_LMA = gsl_matrix_alloc(3, 3);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 0, sigma_N * sigma_N);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 1, cov_N_P);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 2, cov_N_LMA);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 0, cov_N_P);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 1, sigma_P * sigma_P);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 2, cov_P_LMA);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 0, cov_N_LMA);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 1, cov_P_LMA);
-            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 2, sigma_LMA * sigma_LMA);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 0, ctx.intra.sigma_N * ctx.intra.sigma_N);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 1, ctx.intra.cov_N_P);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 0, 2, ctx.intra.cov_N_LMA);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 0, ctx.intra.cov_N_P);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 1, ctx.intra.sigma_P * ctx.intra.sigma_P);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 1, 2, ctx.intra.cov_P_LMA);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 0, ctx.intra.cov_N_LMA);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 1, ctx.intra.cov_P_LMA);
+            gsl_matrix_set(ctx.rng.mcov_N_P_LMA, 2, 2, ctx.intra.sigma_LMA * ctx.intra.sigma_LMA);
 
             // Cholesky decomposition for multivariate draw
             cout << "\nCovariance matrix N,P,LMA: " << endl;
@@ -5027,9 +5027,9 @@ void InitialiseIntraspecific()
     { // modified FF v.3.1.5 (reduced from 100000 to 10000)
         if (ctx.rng.covariance_status == 0)
         {
-            variation_N = gsl_ran_gaussian(ctx.rng.gslrand, sigma_N);
-            variation_P = gsl_ran_gaussian(ctx.rng.gslrand, sigma_P);
-            variation_LMA = gsl_ran_gaussian(ctx.rng.gslrand, sigma_LMA);
+            variation_N = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_N);
+            variation_P = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_P);
+            variation_LMA = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_LMA);
         }
         else
         {
@@ -5038,15 +5038,15 @@ void InitialiseIntraspecific()
             variation_P = gsl_vector_get(ctx.rng.variation_N_P_LMA, 1);
             variation_LMA = gsl_vector_get(ctx.rng.variation_N_P_LMA, 2);
         }
-        gsl_ran_bivariate_gaussian(ctx.rng.gslrand, sigma_height, sigma_CR, corr_CR_height, &variation_height, &variation_CR);
-        // variation_height = gsl_ran_gaussian(ctx.rng.gslrand, sigma_height);
-        // variation_CR = gsl_ran_gaussian(ctx.rng.gslrand, sigma_CR);
-        variation_CD = gsl_ran_gaussian(ctx.rng.gslrand, sigma_CD);
-        variation_wsg = gsl_ran_gaussian(ctx.rng.gslrand, sigma_wsg);
-        variation_dbhmax = gsl_ran_gaussian(ctx.rng.gslrand, sigma_dbhmax);
+        gsl_ran_bivariate_gaussian(ctx.rng.gslrand, ctx.intra.sigma_height, ctx.intra.sigma_CR, ctx.intra.corr_CR_height, &variation_height, &variation_CR);
+        // variation_height = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_height);
+        // variation_CR = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_CR);
+        variation_CD = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_CD);
+        variation_wsg = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_wsg);
+        variation_dbhmax = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_dbhmax);
 #ifdef WATER
-        variation_leafarea = gsl_ran_gaussian(ctx.rng.gslrand, sigma_leafarea);
-        variation_tlp = gsl_ran_gaussian(ctx.rng.gslrand, sigma_tlp);
+        variation_leafarea = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_leafarea);
+        variation_tlp = gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_tlp);
 #endif
 
         // limit extent of variation, some coarse biological limits for variation around allometries
@@ -5095,7 +5095,7 @@ void InitialiseIntraspecific()
         ctx.intra.d_intraspecific_CD[i] = float(exp(variation_CD));
         ctx.intra.d_intraspecific_wsg[i] = float(variation_wsg); // normal, not log-normal
         ctx.intra.d_intraspecific_dbhmax[i] = float(exp(variation_dbhmax));
-        // ctx.intra.d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(ctx.rng.gslrand, sigma_height)));
+        // ctx.intra.d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(ctx.rng.gslrand, ctx.intra.sigma_height)));
         max_intraspecific_height = fmaxf(max_intraspecific_height, ctx.intra.d_intraspecific_height[i]);
         min_intraspecific_height = fminf(min_intraspecific_height, ctx.intra.d_intraspecific_height[i]);
         max_intraspecific_CR = fmaxf(max_intraspecific_CR, ctx.intra.d_intraspecific_CR[i]);

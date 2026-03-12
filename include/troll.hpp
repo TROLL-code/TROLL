@@ -189,26 +189,9 @@ float hurt_decay;    //!< Global variable: "healing factor" rate at which t_hurt
 float m;             //!< Global variable: basal death rate
 float m1;            //!< Global variable: slope of the dependence between death rate and wood density (wsg); usually a negative constant (v.2.2)
 
-// sigmas for intraspecific variation, currently assumed to be the same for all species
-float sigma_height; //!< Global variable: standard deviation of intraspecific variation in maximal height
-float sigma_CR;     //!< Global variable: standard deviation of intraspecific variation in crown radius
-float sigma_CD;     //!< Global variable: standard deviation of intraspecific variation in crown depth
-float sigma_P;      //!< Global variable: standard deviation of intraspecific variation in leaf phosphorus concentration
-float sigma_N;      //!< Global variable: standard deviation of intraspecific variation in leaf nitrogen concentration
-float sigma_LMA;    //!< Global variable: standard deviation of intraspecific variation in leaf mass per area (LMA)
-float sigma_wsg;    //!< Global variable: standard deviation of intraspecific variation in wood specific gravity (wsg)
-float sigma_dbhmax; //!< Global variable: standard deviation of intraspecific variation in maximal trunk diameter
-#ifdef WATER
-float sigma_leafarea; //!< Global variable: standard deviation of intraspecific variation in leaf area (LA)
-float sigma_tlp;      //!< Global variable: standard deviation of intraspecific variation in turgor loss point (TLP)
-#endif
-float corr_CR_height; //!< Global variable: intraspecific correlation between crown radius and maximal height
-float corr_N_P;       //!< Global variable: intraspecific correlation between leaf nitrogen and leaf phosphorus
-float corr_N_LMA;     //!< Global variable: intraspecific correlation between leaf nitrogen and LMA
-float corr_P_LMA;     //!< Global variable: intraspecific correlation between leaf phosphorus and LMA
-float cov_N_P;        //!< Global variable: intraspecific covariance between leaf nitrogen and leaf phosphorus
-float cov_N_LMA;      //!< Global variable: intraspecific covariance between leaf nitrogen and LMA
-float cov_P_LMA;      //!< Global variable: intraspecific covariance between leaf phosphorus and LMA
+// Intraspecific variation parameters migrated to ctx.intra:
+// sigma_height/CR/CD/P/N/LMA/wsg/dbhmax/leafarea/tlp,
+// corr_CR_height/N_P/N_LMA/P_LMA, cov_N_P/N_LMA/P_LMA
 
 // Intraspecific arrays migrated to ctx.intra:
 // d_intraspecific_height/CR/CD/P/N/LMA/wsg/dbhmax/leafarea/tlp

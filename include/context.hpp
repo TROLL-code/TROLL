@@ -272,6 +272,26 @@ struct Intraspecific
     float d_intraspecific_dbhmax[10000];
     float d_intraspecific_leafarea[10000];
     float d_intraspecific_tlp[10000];
+
+    // Standard deviations and correlations for intraspecific variation
+    float sigma_height;
+    float sigma_CR;
+    float sigma_CD;
+    float sigma_P;
+    float sigma_N;
+    float sigma_LMA;
+    float sigma_wsg;
+    float sigma_dbhmax;
+    float sigma_leafarea;
+    float sigma_tlp;
+
+    float corr_CR_height;
+    float corr_N_P;
+    float corr_N_LMA;
+    float corr_P_LMA;
+    float cov_N_P;
+    float cov_N_LMA;
+    float cov_P_LMA;
 };
 
 struct CrownGeometry
