@@ -223,50 +223,12 @@ float **LAI3D(0); //!< Global 3D field: leaf density (per volume unit)
 // TREEFALL IMPACT ON TREE HEALTH
 unsigned short *Thurt[3]; //!<  Global vector:Treefall field
 
-#ifdef WATER
-int nblayers_soil;     //!< Global variable: number of soil layers (for water module)
-float *layer_depth(0); //!< Global vector: depth of each layer (m) !!!UPDATE
-
-// soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this should be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils, and comments in the code). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data made using a new function of RconTROLL, if unearthed.
-// since soil layers (silt, clay, sand) are only needed locally, they are now coded as vectors
-// float *proportion_Silt(0);             //!soil layer silt fraction
-// float *proportion_Clay(0);             //!soil layer clay fraction
-// float *proportion_Sand(0);             //!soil layer sand fraction
-float *Sat_SWC(0);             //!< Global vector: soil layer saturated water content, in m3/m3 -- this is often assumed similar to porosity, even though it is usually 5-10% lower than total porosity due to entrapped or dissolved air -- see comment Table 1 in Marthews et al. 2014
-float *Max_SWC(0);             //!< Global vector: soil layer maximum absolute water content (m^3)
-float *FC_SWC(0);              //!< Global vector: soil layer maximum absolute water content (m^3)
-float *Res_SWC(0);             //!< Global vector: soil layer residual water content (m^3/m^3)
-float *Min_SWC(0);             //!< Global vector: soil layer minimum absolute water content (m^3)
-float *Ksat(0);                //!< Global vector: soil layer saturated conductivity (m^3)
-float *a_vgm(0);               //!< Global vector: parameter for the van Genuchten_mualem soil water retention curves
-float *b_vgm(0);               //!< Global vector: parameter for the van Genuchten_mualem soil water retention curves
-float *c_vgm(0);               //!< Global vector: parameter for the van Genuchten_mualem soil water retention curves
-float *m_vgm(0);               //!< Global vector: parameter for the van Genuchten_mualem soil water retention curves
-float *phi_e(0);               //!< Global vector: parameter for the Campbell-Mualem soil water retention curves (possible update: replace with a Genuchten parameter)
-float *b(0);                   //!< Global vector: parameter for the Campbell-Mualem soil water retention curves (possible update: replace with a Genuchten parameter)
-float **SWC3D(0);              //!< Global 3D field: soil water content in each soil voxel (layer * DCELL)
-float **soil_phi3D(0);         //!< Global 3D field: soil water potential (in MPa) in each soil voxel (layer * DCELL)
-float **Ks(0);                 //!< Global 3D field: soil hydraulic conductivity in each soil voxel (layer * DCELL)
-float **KsPhi(0);              //!< Global vector: soil hydraulic conductivity * soil water potential for each soil voxel (layer * DCELL), useful to ease computation
-float **LAI_DCELL(0);          //!< Global vector: total leaf area index (LAI), averaged per DCELL
-float *LAI_young(0);           //!< Global vector: total young leaf area index (LAI), averaged across all sites
-float *LAI_mature(0);          //!< Global vector: total mature leaf area index (LAI), averaged across all sites
-float *LAI_old(0);             //!< Global vector: total old leaf area index (LAI), averaged across all sites
-float *Canopy_height_DCELL(0); //!< Global vector: mean top canopy height, averaged per DCELL
-int *HSum_DCELL(0);            //!< Global vector: number of sites covered by vegetation per DCELL, used to compute mean top canopy height per DCELL
-float *TopWindSpeed_DCELL(0);  //!< Global vector: wind speed at the top of the canopy, per DCELL
-float *Interception(0);        //!< Global vector: water interception by the canopy, per DCELL !!!UNITS
-float *Throughfall(0);         //!< Global vector: throughfall, per DCELL !!!UNITS
-float *Runoff(0);              //!< Global vector: water run-off, per DCELL !!!UNITS
-float *Leakage(0);             //!< Global vector: water leakage, per DCELL !!!UNITS
-float *Evaporation(0);         //!< Global vector: water evaporation (physical process), per DCELL
-float **Transpiration(0);      //!< Global vector: water uptake by trees, in each soil voxel (layer * DCELL)
-float transpiration_1016;      // variable used only to compare with eddy-flux tower data.
-
-float abund_phi_root;   //!< summary statistic output: abundance-weighted phi-root
-float abund10_phi_root; //!< summary statistic output: abundance-weighted phi-root, including only tree with dbh>10cm
-float agb_phi_root;     //!< summary statistic output: agb-weighted phi-root
-#endif
+// Soil globals migrated to ctx.soil:
+// nblayers_soil, layer_depth, Sat_SWC, Max_SWC, FC_SWC, Res_SWC, Min_SWC,
+// Ksat, a_vgm, b_vgm, c_vgm, m_vgm, phi_e, b, SWC3D, soil_phi3D, Ks, KsPhi,
+// LAI_DCELL, LAI_young, LAI_mature, LAI_old, Canopy_height_DCELL, HSum_DCELL,
+// TopWindSpeed_DCELL, Interception, Throughfall, Runoff, Leakage, Evaporation,
+// Transpiration, transpiration_1016, abund_phi_root, abund10_phi_root, agb_phi_root
 
 // SEED DENSITIES migrated to ctx.species:
 // SPECIES_SEEDS, p_seed, n_seed, p_species, n_species,

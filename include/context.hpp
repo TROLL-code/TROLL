@@ -208,6 +208,11 @@ struct Soil
     float *Runoff = nullptr;
     float *Leakage = nullptr;
     float *Evaporation = nullptr;
+
+    float transpiration_1016;
+    float abund_phi_root;
+    float abund10_phi_root;
+    float agb_phi_root;
 };
 
 struct Diagnostics
