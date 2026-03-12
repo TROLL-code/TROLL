@@ -142,17 +142,17 @@ void Tree::Birth(int nume, int site0)
         // # intraspecific var ##
         // ######################
 
-        t_mult_height = d_intraspecific_height[dev_rand];
-        t_mult_CR = d_intraspecific_CR[dev_rand];
-        t_mult_N = d_intraspecific_N[dev_rand];
-        t_mult_P = d_intraspecific_P[dev_rand];
-        t_mult_LMA = d_intraspecific_LMA[dev_rand];
-        t_mult_CD = d_intraspecific_CD[dev_rand];
-        t_dev_wsg = d_intraspecific_wsg[dev_rand];
-        t_mult_dbhmax = d_intraspecific_dbhmax[dev_rand];
+        t_mult_height = ctx.intra.d_intraspecific_height[dev_rand];
+        t_mult_CR = ctx.intra.d_intraspecific_CR[dev_rand];
+        t_mult_N = ctx.intra.d_intraspecific_N[dev_rand];
+        t_mult_P = ctx.intra.d_intraspecific_P[dev_rand];
+        t_mult_LMA = ctx.intra.d_intraspecific_LMA[dev_rand];
+        t_mult_CD = ctx.intra.d_intraspecific_CD[dev_rand];
+        t_dev_wsg = ctx.intra.d_intraspecific_wsg[dev_rand];
+        t_mult_dbhmax = ctx.intra.d_intraspecific_dbhmax[dev_rand];
 #ifdef WATER
-        t_mult_leafarea = d_intraspecific_leafarea[dev_rand];
-        t_mult_tlp = d_intraspecific_tlp[dev_rand];
+        t_mult_leafarea = ctx.intra.d_intraspecific_leafarea[dev_rand];
+        t_mult_tlp = ctx.intra.d_intraspecific_tlp[dev_rand];
 #endif
 
         // #####################
@@ -369,7 +369,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_Pmass == 0.0)
         {
             // draw random trait
-            t_mult_P = d_intraspecific_P[dev_rand];
+            t_mult_P = ctx.intra.d_intraspecific_P[dev_rand];
             t_Pmass = S[t_sp_lab].s_Pmass * t_mult_P;
         }
         else
@@ -391,7 +391,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_Nmass == 0.0)
         {
             // draw random trait
-            t_mult_N = d_intraspecific_N[dev_rand];
+            t_mult_N = ctx.intra.d_intraspecific_N[dev_rand];
             t_Nmass = S[t_sp_lab].s_Nmass * t_mult_N;
         }
         else
@@ -410,7 +410,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_LMA == 0.0)
         {
             // draw random trait
-            t_mult_LMA = d_intraspecific_LMA[dev_rand];
+            t_mult_LMA = ctx.intra.d_intraspecific_LMA[dev_rand];
             t_LMA = S[t_sp_lab].s_LMA * t_mult_LMA;
         }
         else
@@ -429,7 +429,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 
         if (t_leafarea == 0.0)
         {
-            t_mult_leafarea = d_intraspecific_leafarea[dev_rand];
+            t_mult_leafarea = ctx.intra.d_intraspecific_leafarea[dev_rand];
             t_leafarea = S[t_sp_lab].s_leafarea * t_mult_leafarea;
         }
         else
@@ -445,7 +445,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 
         if (t_leafarea == 0.0)
         {
-            t_mult_tlp = d_intraspecific_tlp[dev_rand];
+            t_mult_tlp = ctx.intra.d_intraspecific_tlp[dev_rand];
             t_tlp = S[t_sp_lab].s_tlp * t_mult_tlp;
         }
         else
@@ -464,7 +464,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_wsg == 0.0)
         {
             // draw random trait
-            t_dev_wsg = d_intraspecific_wsg[dev_rand];
+            t_dev_wsg = ctx.intra.d_intraspecific_wsg[dev_rand];
             t_wsg = fmaxf(S[t_sp_lab].s_wsg + t_dev_wsg, 0.05);
         }
         else
@@ -483,7 +483,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_dbhmax == 0.0)
         {
             t_dbhmax = S[t_sp_lab].s_dbhmax;
-            t_mult_dbhmax = d_intraspecific_dbhmax[dev_rand];
+            t_mult_dbhmax = ctx.intra.d_intraspecific_dbhmax[dev_rand];
             t_dbhmax *= t_mult_dbhmax;
             if (t_dbhmax < t_dbh * 1.5)
             {
@@ -575,7 +575,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         // !!!: assumption of random deviations from allometry, irrespective of neighborhood, is a problematic assumption for generic inventories
         if (t_height == 0.0)
         {
-            t_mult_height = d_intraspecific_height[dev_rand];
+            t_mult_height = ctx.intra.d_intraspecific_height[dev_rand];
             UpdateHeight();
         }
         else
@@ -593,7 +593,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         // !!!: assumption of random deviations from allometry, irrespective of neighborhood, is a problematic assumption for generic inventories
         if (t_CD == 0.0)
         {
-            t_mult_CD = d_intraspecific_CD[dev_rand];
+            t_mult_CD = ctx.intra.d_intraspecific_CD[dev_rand];
             UpdateCD();
         }
         else
@@ -611,7 +611,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         // !!!: assumption of random deviations from allometry, irrespective of neighborhood, is a problematic assumption for generic inventories
         if (t_CR == 0.0)
         {
-            t_mult_CR = d_intraspecific_CR[dev_rand];
+            t_mult_CR = ctx.intra.d_intraspecific_CR[dev_rand];
             UpdateCR();
         }
         else
@@ -5083,40 +5083,40 @@ void InitialiseIntraspecific()
             variation_tlp = 0.5;
         if (variation_tlp < -0.5)
             variation_tlp = -0.5;
-        d_intraspecific_leafarea[i] = float(exp(variation_leafarea));
-        d_intraspecific_tlp[i] = float(exp(variation_tlp));
+        ctx.intra.d_intraspecific_leafarea[i] = float(exp(variation_leafarea));
+        ctx.intra.d_intraspecific_tlp[i] = float(exp(variation_tlp));
 #endif
 
-        d_intraspecific_height[i] = float(exp(variation_height));
-        d_intraspecific_CR[i] = float(exp(variation_CR));
-        d_intraspecific_N[i] = float(exp(variation_N));
-        d_intraspecific_P[i] = float(exp(variation_P));
-        d_intraspecific_LMA[i] = float(exp(variation_LMA));
-        d_intraspecific_CD[i] = float(exp(variation_CD));
-        d_intraspecific_wsg[i] = float(variation_wsg); // normal, not log-normal
-        d_intraspecific_dbhmax[i] = float(exp(variation_dbhmax));
-        // d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(gslrand, sigma_height)));
-        max_intraspecific_height = fmaxf(max_intraspecific_height, d_intraspecific_height[i]);
-        min_intraspecific_height = fminf(min_intraspecific_height, d_intraspecific_height[i]);
-        max_intraspecific_CR = fmaxf(max_intraspecific_CR, d_intraspecific_CR[i]);
-        min_intraspecific_CR = fminf(min_intraspecific_CR, d_intraspecific_CR[i]);
-        max_intraspecific_N = fmaxf(max_intraspecific_N, d_intraspecific_N[i]);
-        min_intraspecific_N = fminf(min_intraspecific_N, d_intraspecific_N[i]);
-        max_intraspecific_P = fmaxf(max_intraspecific_P, d_intraspecific_P[i]);
-        min_intraspecific_P = fminf(min_intraspecific_P, d_intraspecific_P[i]);
-        max_intraspecific_LMA = fmaxf(max_intraspecific_LMA, d_intraspecific_LMA[i]);
-        min_intraspecific_LMA = fminf(min_intraspecific_LMA, d_intraspecific_LMA[i]);
-        max_intraspecific_CD = fmaxf(max_intraspecific_CD, d_intraspecific_CD[i]);
-        min_intraspecific_CD = fminf(min_intraspecific_CD, d_intraspecific_CD[i]);
-        max_intraspecific_wsg = fmaxf(max_intraspecific_wsg, d_intraspecific_wsg[i]);
-        min_intraspecific_wsg = fminf(min_intraspecific_wsg, d_intraspecific_wsg[i]);
-        max_intraspecific_dbhmax = fmaxf(max_intraspecific_dbhmax, d_intraspecific_dbhmax[i]);
-        min_intraspecific_dbhmax = fminf(min_intraspecific_dbhmax, d_intraspecific_dbhmax[i]);
+        ctx.intra.d_intraspecific_height[i] = float(exp(variation_height));
+        ctx.intra.d_intraspecific_CR[i] = float(exp(variation_CR));
+        ctx.intra.d_intraspecific_N[i] = float(exp(variation_N));
+        ctx.intra.d_intraspecific_P[i] = float(exp(variation_P));
+        ctx.intra.d_intraspecific_LMA[i] = float(exp(variation_LMA));
+        ctx.intra.d_intraspecific_CD[i] = float(exp(variation_CD));
+        ctx.intra.d_intraspecific_wsg[i] = float(variation_wsg); // normal, not log-normal
+        ctx.intra.d_intraspecific_dbhmax[i] = float(exp(variation_dbhmax));
+        // ctx.intra.d_intraspecific_height[i] = exp(float(gsl_ran_gaussian(gslrand, sigma_height)));
+        max_intraspecific_height = fmaxf(max_intraspecific_height, ctx.intra.d_intraspecific_height[i]);
+        min_intraspecific_height = fminf(min_intraspecific_height, ctx.intra.d_intraspecific_height[i]);
+        max_intraspecific_CR = fmaxf(max_intraspecific_CR, ctx.intra.d_intraspecific_CR[i]);
+        min_intraspecific_CR = fminf(min_intraspecific_CR, ctx.intra.d_intraspecific_CR[i]);
+        max_intraspecific_N = fmaxf(max_intraspecific_N, ctx.intra.d_intraspecific_N[i]);
+        min_intraspecific_N = fminf(min_intraspecific_N, ctx.intra.d_intraspecific_N[i]);
+        max_intraspecific_P = fmaxf(max_intraspecific_P, ctx.intra.d_intraspecific_P[i]);
+        min_intraspecific_P = fminf(min_intraspecific_P, ctx.intra.d_intraspecific_P[i]);
+        max_intraspecific_LMA = fmaxf(max_intraspecific_LMA, ctx.intra.d_intraspecific_LMA[i]);
+        min_intraspecific_LMA = fminf(min_intraspecific_LMA, ctx.intra.d_intraspecific_LMA[i]);
+        max_intraspecific_CD = fmaxf(max_intraspecific_CD, ctx.intra.d_intraspecific_CD[i]);
+        min_intraspecific_CD = fminf(min_intraspecific_CD, ctx.intra.d_intraspecific_CD[i]);
+        max_intraspecific_wsg = fmaxf(max_intraspecific_wsg, ctx.intra.d_intraspecific_wsg[i]);
+        min_intraspecific_wsg = fminf(min_intraspecific_wsg, ctx.intra.d_intraspecific_wsg[i]);
+        max_intraspecific_dbhmax = fmaxf(max_intraspecific_dbhmax, ctx.intra.d_intraspecific_dbhmax[i]);
+        min_intraspecific_dbhmax = fminf(min_intraspecific_dbhmax, ctx.intra.d_intraspecific_dbhmax[i]);
 #ifdef WATER
-        max_intraspecific_leafarea = fmaxf(max_intraspecific_leafarea, d_intraspecific_leafarea[i]);
-        min_intraspecific_leafarea = fminf(min_intraspecific_leafarea, d_intraspecific_leafarea[i]);
-        max_intraspecific_tlp = fmaxf(max_intraspecific_tlp, d_intraspecific_tlp[i]);
-        min_intraspecific_tlp = fminf(min_intraspecific_tlp, d_intraspecific_tlp[i]);
+        max_intraspecific_leafarea = fmaxf(max_intraspecific_leafarea, ctx.intra.d_intraspecific_leafarea[i]);
+        min_intraspecific_leafarea = fminf(min_intraspecific_leafarea, ctx.intra.d_intraspecific_leafarea[i]);
+        max_intraspecific_tlp = fmaxf(max_intraspecific_tlp, ctx.intra.d_intraspecific_tlp[i]);
+        min_intraspecific_tlp = fminf(min_intraspecific_tlp, ctx.intra.d_intraspecific_tlp[i]);
 #endif
     }
     cout << endl
@@ -5151,13 +5151,13 @@ void InitialiseLookUpLAImax()
             Tree pseudotree;
             pseudotree.t_sp_lab = spp;
 
-            pseudotree.t_Pmass = S[spp].s_Pmass * d_intraspecific_P[dev];
-            pseudotree.t_Nmass = S[spp].s_Nmass * d_intraspecific_N[dev];
-            pseudotree.t_LMA = S[spp].s_LMA * d_intraspecific_LMA[dev];
+            pseudotree.t_Pmass = S[spp].s_Pmass * ctx.intra.d_intraspecific_P[dev];
+            pseudotree.t_Nmass = S[spp].s_Nmass * ctx.intra.d_intraspecific_N[dev];
+            pseudotree.t_LMA = S[spp].s_LMA * ctx.intra.d_intraspecific_LMA[dev];
 
 #ifdef WATER
-            pseudotree.t_leafarea = S[spp].s_leafarea * d_intraspecific_leafarea[dev];
-            pseudotree.t_wsg = fmaxf(S[spp].s_wsg + d_intraspecific_wsg[dev], 0.05);
+            pseudotree.t_leafarea = S[spp].s_leafarea * ctx.intra.d_intraspecific_leafarea[dev];
+            pseudotree.t_wsg = fmaxf(S[spp].s_wsg + ctx.intra.d_intraspecific_wsg[dev], 0.05);
             pseudotree.t_wleaf = sqrt(pseudotree.t_leafarea * 0.0001);
             pseudotree.t_WSF = 1;
             pseudotree.t_WSF_A = 1;
@@ -9007,14 +9007,14 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
             nb_trees_counted++;
             mu_random += dev_rand;
 
-            mu_height_varinput += log(d_intraspecific_height[dev_rand]);
-            mu_CR_varinput += log(d_intraspecific_CR[dev_rand]);
-            mu_CD_varinput += log(d_intraspecific_CD[dev_rand]);
-            mu_P_varinput += log(d_intraspecific_P[dev_rand]);
-            mu_N_varinput += log(d_intraspecific_N[dev_rand]);
-            mu_LMA_varinput += log(d_intraspecific_LMA[dev_rand]);
-            mu_dbhmax_varinput += log(d_intraspecific_dbhmax[dev_rand]);
-            mu_wsg_varinput += log(d_intraspecific_wsg[dev_rand]);
+            mu_height_varinput += log(ctx.intra.d_intraspecific_height[dev_rand]);
+            mu_CR_varinput += log(ctx.intra.d_intraspecific_CR[dev_rand]);
+            mu_CD_varinput += log(ctx.intra.d_intraspecific_CD[dev_rand]);
+            mu_P_varinput += log(ctx.intra.d_intraspecific_P[dev_rand]);
+            mu_N_varinput += log(ctx.intra.d_intraspecific_N[dev_rand]);
+            mu_LMA_varinput += log(ctx.intra.d_intraspecific_LMA[dev_rand]);
+            mu_dbhmax_varinput += log(ctx.intra.d_intraspecific_dbhmax[dev_rand]);
+            mu_wsg_varinput += log(ctx.intra.d_intraspecific_wsg[dev_rand]);
 
             mu_height_varoutput += log(T[s].t_mult_height);
             mu_CR_varoutput += log(T[s].t_mult_CR);
@@ -9026,14 +9026,14 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
             mu_wsg_varoutput += log(T[s].t_dev_wsg);
 
             moment2_random += dev_rand;
-            moment2_height_varinput += log(d_intraspecific_height[dev_rand]) * log(d_intraspecific_height[dev_rand]);
-            moment2_CR_varinput += log(d_intraspecific_CR[dev_rand]) * log(d_intraspecific_CR[dev_rand]);
-            moment2_CD_varinput += log(d_intraspecific_CD[dev_rand]) * log(d_intraspecific_CD[dev_rand]);
-            moment2_P_varinput += log(d_intraspecific_P[dev_rand]) * log(d_intraspecific_P[dev_rand]);
-            moment2_N_varinput += log(d_intraspecific_N[dev_rand]) * log(d_intraspecific_N[dev_rand]);
-            moment2_LMA_varinput += log(d_intraspecific_LMA[dev_rand]) * log(d_intraspecific_LMA[dev_rand]);
-            moment2_dbhmax_varinput += log(d_intraspecific_dbhmax[dev_rand]) * log(d_intraspecific_dbhmax[dev_rand]);
-            moment2_wsg_varinput += log(d_intraspecific_wsg[dev_rand]) * log(d_intraspecific_wsg[dev_rand]);
+            moment2_height_varinput += log(ctx.intra.d_intraspecific_height[dev_rand]) * log(ctx.intra.d_intraspecific_height[dev_rand]);
+            moment2_CR_varinput += log(ctx.intra.d_intraspecific_CR[dev_rand]) * log(ctx.intra.d_intraspecific_CR[dev_rand]);
+            moment2_CD_varinput += log(ctx.intra.d_intraspecific_CD[dev_rand]) * log(ctx.intra.d_intraspecific_CD[dev_rand]);
+            moment2_P_varinput += log(ctx.intra.d_intraspecific_P[dev_rand]) * log(ctx.intra.d_intraspecific_P[dev_rand]);
+            moment2_N_varinput += log(ctx.intra.d_intraspecific_N[dev_rand]) * log(ctx.intra.d_intraspecific_N[dev_rand]);
+            moment2_LMA_varinput += log(ctx.intra.d_intraspecific_LMA[dev_rand]) * log(ctx.intra.d_intraspecific_LMA[dev_rand]);
+            moment2_dbhmax_varinput += log(ctx.intra.d_intraspecific_dbhmax[dev_rand]) * log(ctx.intra.d_intraspecific_dbhmax[dev_rand]);
+            moment2_wsg_varinput += log(ctx.intra.d_intraspecific_wsg[dev_rand]) * log(ctx.intra.d_intraspecific_wsg[dev_rand]);
 
             moment2_height_varoutput += log(T[s].t_mult_height) * log(T[s].t_mult_height);
             moment2_CR_varoutput += log(T[s].t_mult_CR) * log(T[s].t_mult_CR);

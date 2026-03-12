@@ -213,19 +213,8 @@ float cov_N_P;        //!< Global variable: intraspecific covariance between lea
 float cov_N_LMA;      //!< Global variable: intraspecific covariance between leaf nitrogen and LMA
 float cov_P_LMA;      //!< Global variable: intraspecific covariance between leaf phosphorus and LMA
 
-// LookUp_tables for intraspecific variation, modified FF v.3.1.5 (reduced to 10000)
-float d_intraspecific_height[10000]; //!< Global vector: distribution of intraspecific values for maximal tree height
-float d_intraspecific_CR[10000];     //!< Global vector: distribution of intraspecific values for maximal crown radius
-float d_intraspecific_CD[10000];     //!< Global vector: distribution of intraspecific values for maximal crown depth
-float d_intraspecific_P[10000];      //!< Global vector: distribution of intraspecific values for leaf phosphorus
-float d_intraspecific_N[10000];      //!< Global vector: distribution of intraspecific values for leaf nitrogen
-float d_intraspecific_LMA[10000];    //!< Global vector: distribution of intraspecific values for leaf mass per area (LMA)
-float d_intraspecific_wsg[10000];    //!< Global vector: distribution of intraspecific values for wood density (wsg)
-float d_intraspecific_dbhmax[10000]; //!< Global vector: distribution of intraspecific values for maximal trunk diameter
-#ifdef WATER
-float d_intraspecific_leafarea[10000]; //!< Global vector: distribution of intraspecific values for leaf area (LA)
-float d_intraspecific_tlp[10000];      //!< Global vector: distribution of intraspecific values for turgor loss point (TLP)
-#endif
+// Intraspecific arrays migrated to ctx.intra:
+// d_intraspecific_height/CR/CD/P/N/LMA/wsg/dbhmax/leafarea/tlp
 
 // LookUpLAImax migrated to ctx.lookup
 
