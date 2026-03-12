@@ -3901,32 +3901,32 @@ int main(int argc, char *argv[])
             switch (*(argv[argn] + 1))
             {
             case 'i':
-                bufi = argv[argn] + 2;
+                ctx.buffers.bufi = argv[argn] + 2;
                 break;
             case 'd': // new v.3.0; initialisation of daytime variation in a separate file ('d' for daytime variation)
-                bufi_daytimevar = argv[argn] + 2;
+                ctx.buffers.bufi_daytimevar = argv[argn] + 2;
                 break;
             case 'm': // new v.2.4; initialisation of climate parameters from separate file ('m' for meterology)
-                bufi_climate = argv[argn] + 2;
+                ctx.buffers.bufi_climate = argv[argn] + 2;
                 break;
             case 'p': // new v.3.0; initialisation of soil parameters from separate file ('p' for pedology)
-                bufi_soil = argv[argn] + 2;
+                ctx.buffers.bufi_soil = argv[argn] + 2;
                 break;
             case 's': // new v.3.0; initialisation of species parameters from separate file
-                bufi_species = argv[argn] + 2;
+                ctx.buffers.bufi_species = argv[argn] + 2;
                 break;
             case 'o':
-                buf = argv[argn] + 2;
+                ctx.buffers.buf = argv[argn] + 2;
                 break;
             case 'f': // new v.2.3: initialisation from field, 'f' for "forest", "field data"
-                bufi_data = argv[argn] + 2;
+                ctx.buffers.bufi_data = argv[argn] + 2;
                 ctx.opt._FromInventory = 1; // new v.3.1: automatic recognition of whether data sheet is provided or not
                 break;
             case 'w': // new v.2.3: initialisation from field, 'f' for "forest", "field data"
-                bufi_dataSWC = argv[argn] + 2;
+                ctx.buffers.bufi_dataSWC = argv[argn] + 2;
                 break;
             case 'l':
-                bufi_pointcloud = argv[argn] + 2; // new v.3.1.6: output of simulated point clouds for TROLL-created stands
+                ctx.buffers.bufi_pointcloud = argv[argn] + 2; // new v.3.1.6: output of simulated point clouds for TROLL-created stands
                 ctx.opt._OUTPUT_pointcloud = 1;
                 break;
             case 'n':
@@ -3936,22 +3936,22 @@ int main(int argc, char *argv[])
     }
 
     // input files
-    sprintf(inputfile, "%s", bufi);
-    sprintf(inputfile_daytimevar, "%s", bufi_daytimevar);
-    sprintf(inputfile_climate, "%s", bufi_climate);
-    sprintf(inputfile_soil, "%s", bufi_soil);
-    sprintf(inputfile_species, "%s", bufi_species);
+    sprintf(ctx.fileio.inputfile, "%s", ctx.buffers.bufi);
+    sprintf(ctx.fileio.inputfile_daytimevar, "%s", ctx.buffers.bufi_daytimevar);
+    sprintf(ctx.fileio.inputfile_climate, "%s", ctx.buffers.bufi_climate);
+    sprintf(ctx.fileio.inputfile_soil, "%s", ctx.buffers.bufi_soil);
+    sprintf(ctx.fileio.inputfile_species, "%s", ctx.buffers.bufi_species);
 
     if (ctx.opt._OUTPUT_pointcloud)
     {
-        sprintf(inputfile_pointcloud, "%s", bufi_pointcloud); // v.3.1.6
+        sprintf(ctx.fileio.inputfile_pointcloud, "%s", ctx.buffers.bufi_pointcloud); // v.3.1.6
     }
 
     if (ctx.opt._FromInventory)
     {
-        sprintf(inputfile_inventory, "%s", bufi_data);
+        sprintf(ctx.fileio.inputfile_inventory, "%s", ctx.buffers.bufi_data);
 #ifdef WATER
-        sprintf(inputfile_SWC, "%s", bufi_dataSWC);
+        sprintf(ctx.fileio.inputfile_SWC, "%s", ctx.buffers.bufi_dataSWC);
 #endif
     }
     // Registers parameters (used by AssignParamFromRegistry, the AssignValueGlobal replacement)
@@ -3977,8 +3977,8 @@ int main(int argc, char *argv[])
     gsl_rng_set(gslrand, seed);
 
     cout << "On proc #" << easympi_rank << " seed: " << seed << endl;
-    sprintf(outputinfo, "%s_%i_info.txt", buf, easympi_rank);
-    output_info.open(outputinfo, ios::out);
+    sprintf(ctx.fileio.outputinfo, "%s_%i_info.txt", ctx.buffers.buf, easympi_rank);
+    output_info.open(ctx.fileio.outputinfo, ios::out);
     if (!output_info)
         cerr << "ERROR with info file" << endl;
 
@@ -4257,21 +4257,21 @@ void AssignValuePointcloud(string parameter_name, string parameter_value)
 //! - !!!: TO IMPLEMENT: separate error messages (i.e. no input file provided, empty input file, etc.)
 void ReadInputGeneral(Context &ctx)
 {
-    fstream In(inputfile, ios::in);
+    fstream In(ctx.fileio.inputfile, ios::in);
     if (In)
     {
         cout << endl
-             << "Reading in file: " << inputfile << endl;
+             << "Reading in file: " << ctx.fileio.inputfile << endl;
 
-        fstream In(inputfile, ios::in);
+        fstream In(ctx.fileio.inputfile, ios::in);
         if (In)
         {
-            In.getline(buffer, 256, '\n'); // skip header
+            In.getline(ctx.fileio.buffer, 256, '\n'); // skip header
             std::string parameter_name, parameter_value;
 
             while (In >> parameter_name >> parameter_value)
             {
-                In.getline(buffer, 256, '\n'); // consume rest of line
+                In.getline(ctx.fileio.buffer, 256, '\n'); // consume rest of line
                 AssignParamFromRegistry(parameter_name, parameter_value);
             }
         }
@@ -4381,8 +4381,8 @@ void ReadInputGeneral(Context &ctx)
 void ReadInputSpecies()
 {
     cout << endl
-         << "Reading in file: " << inputfile_species << endl;
-    fstream InSpecies(inputfile_species, ios::in);
+         << "Reading in file: " << ctx.fileio.inputfile_species << endl;
+    fstream InSpecies(ctx.fileio.inputfile_species, ios::in);
     if (InSpecies)
     {
         // possible parameters to initialise vector<string> parameter_names{"s_name","s_LMA","s_Nmass","s_Pmass","s_wsg","s_dbhmax","s_hmax","s_ah","s_seedmass","s_regionalfreq","s_tlp","s_leafarea"};
@@ -4496,13 +4496,13 @@ void ReadInputDailyvar()
 {
     // currently very simple reading in, only basic error checking
     cout << endl
-         << "Reading in file: " << inputfile_daytimevar << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_daytimevar << endl;
 
-    fstream InDaily(inputfile_daytimevar, ios::in);
+    fstream InDaily(ctx.fileio.inputfile_daytimevar, ios::in);
 
     if (InDaily)
     {
-        InDaily.getline(buffer, 256, '\n'); // read in header
+        InDaily.getline(ctx.fileio.buffer, 256, '\n'); // read in header
 
         // we go through all lines in the input file
         ctx.time.nbsteps_varday = 0;
@@ -4629,16 +4629,16 @@ void ReadInputDailyvar()
 void ReadInputClimate()
 {
     cout << endl
-         << "Reading in file: " << inputfile_climate << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_climate << endl;
 
-    fstream InClim(inputfile_climate, ios::in);
+    fstream InClim(ctx.fileio.inputfile_climate, ios::in);
 
     if (InClim)
     {
         // we go through all lines in the input file
         ctx.time.nbdays = 0;
-        InClim.getline(buffer, 256, '\n');
-        // cout << "Header line: " << buffer << endl;
+        InClim.getline(ctx.fileio.buffer, 256, '\n');
+        // cout << "Header line: " << ctx.fileio.buffer << endl;
 
         string line;
         while (getline(InClim, line))
@@ -4689,13 +4689,13 @@ void ReadInputDailyvar()
 {
     // currently very simple reading in, only basic error checking
     cout << endl
-         << "Reading in file: " << inputfile_daytimevar << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_daytimevar << endl;
 
-    fstream InDaily(inputfile_daytimevar, ios::in);
+    fstream InDaily(ctx.fileio.inputfile_daytimevar, ios::in);
 
     if (InDaily)
     {
-        InDaily.getline(buffer, 256, '\n'); // read in header
+        InDaily.getline(ctx.fileio.buffer, 256, '\n'); // read in header
 
         // we go through all lines in the input file
         ctx.time.nbsteps_varday = 0;
@@ -4749,16 +4749,16 @@ void ReadInputDailyvar()
 void ReadInputClimate()
 {
     cout << endl
-         << "Reading in file: " << inputfile_climate << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_climate << endl;
 
-    fstream InClim(inputfile_climate, ios::in);
+    fstream InClim(ctx.fileio.inputfile_climate, ios::in);
 
     if (InClim)
     {
         // we go through all lines in the input file
         ctx.time.iterperyear = 0;
-        InClim.getline(buffer, 256, '\n');
-        // cout << "Header line: " << buffer << endl;
+        InClim.getline(ctx.fileio.buffer, 256, '\n');
+        // cout << "Header line: " << ctx.fileio.buffer << endl;
 
         string line;
         while (getline(InClim, line))
@@ -4833,12 +4833,12 @@ void ReadInputClimate()
 void ReadInputSoil()
 {
     cout << endl
-         << "Reading in file: " << inputfile_soil << endl;
-    fstream InSoil(inputfile_soil, ios::in);
+         << "Reading in file: " << ctx.fileio.inputfile_soil << endl;
+    fstream InSoil(ctx.fileio.inputfile_soil, ios::in);
 
     if (InSoil)
     {
-        InSoil.getline(buffer, 256, '\n');
+        InSoil.getline(ctx.fileio.buffer, 256, '\n');
         vector<float> layer_thickness, proportion_Silt, proportion_Clay, proportion_Sand; // in m, %, %,%
         vector<float> SOC, DBD, pH, CEC;                                                  // soil organic content, provided in %; dry bulk density, in g cm-3; pH; cation exchange capacity, in cmol kg-1
         SOC.reserve(20);
@@ -5418,27 +5418,27 @@ void InitialiseOutputStreams()
     char nnn[200];
     if (!mpi_rank)
     {
-        sprintf(nnn, "%s_%i_sumstats.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_sumstats.txt", ctx.buffers.buf, easympi_rank);
         output_basic[0].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_initial_pattern.txt", buf, easympi_rank); // previously "state" output, but not used anymore, overwritten for initial pattern
+        sprintf(nnn, "%s_%i_initial_pattern.txt", ctx.buffers.buf, easympi_rank); // previously "state" output, but not used anymore, overwritten for initial pattern
         output_basic[1].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_final_pattern.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_final_pattern.txt", ctx.buffers.buf, easympi_rank);
         output_basic[2].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_final_SWC3D.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_final_SWC3D.txt", ctx.buffers.buf, easympi_rank);
         output_basic[3].open(nnn, ios::out);
 
         // write headers for files
         output_basic[0] << "iter\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
         // headers for initial and final patterns are written automatically
 
-        sprintf(nnn, "%s_%i_sumstats_species.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_sumstats_species.txt", ctx.buffers.buf, easympi_rank);
         output_extended[0].open(nnn, ios::out);
         output_extended[0] << "iter\tspecies\tsum1\tsum10\tsum30\tba\tba10\tagb\tgpp\tnpp\trday\trnight\trstem\tlitterfall" << endl;
 
 #ifdef MIP_Lichstein
-        sprintf(nnn, "%s_%i_MIP_eco.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_MIP_eco.txt", ctx.buffers.buf, easympi_rank);
         output_MIP_eco.open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_MIP_ind.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_MIP_ind.txt", ctx.buffers.buf, easympi_rank);
         output_MIP_ind.open(nnn, ios::out);
 
         output_MIP_eco << "YEAR\tMONTH\tDAY\tGPP\tNPP\tET\tLAI\tLFLIT\tSW1\tSW2\tSW3\tSW4" << endl;
@@ -5447,23 +5447,23 @@ void InitialiseOutputStreams()
 
         if (ctx.opt._OUTPUT_extended)
         {
-            sprintf(nnn, "%s_%i_sumstats_species.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_sumstats_species.txt", ctx.buffers.buf, easympi_rank);
             output_extended[0].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_ppfd0.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_ppfd0.txt", ctx.buffers.buf, easympi_rank);
             output_extended[1].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_death.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_death.txt", ctx.buffers.buf, easympi_rank);
             output_extended[2].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_death_snapshots.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_death_snapshots.txt", ctx.buffers.buf, easympi_rank);
             output_extended[3].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_deathrate.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_deathrate.txt", ctx.buffers.buf, easympi_rank);
             output_extended[4].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_sdd.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_sdd.txt", ctx.buffers.buf, easympi_rank);
             output_extended[5].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_vertd.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_vertd.txt", ctx.buffers.buf, easympi_rank);
             output_extended[6].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_LAI.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_LAI.txt", ctx.buffers.buf, easympi_rank);
             output_extended[7].open(nnn, ios::out);
-            sprintf(nnn, "%s_%i_CHM.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_CHM.txt", ctx.buffers.buf, easympi_rank);
             output_extended[8].open(nnn, ios::out);
 
             // write headers
@@ -5480,7 +5480,7 @@ void InitialiseOutputStreams()
 
             if (extent_visual > 0)
             {
-                sprintf(nnn, "%s_%i_visual_field.txt", buf, easympi_rank);
+                sprintf(nnn, "%s_%i_visual_field.txt", ctx.buffers.buf, easympi_rank);
                 output_visual[0].open(nnn, ios::out);
 #ifdef CHM_SPIKEFREE
                 output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl; // header
@@ -5488,7 +5488,7 @@ void InitialiseOutputStreams()
                 output_visual[0] << "iter" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "LAI" << endl; // header
 #endif
 
-                sprintf(nnn, "%s_%i_visual_slice.txt", buf, easympi_rank);
+                sprintf(nnn, "%s_%i_visual_slice.txt", ctx.buffers.buf, easympi_rank);
                 output_visual[1].open(nnn, ios::out);
                 output_visual[1] << "iter" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "sp_lab" << "\t" << "ratio_height_Ct" << "\t" << "ratio_NPP_GPP" << endl; // header
             }
@@ -5497,93 +5497,93 @@ void InitialiseOutputStreams()
         // v.3.1.6 output for point cloud
         if (ctx.opt._OUTPUT_pointcloud)
         {
-            sprintf(nnn, "%s_%i.las", buf, easympi_rank);
+            sprintf(nnn, "%s_%i.las", ctx.buffers.buf, easympi_rank);
             output_pointcloud.open(nnn, ios::out | ios::binary);
             output_pointcloud.imbue(locale::classic()); // justification here: https://stackoverflow.com/questions/14750496/sending-integer-to-fstream-as-little-endian; locale regulates how streams print and read values (i.e. commas vs. points for decimals, etc.); setting it to classic to ensure portability, but not entirely sure how important this is in practice for binary files
         }
 
 #ifdef Output_ABC
-        sprintf(nnn, "%s_%i_abc_traitconservation.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_traitconservation.txt", ctx.buffers.buf, easympi_rank);
         output_abc[0].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_ground.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_ground.txt", ctx.buffers.buf, easympi_rank);
         output_abc[1].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_chm.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_chm.txt", ctx.buffers.buf, easympi_rank);
         output_abc[2].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_chmALS.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_chmALS.txt", ctx.buffers.buf, easympi_rank);
         output_abc[3].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_transmittance.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_transmittance.txt", ctx.buffers.buf, easympi_rank);
         output_abc[4].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_transmittanceALS.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_transmittanceALS.txt", ctx.buffers.buf, easympi_rank);
         output_abc[5].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_species.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_species.txt", ctx.buffers.buf, easympi_rank);
         output_abc[6].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_species10.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_species10.txt", ctx.buffers.buf, easympi_rank);
         output_abc[7].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_traits.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_traits.txt", ctx.buffers.buf, easympi_rank);
         output_abc[8].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_traits10.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_traits10.txt", ctx.buffers.buf, easympi_rank);
         output_abc[9].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_abc_biomass.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_abc_biomass.txt", ctx.buffers.buf, easympi_rank);
         output_abc[10].open(nnn, ios::out);
 #endif
 
 #ifdef WATER
-        // sprintf(nnn,"%s_%i_water_balance.txt",buf, easympi_rank);
+        // sprintf(nnn,"%s_%i_water_balance.txt",ctx.buffers.buf, easympi_rank);
         // output_water[0].open(nnn, ios::out);
 
-        sprintf(nnn, "%s_%i_water_balance.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_water_balance.txt", ctx.buffers.buf, easympi_rank);
         output[11].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site1.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site1.txt", ctx.buffers.buf, easympi_rank);
         output[12].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site2.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site2.txt", ctx.buffers.buf, easympi_rank);
         output[13].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site3.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site3.txt", ctx.buffers.buf, easympi_rank);
         output[14].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site4.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site4.txt", ctx.buffers.buf, easympi_rank);
         output[15].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site5.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site5.txt", ctx.buffers.buf, easympi_rank);
         output[16].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_site6.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_site6.txt", ctx.buffers.buf, easympi_rank);
         output[17].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_state_begin.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_state_begin.txt", ctx.buffers.buf, easympi_rank);
         output[28].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_state_mid.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_state_mid.txt", ctx.buffers.buf, easympi_rank);
         output[29].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_state_end.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_state_end.txt", ctx.buffers.buf, easympi_rank);
         output[30].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWC_begin.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWC_begin.txt", ctx.buffers.buf, easympi_rank);
         output[1].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWC_mid.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWC_mid.txt", ctx.buffers.buf, easympi_rank);
         output[2].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWC_end.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWC_end.txt", ctx.buffers.buf, easympi_rank);
         output[3].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWP_begin.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWP_begin.txt", ctx.buffers.buf, easympi_rank);
         output[4].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWP_mid.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWP_mid.txt", ctx.buffers.buf, easympi_rank);
         output[5].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_SWP_end.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_SWP_end.txt", ctx.buffers.buf, easympi_rank);
         output[6].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_litterfall.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_litterfall.txt", ctx.buffers.buf, easympi_rank);
         output[7].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_waterfluxes_begin.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_waterfluxes_begin.txt", ctx.buffers.buf, easympi_rank);
         output[18].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_waterfluxes_mid.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_waterfluxes_mid.txt", ctx.buffers.buf, easympi_rank);
         output[19].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_waterfluxes_end.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_waterfluxes_end.txt", ctx.buffers.buf, easympi_rank);
         output[20].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_LAIdynamics.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_LAIdynamics.txt", ctx.buffers.buf, easympi_rank);
         output[21].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_LAIyoung.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_LAIyoung.txt", ctx.buffers.buf, easympi_rank);
         output[22].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_LAImature.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_LAImature.txt", ctx.buffers.buf, easympi_rank);
         output[23].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_LAIold.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_LAIold.txt", ctx.buffers.buf, easympi_rank);
         output[24].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_phi_root.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_phi_root.txt", ctx.buffers.buf, easympi_rank);
         output[31].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_LAIprofile.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_LAIprofile.txt", ctx.buffers.buf, easympi_rank);
         output[32].open(nnn, ios::out);
-        sprintf(nnn, "%s_%i_soilproperties.txt", buf, easympi_rank);
+        sprintf(nnn, "%s_%i_soilproperties.txt", ctx.buffers.buf, easympi_rank);
         output[33].open(nnn, ios::out);
 
         // write headers
@@ -5713,18 +5713,18 @@ void InitialiseOutputStreams()
         if (ctx.opt._OUTPUT_extended)
         {
             // these are the "cases" of trees that are followed
-            sprintf(nnn, "%s_%i_trees_fortracking.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_trees_fortracking.txt", ctx.buffers.buf, easympi_rank);
             output_track[0].open(nnn, ios::out);
             output_track[0] << "site" << "\t" << "timeofyear_born" << "\t" << "col" << "\t" << "row" << "\t" << "species" << "\t" << "dbh" << "\t" << "cr" << "\t" << "height" << "\t" << "agb" << "\t" << "multiplier_cr" << "\t" << "multiplier_height" << "\t" << "wsg" << "\t" << "Nmass" << "\t" << "Pmass" << "\t" << "LMA" << "\t" << "deviation_wsg" << "\t" << "multiplier_Nmass" << "\t" << "multiplier_Pmass" << "\t" << "multiplier_lma" << "\t" << "Vcmax" << "\t" << "Jmax" << "\t" << "Rdark" << "\t" << "LAImax" << "\t" << "leaflifespan" << endl;
 
             // these are the "activities" that are recorded for each tree
-            sprintf(nnn, "%s_%i_trees_tracked.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_trees_tracked.txt", ctx.buffers.buf, easympi_rank);
             output_track[1].open(nnn, ios::out);
 
             output_track[1] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seeds" << "\t" << "seedstotal" << "\t" << "carbstarv" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "dbhgrowth" << "\t" << "height" << "\t" << "heightgrowth" << "\t" << "cr" << "\t" << "crgrowth" << "\t" << "agb" << "\t" << "agbgrowth" << "\t" << "GPP" << "\t" << "GPPsq" << "\t" << "NPP" << "\t" << "NPPsq" << "\t" << "Rday" << "\t" << "Rnight" << "\t" << "Rstem" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "carbstore_avg" << endl;
 
             // this is to get information on the dead trees > 10cm
-            sprintf(nnn, "%s_%i_trees_aftertracking.txt", buf, easympi_rank);
+            sprintf(nnn, "%s_%i_trees_aftertracking.txt", ctx.buffers.buf, easympi_rank);
             output_track[2].open(nnn, ios::out);
 
             output_track[2] << "site" << "\t" << "timeofyear_born" << "\t" << "Iter" << "\t" << "age" << "\t" << "seedstotal" << "\t" << "carbstarvtotal" << "\t" << "dbh" << "\t" << "height" << "\t" << "cr" << "\t" << "agb" << "\t" << "GPP" << "\t" << "NPP" << "\t" << "LAIabove_avg" << "\t" << "LAIabove_effavg" << "\t" << "GPPsquared" << "\t" << "NPPsquared" << "\t" << "LAIabovesquared_avg" << "\t" << "LAIabovesquared_effavg" << endl;
@@ -5874,9 +5874,9 @@ void InitialiseABC()
 void ReadInputPointcloud()
 {
     cout << endl
-         << "Reading in file: " << inputfile_pointcloud << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_pointcloud << endl;
 
-    fstream InPointcloud(inputfile_pointcloud, ios::in);
+    fstream InPointcloud(ctx.fileio.inputfile_pointcloud, ios::in);
 
     if (InPointcloud)
     {
@@ -5885,13 +5885,13 @@ void ReadInputPointcloud()
         vector<string> parameter_values(nb_parameters, "");
 
         cout << endl
-             << "Reading in file: " << inputfile << endl;
-        InPointcloud.getline(buffer, 256, '\n');
+             << "Reading in file: " << ctx.fileio.inputfile << endl;
+        InPointcloud.getline(ctx.fileio.buffer, 256, '\n');
         string parameter_name, parameter_value;
 
         while (InPointcloud >> parameter_name >> parameter_value)
         {
-            InPointcloud.getline(buffer, 256, '\n');
+            InPointcloud.getline(ctx.fileio.buffer, 256, '\n');
             for (int i = 0; i < nb_parameters; i++)
             {
                 if (parameter_name == parameter_names[i])
@@ -5915,9 +5915,9 @@ void ReadInputInventory()
 {
 
     cout << endl
-         << "Reading in file: " << inputfile_inventory << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_inventory << endl;
 
-    fstream InInventory(inputfile_inventory, ios::in);
+    fstream InInventory(ctx.fileio.inputfile_inventory, ios::in);
 
     if (InInventory)
     {
@@ -6157,9 +6157,9 @@ void ReadInputInventory()
     InInventory.close();
 
     cout << endl
-         << "Reading in file: " << inputfile_SWC << endl;
+         << "Reading in file: " << ctx.fileio.inputfile_SWC << endl;
 
-    fstream InSWC(inputfile_SWC, ios::in);
+    fstream InSWC(ctx.fileio.inputfile_SWC, ios::in);
 
     if (InSWC)
     {
