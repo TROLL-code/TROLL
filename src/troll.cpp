@@ -4,6 +4,11 @@
 #include "context.hpp"
 #include "params/param_registry.hpp"
 
+// File-scope Context instance. Temporary during the globals → Context migration.
+// All sub-struct fields are populated incrementally as globals are removed.
+// Will be converted to an explicit parameter once globals are gone (Phase 3).
+Context ctx;
+
 // #############################################
 //  Species constructor
 // #############################################
@@ -3949,11 +3954,9 @@ int main(int argc, char *argv[])
         sprintf(inputfile_SWC, "%s", bufi_dataSWC);
 #endif
     }
-    // add context
-    Context ctx;
     // Registers parameters (used by AssignParamFromRegistry, the AssignValueGlobal replacement)
     // see src/params/param_registry.hpp and src/params/param_registry.cpp
-    RegisterParameters();
+    RegisterParameters(ctx);
     // v.3.1: removed par output, because no single parameter sheet provided anymore (in future all separate parameter sheets could be provided as outputs as well
     ReadInputGeneral(ctx); // v.3.1 has to be done before initialisation of random number generators (_NONRANDOM)
 

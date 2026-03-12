@@ -220,7 +220,7 @@ std::unordered_map<std::string, ParamSpec> parameter_registry;
 // ============================================================================
 //   RegisterParameters()
 // ============================================================================
-void RegisterParameters()
+void RegisterParameters(Context &ctx)
 {
     parameter_registry.clear();
 

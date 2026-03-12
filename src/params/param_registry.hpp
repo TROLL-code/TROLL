@@ -99,6 +99,7 @@
 
 #include <string>
 #include <unordered_map>
+#include "../../include/context.hpp"
 
 // ==========================
 // SetParameter declarations
@@ -151,7 +152,7 @@ struct ParamSpec
 
 extern std::unordered_map<std::string, ParamSpec> parameter_registry;
 
-void RegisterParameters();
+void RegisterParameters(Context &ctx);
 
 void AssignParamFromRegistry(const std::string &name,
                              const std::string &value);
