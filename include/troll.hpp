@@ -234,12 +234,8 @@ unsigned short *Thurt[3]; //!<  Global vector:Treefall field
 // SPECIES_SEEDS, p_seed, n_seed, p_species, n_species,
 // SPECIES_GERM, PROB_S
 
-// point cloud output, v.3.1.6
-float mean_beam_pc;             // the mean number of shots per m2 for the point cloud sampling
-float sd_beam_pc;               // the standard deviation of the shots per m2 for the point cloud sampling
-float klaser_pc;                // the klight for the point cloud sampling, needs to be multiplied with the transmittance_laser to get effective klaser (i.e. 0.5 * 0.4 = 0.2)
-float transmittance_laser;      // transmittance of the laser when hitting something (or probability of continuing)
-int iter_pointcloud_generation; // iteration at which point cloud should be generated
+// PointCloud globals migrated to ctx.pc:
+// mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, iter_pointcloud_generation
 
 #ifdef Output_ABC
 // Output creation for Approximate Bayesian Computation and Summary Statistics calculation. ABC produces large files, so metrics are pre-calculated within TROLL

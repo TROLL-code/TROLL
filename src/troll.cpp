@@ -4075,8 +4075,8 @@ int main(int argc, char *argv[])
                 OutputVisual();
         }
 
-        /*if(ctx.opt._OUTPUT_pointcloud > 0 && ctx.time.iter == iter_pointcloud_generation){
-            ExportPointcloud(mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, output_pointcloud); // v.3.1.6
+        /*if(ctx.opt._OUTPUT_pointcloud > 0 && ctx.time.iter == ctx.pc.iter_pointcloud_generation){
+            ExportPointcloud(ctx.pc.mean_beam_pc, ctx.pc.sd_beam_pc, ctx.pc.klaser_pc, ctx.pc.transmittance_laser, output_pointcloud); // v.3.1.6
         }*/
 
 #ifdef Output_ABC
@@ -4233,25 +4233,25 @@ void AssignValuePointcloud(string parameter_name, string parameter_value)
     // we set parameters to values that have been read, or to their defaults, if outside of range or not the right type
     bool quiet = 1; //! only applies to successful initialization, warnings are always given
 
-    if (parameter_name == "mean_beam_pc")
+    if (parameter_name == "ctx.pc.mean_beam_pc")
     {
-        SetParameter(parameter_name, parameter_value, mean_beam_pc, 0.1f, 100.0f, 10.0f, quiet);
+        SetParameter(parameter_name, parameter_value, ctx.pc.mean_beam_pc, 0.1f, 100.0f, 10.0f, quiet);
     }
-    else if (parameter_name == "sd_beam_pc")
+    else if (parameter_name == "ctx.pc.sd_beam_pc")
     {
-        SetParameter(parameter_name, parameter_value, sd_beam_pc, 0.0f, 100.0f, 10.0f, quiet);
+        SetParameter(parameter_name, parameter_value, ctx.pc.sd_beam_pc, 0.0f, 100.0f, 10.0f, quiet);
     }
-    else if (parameter_name == "klaser_pc")
+    else if (parameter_name == "ctx.pc.klaser_pc")
     {
-        SetParameter(parameter_name, parameter_value, klaser_pc, 0.1f, 0.9f, 0.5f, quiet);
+        SetParameter(parameter_name, parameter_value, ctx.pc.klaser_pc, 0.1f, 0.9f, 0.5f, quiet);
     }
-    else if (parameter_name == "transmittance_laser")
+    else if (parameter_name == "ctx.pc.transmittance_laser")
     {
-        SetParameter(parameter_name, parameter_value, transmittance_laser, 0.0f, 1.0f, 0.4f, quiet);
+        SetParameter(parameter_name, parameter_value, ctx.pc.transmittance_laser, 0.0f, 1.0f, 0.4f, quiet);
     }
-    else if (parameter_name == "iter_pointcloud_generation")
+    else if (parameter_name == "ctx.pc.iter_pointcloud_generation")
     {
-        SetParameter(parameter_name, parameter_value, iter_pointcloud_generation, 0, ctx.time.nbiter - 1, ctx.time.nbiter - 1, quiet);
+        SetParameter(parameter_name, parameter_value, ctx.pc.iter_pointcloud_generation, 0, ctx.time.nbiter - 1, ctx.time.nbiter - 1, quiet);
     }
 }
 
@@ -5884,7 +5884,7 @@ void ReadInputPointcloud()
 
     if (InPointcloud)
     {
-        string parameter_names[5] = {"mean_beam_pc", "sd_beam_pc", "klaser_pc", "transmittance_laser", "iter_pointcloud_generation"};
+        string parameter_names[5] = {"ctx.pc.mean_beam_pc", "ctx.pc.sd_beam_pc", "ctx.pc.klaser_pc", "ctx.pc.transmittance_laser", "ctx.pc.iter_pointcloud_generation"};
         int nb_parameters = 5;
         vector<string> parameter_values(nb_parameters, "");
 
@@ -8276,14 +8276,14 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
     output_pointcloud.write(reinterpret_cast<const char *>(&min_z), 8); // hardcoded 8 bytes
 }
 
- void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream& output_pointcloud){
+ void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float ctx.pc.transmittance_laser, fstream& output_pointcloud){
     cout << "Point cloud generation." << endl;
 
     vector<int> beams;
     vector<float> beams_returns;
 
     // three options
-    GenerateVoxelreturnsALS(beams, beams_returns, mean_beam, sd_beam, klaser, transmittance_laser);
+    GenerateVoxelreturnsALS(beams, beams_returns, mean_beam, sd_beam, klaser, ctx.pc.transmittance_laser);
 
     ExportPointcloudHeader(beams, output_pointcloud);
 
@@ -8567,7 +8567,7 @@ void UpdateDBHtrackingABC()
 //! - The parameters used is the k assumed for the laser, which is only based on leaf geometry and should thus be taken equal to klight
 //! - The difference to kpar is accounted for by parameterizing the transmittance of leaves, which, in the NIR spectrum, is much larger than for visible light (0.4 vs. 0.1)
 //! - Results are saved in transmittance_simulatedALS_sampling for the number of beams, transmittance_simulatedALS for the transmittance
-void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, float transmittance_laser)
+void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, float ctx.pc.transmittance_laser)
 {
     // loop over the LAI3D field
     for (int r = row_start; r < row_end; r++)
@@ -8627,7 +8627,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                                 nbbeams -= hits;
                                 // nbbeams += int(0.1*float(hits));                            // 10% of intercepted beams are not getting extinct
                                 //  now simulate transmittance of beam through the leaves
-                                int hits_notextinct = gsl_ran_binomial(gslrand, transmittance_laser, hits);
+                                int hits_notextinct = gsl_ran_binomial(gslrand, ctx.pc.transmittance_laser, hits);
                                 nbbeams += hits_notextinct;
                             }
                         }
