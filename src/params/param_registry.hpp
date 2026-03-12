@@ -140,8 +140,7 @@ struct ParamSpec
     {
         INT,
         FLOAT,
-        BOOL,
-        STRING
+        BOOL
     } type;
     void *target;
     double minv, maxv, def;
@@ -158,18 +157,3 @@ void AssignParamFromRegistry(const std::string &name,
                              const std::string &value);
 
 #endif
-
-// ==========================
-// Species registry
-// ==========================
-
-// Forward declaration to avoid including troll.hpp
-struct Species;
-
-// Build the registry table for one Species entry
-void RegisterSpeciesParameters(Species &S);
-
-// Assign a (name,value) pair to a Species object
-void AssignSpeciesParam(Species &S,
-                        const std::string &name,
-                        const std::string &value);
