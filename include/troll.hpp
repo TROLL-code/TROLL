@@ -383,39 +383,10 @@ float Mortality_MA[120] = {0.0};  //!< Global variable: moving average of mortal
 float Treefall_MA[120] = {0.0};   //!< Global variable: moving average of treefall across 120 iterations (originally 120 months, could also be made dependent on iterperyear)
 #endif
 
-// DIAGNOSTICS OUTPUT STATISTICS
-int nblivetrees;  //!< Global variable: for output -- number of live trees at each timestep
-int nbtrees_n10;  //!< Global variable: for output -- number of trees dbh > 10 cm, computed at beginning of each timestep
-int nbtrees_n30;  //!< Global variable: for output -- number of trees dbh > 30 cm, computed at beginning of each timestep
-int nbdead_n1;    //!< Global variable: for output -- number of deaths dbh > 1 cm, computed at each timestep
-int nbdead_n10;   //!< Global variable: for output -- number of deaths dbh > 10 cm, computed at each timestep
-int nbdead_n30;   //!< Global variable: for output -- number of deaths dbh > 30 cm, computed at each timestep
-int nbTreefall1;  //!< Global variable: for output -- number of treefalls at each timestep (dbh > 1cm), _BASICTREEFALL
-int nbTreefall10; //!< Global variable: for output -- number of treefalls at each timestep (dbh > 10 cm), _BASICTREEFALL
-int nbTreefall30; //!< Global variable: for output -- number of treefalls at each timestep (dbh > 30 cm), _BASICTREEFALL
-
-#ifdef Output_ABC
-int nbdead_n10_abc;   //!< Global variable: for ABC output -- number of trees dbh > 10 cm at each timestep
-int nbTreefall10_abc; //!< Global variable: for ABC output -- number of treefalls at each timestep (dbh > 10 cm) at each timestep
-#endif
-
-// Carbon starvation statistics
-int nbtrees_carbstarv_n1;  //!< Global variable: for output -- number of trees > 1 cm with carbon starvation
-int nbtrees_carbstarv_n10; //!< Global variable: for output -- number of trees > 10 cm with carbon starvation
-int nbtrees_carbstarv_n30; //!< Global variable: for output -- number of trees > 30 cm with carbon starvation
-
-// Further output statistics
-// long int *persist;    //!< Global vector: for output --  persistence histogram
-int *nbdbh(0);   //!< Global vector: for output --  dbh size distribution
-float *layer(0); //!< Global vector: for output --  vertical LAI histogram
-
-#ifdef Output_ABC
-int *abundances_species(0);   //!< Global vector: for output --  !!!UPDATE
-int *abundances_species10(0); //!< Global vector: for output --  !!!UPDATE
-float *biomass_species(0);    //!< Global vector: for output --  !!!UPDATE
-float **traits_species(0);    //!< Global field: for output --  !!!UPDATE
-float **traits_species10(0);  //!< Global field: for output --  !!!UPDATE
-#endif
+// DIAGNOSTICS OUTPUT STATISTICS migrated to ctx.diag:
+// nblivetrees, nbtrees_n10/n30, nbdead_n1/n10/n30,
+// nbTreefall1/10/30, nbtrees_carbstarv_n1/n10/n30, nbdbh, layer
+// (Output_ABC globals omitted: Output_ABC is #undef'd)
 
 #ifdef CHECK_CARBON
 float carbon_assimilated_total; //!< Global variable: --  !!!UPDATE

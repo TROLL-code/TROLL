@@ -125,7 +125,7 @@ void Tree::Birth(int nume, int site0)
 
 #endif
 
-        nblivetrees++;
+        ctx.diag.nblivetrees++;
         t_site = site0;
         t_sp_lab = nume;
         S[t_sp_lab].s_nbind++;
@@ -322,7 +322,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         //*## General traits ##*/
         //*####################*/
 
-        nblivetrees++;
+        ctx.diag.nblivetrees++;
         // assign site, by default initialized to site of tree
         t_site = site;
 
@@ -878,7 +878,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //        }
 //
 //        // 2. allocate the leaves to the LAI3D field
-//        // nota bene: we here use the same function as CalcLAI3D, with one exception: LAI2dens_cumulated instead of LAI2dens; this means that we allocate the cumulated LAI in each layer and do not require any summation afterwards
+//        // nota bene: we here use the same function as CalcLAI3D, with one exception: LAI2dens_cumulated instead of LAI2dens; this means that we allocate the cumulated LAI in each ctx.diag.layer and do not require any summation afterwards
 //        int site_crowncenter = t_site + t_CrownDisplacement;
 //        int row_crowncenter = site_crowncenter/ctx.grid.cols;
 //        int col_crowncenter = site_crowncenter%ctx.grid.cols;
@@ -1028,9 +1028,9 @@ void Tree::Water_availability()
 
         deep_bound = exp(-3.0 * i_root_depth * layer_depth[l]);
         // deep_bound=exp(-4.02*i_root_depth*layer_depth[l]); // by consistency with the root depth allometry, we here used the parameter value used by Xu et al. 2016 for evergreen trees. This value (log(beta)) was defined based on Jackson et al. 1996 Oecologia.
-        // t_soil_layer_weight[l]=shallow_bound-deep_bound;                        //the weight for each soil layer are the relative tree root biomass in this layer. This is the most classic approach, however probably not fully relevant, inasmuch as trees may equilibrate "preferentially" with the wettest part of the soil, where water is more available and more easily exctractable. Hence another possible weighting integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2011). See below.
-        t_root_biomass[l] = total_root_biomass * (shallow_bound - deep_bound); // this is the root biomass in layer l, computed from the integration of the root biomass exponential profile in this layer, following Arora & Boer 2003. This also corresponds to the shape of cumulative root fraction used by Jackson et al. 1996 Oecologia, who gathered a large global database of root distributions with this equation. It was thus used in many models, e.g. Duursma & Medlyn 2012; Xu et al. 2016.
-        // t_soil_layer_weight[l]=t_root_biomass[l]*10.0/(-log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
+        // t_soil_layer_weight[l]=shallow_bound-deep_bound;                        //the weight for each soil ctx.diag.layer are the relative tree root biomass in this ctx.diag.layer. This is the most classic approach, however probably not fully relevant, inasmuch as trees may equilibrate "preferentially" with the wettest part of the soil, where water is more available and more easily exctractable. Hence another possible weighting integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2011). See below.
+        t_root_biomass[l] = total_root_biomass * (shallow_bound - deep_bound); // this is the root biomass in ctx.diag.layer l, computed from the integration of the root biomass exponential profile in this ctx.diag.layer, following Arora & Boer 2003. This also corresponds to the shape of cumulative root fraction used by Jackson et al. 1996 Oecologia, who gathered a large global database of root distributions with this equation. It was thus used in many models, e.g. Duursma & Medlyn 2012; Xu et al. 2016.
+        // t_soil_layer_weight[l]=t_root_biomass[l]*10.0/(-log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)); // this soil ctx.diag.layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
 
         if (t_LA > 0.0)
         {
@@ -1038,49 +1038,49 @@ void Tree::Water_availability()
             if (ctx.opt._WATER_RETENTION_CURVE == 1)
             {
                 if (ctx.opt._SOIL_LAYER_WEIGHT == 0)
-                { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
+                { // soil ctx.diag.layer weights as a function of root biomass in each ctx.diag.layer only (cf. M1 in de Kauwe et al 2015)
                     t_soil_layer_weight[l] = t_root_biomass[l];
                     t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (ctx.opt._SOIL_LAYER_WEIGHT == 1)
                 {
-                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 * Ks[l][ctx.grid.site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];                                                                // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 * Ks[l][ctx.grid.site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil ctx.diag.layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];                                                                // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 }
                 else if (ctx.opt._SOIL_LAYER_WEIGHT == 2)
-                { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
+                { // soil ctx.diag.layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
 
-                    // if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][ctx.grid.site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)))*(soil_phi3D[l][ctx.grid.site_DCELL[t_site]]+3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
+                    // if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][ctx.grid.site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0)*0.001)))*(soil_phi3D[l][ctx.grid.site_DCELL[t_site]]+3); // this soil ctx.diag.layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
                     // if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]]>(-3.0)) t_soil_layer_weight[l]=t_root_biomass[l]*10.0*Ks[l][ctx.grid.site_DCELL[t_site]]/(abs(log(sqrt(PI*t_root_biomass[l]*10.0/(ctx.grid.length_dcell*ctx.grid.length_dcell*layer_thickness))*0.001)))*(soil_phi3D[l][ctx.grid.site_DCELL[t_site]]+3);
                     if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] > (-3.0))
                         t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) * Ks[l][ctx.grid.site_DCELL[t_site]] / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] + 3);
                     else
                         t_soil_layer_weight[l] = 0.0;
-                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                 }
             }
             else if (ctx.opt._WATER_RETENTION_CURVE == 0)
             {
 
                 if (ctx.opt._SOIL_LAYER_WEIGHT == 0)
-                { // soil layer weights as a function of root biomass in each layer only (cf. M1 in de Kauwe et al 2015)
+                { // soil ctx.diag.layer weights as a function of root biomass in each ctx.diag.layer only (cf. M1 in de Kauwe et al 2015)
                     t_soil_layer_weight[l] = t_root_biomass[l];
                     t_phi_root += t_soil_layer_weight[l] * soil_phi3D[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (ctx.opt._SOIL_LAYER_WEIGHT == 1)
                 {
-                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
-                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]];                                         // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_soil_layer_weight[l] = t_root_biomass[l] * 10.0 / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0) * 0.001))); // this soil ctx.diag.layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012)
+                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]];                                         // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                     t_soil_layer_weight[l] *= Ks[l][ctx.grid.site_DCELL[t_site]];
                 }
                 else if (ctx.opt._SOIL_LAYER_WEIGHT == 2)
-                { // soil layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
+                { // soil ctx.diag.layer weight as in Duursma & Medlyn 2012 (cf M3 in de Kauwe et al. 2015)
 
                     if (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] > (-3.0))
-                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] + 3); // this soil layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
+                        t_soil_layer_weight[l] = (t_root_biomass[l] * 10.0 / root_area) / (abs(log(sqrt(PI * t_root_biomass[l] * 10.0 / (root_area * layer_thickness)) * 0.001))) * (soil_phi3D[l][ctx.grid.site_DCELL[t_site]] + 3); // this soil ctx.diag.layer weight integrates the soil-to-root conductance into account (as in de Kauwe et al. 2015; Duursma & Medlyn 2012). Note that in their implementation of MAESPA, Christina et al. used minimum root water potential = -1.6 MPa and not -3 MPa as here, and they also added a gravimetric component, since they explore the effect of very deep root. Sensibility to this value and addition to be tested.
                     else
                         t_soil_layer_weight[l] = 0.0;
-                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
+                    t_phi_root += t_soil_layer_weight[l] * KsPhi[l][ctx.grid.site_DCELL[t_site]]; // the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer in the DCELL where the tree stands. Note that KsPhi was here not computed as Ks[l][ctx.grid.site_DCELL[t_site]]*soil_phi3D[l][ctx.grid.site_DCELL[t_site]], to avoid some potential divergence for very low water content, and due to the limit of float type, but directly as the exact power of SWC -- see in UpdateField.
                     t_soil_layer_weight[l] *= Ks[l][ctx.grid.site_DCELL[t_site]];
                 }
             }
@@ -1104,7 +1104,7 @@ void Tree::Water_availability()
 
         // if(t_soil_layer_weight[l]<=0) cout << "t_soil_layer_weight[l]=" << t_soil_layer_weight[l] << " t_root_biomass[l]=" << t_root_biomass[l] << " Ks=" << Ks[l][ctx.grid.site_DCELL[t_site]] << " Ks*Phi soil =" << KsPhi[l][ctx.grid.site_DCELL[t_site]] << " phi soil=" <<   soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << endl;
         // t_soil_layer_weight[l]=t_root_biomass[l]*10/(-log(sqrt(PI*t_root_biomass[l]*10)*0.001));
-        // t_phi_root+=t_soil_layer_weight[l]*fmaxf(0.0,(KsPhi2[l][ctx.grid.site_DCELL[t_site]]-KsPhi[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));  //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil layer
+        // t_phi_root+=t_soil_layer_weight[l]*fmaxf(0.0,(KsPhi2[l][ctx.grid.site_DCELL[t_site]]-KsPhi[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));  //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer
         // t_soil_layer_weight[l]*=fmaxf(0.0,(KsPhi[l][ctx.grid.site_DCELL[t_site]]-Ks[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));
         sumG += t_soil_layer_weight[l];
         shallow_bound = deep_bound;
@@ -1230,7 +1230,7 @@ void Tree::Water_uptake()
             if (t_soil_layer_weight[l] < 0.0 || t_transpiration < 0.0)
             {
                 cout << setprecision(10);
-                cout << "Problem with soil_layer_weight and transpiration at site: " << t_site << " layer: " << l << " depth: " << depth << endl;
+                cout << "Problem with soil_layer_weight and transpiration at site: " << t_site << " ctx.diag.layer: " << l << " depth: " << depth << endl;
                 cout << t_soil_layer_weight[l] << "\t" << t_transpiration << "\n";
             }
             sum_weights += t_soil_layer_weight[l];
@@ -1245,9 +1245,9 @@ void Tree::Water_uptake()
 // ##################################################
 //  Computation of PPFD right above the tree -- called by Tree::Birth and Tree::Growth
 // ####################################################
-//! Mean light flux received by the tree crown layer at height h new version (PPFD symmetrical with T and VPD); PPFD, VPD, T and leafarea of a layer are now local variables (not tree variables); v2.3.0, updated in v.2.5
-//! - v.2.3.: Tree::Fluxh() computes the average light flux received by a tree crown layer at height h , and also the average VPD and T (modified 1/02/2016)
-//! - modified in v.2.4: weighting of each layer's GPP by the leafarea in the layer, this is also computed here
+//! Mean light flux received by the tree crown ctx.diag.layer at height h new version (PPFD symmetrical with T and VPD); PPFD, VPD, T and leafarea of a ctx.diag.layer are now local variables (not tree variables); v2.3.0, updated in v.2.5
+//! - v.2.3.: Tree::Fluxh() computes the average light flux received by a tree crown ctx.diag.layer at height h , and also the average VPD and T (modified 1/02/2016)
+//! - modified in v.2.4: weighting of each ctx.diag.layer's GPP by the leafarea in the ctx.diag.layer, this is also computed here
 //! - modified in v.2.4 and v.2.5: introducing an alternative crown shape, "umbrella"-like, inspired by previous shell models and similar to the crown shapes in the PPA. If activated, crowns contain three layers of vegetation that, once the crown goes beyond 3m in depth, will bend downwards on the edges with a linear slope. Since v.2.5 all loops (CalcLAI, Fluxh, leafarea_max) are executed through the same template. This allows to implement other crown shapes in the future and ensures that modifications are carried through across the code
 #ifdef CROWN_UMBRELLA
 #ifdef WATER
@@ -1351,7 +1351,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
     VPD *= icrown_intarea_allocated;
     Tmp *= icrown_intarea_allocated;
 
-    // weighting of each layer
+    // weighting of each ctx.diag.layer
     float crown_area_nogaps;
     if (fraction_filled_actual > fraction_filled_target)
         crown_area_nogaps = float(crown_intarea - crown_intarea_gaps);
@@ -1373,7 +1373,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
     else if (h_index == crown_base)
         dens_layer *= fraction_belowbase;
 
-    // given constant density within layer, we just need to multiply by area
+    // given constant density within ctx.diag.layer, we just need to multiply by area
     leafarea_layer = dens_layer * crown_area_nogaps;
 }
 #endif
@@ -1512,7 +1512,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
     float CMOLAR = 1000.0 * PRESS / (RCONST * (Ta - ABSZERO)); // 1000 because PRESS is in kPa
     float GAMMA = 1000.0 * PRESS * CPAIR * AIRMA / LHV;        // Psychrometric constant; 1000.0 to convert kPa into Pa. !! IM to be checked !! factor AIRMA not consistent with Jérôme's note and Appendix 3 of Jones, but similar to Duursma 's package
     float GRADN = LookUp_GRADN[convTA];                        // Radiation conductance (mol m-2 s-1) at air temperature (Jones 2013, Eq 5.10 p. 101). // IM to be double-checked with Jones (not fully consistent with Medlyn et al. 2007)
-    float GBHU = 0.003 * sqrt(WIND / t_wleaf) * CMOLAR;        // Boundary layer conductance to heat transfer by forced convection (single sided) in mol m-2 s-1; Leuning et al (1995) PC&E 18:1183-1200 Eqn E1; Equation A2 in Medlyn et al. 2007
+    float GBHU = 0.003 * sqrt(WIND / t_wleaf) * CMOLAR;        // Boundary ctx.diag.layer conductance to heat transfer by forced convection (single sided) in mol m-2 s-1; Leuning et al (1995) PC&E 18:1183-1200 Eqn E1; Equation A2 in Medlyn et al. 2007
     // Rnetiso = absorptance_leaves*RSOL - LookUp_INLR[convTA][convVPDA]; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100)
     Rnetiso = RSOL - LookUp_INLR[convTAtop][convVPDAtop] * ExtinctLW; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100). No need of absorptance_leaves, since PPFD provided in argument is already the absorbed flux.
 
@@ -1545,7 +1545,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         }
 
         // Computation of the different conductance terms
-        float GBHF; // Boundary layer conductance to heat transfer by free convection (single sided) in mol m-2 s-1. Leuning et al (1995) PC&E 18:1183-1200 Eqns E3 & E4. Equation A1 in Medlyn et al. 2007
+        float GBHF; // Boundary ctx.diag.layer conductance to heat transfer by free convection (single sided) in mol m-2 s-1. Leuning et al (1995) PC&E 18:1183-1200 Eqns E3 & E4. Equation A1 in Medlyn et al. 2007
         if (abs(TLEAF - Ta) > 0.01)
         { // this is to speed up: calculating GBHF involves a pow, so do only if difftemp is not zero.
             // float GRASHOF = 1.6e8 * abs(TLEAF-TAIR) * pow(WLEAF,3.0); // Grashof number
@@ -1554,16 +1554,16 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         }
         else
             GBHF = 0.0;
-        GBH = GBHU + GBHF;      // Total boundary layer conductance to heat (single sided), in mol m-2 s-1
+        GBH = GBHU + GBHF;      // Total boundary ctx.diag.layer conductance to heat (single sided), in mol m-2 s-1
         GH = 2 * (GBH + GRADN); // GH heat and radiative conductance (free & forced & radiative components), mol m-2 s-1, to be used in the isothermal version of the Penman-Monteith equation (always two sided, hence the factor 2)
         // if (t_sp_lab==6) GBH*=2; // test to see if assuming that Cecropia obtusa is amphistomatous (and not hypostomatous) would solve the issue found when ALEAF is big, wleaf is big (and hence GBH small) that leads to negative CS.... IM 09/09/2021
         HDIVT = GH * CPAIR * AIRMA; // in J m-2 s-1 K-1, useful in several calculations below
-        GBV = GBVGBH * GBH;         // Boundary layer conductance for water vapour, for hypostomatous leaves (single-sided value). Note: we thus here assumed that all leaves are hypostomatous, this is a reasonable assumption as few species have been reported to have amphistomatous leaves in tropical forests (e.g. Drake et al. 2019 New phytologist; Muir 2015 Proc Roy Soc; email with Lawren Sack Oct. 29th 2020). Cf. comment in Leuning et al. 1995 after equ. E5.
+        GBV = GBVGBH * GBH;         // Boundary ctx.diag.layer conductance for water vapour, for hypostomatous leaves (single-sided value). Note: we thus here assumed that all leaves are hypostomatous, this is a reasonable assumption as few species have been reported to have amphistomatous leaves in tropical forests (e.g. Drake et al. 2019 New phytologist; Muir 2015 Proc Roy Soc; email with Lawren Sack Oct. 29th 2020). Cf. comment in Leuning et al. 1995 after equ. E5.
         GSV = GSVGSC * GSC;         // Stomatal conductance for water vapour, in mol H2O m-2 s-1
         if ((GSV / GBV) > 100000)
             GV = GBV;
         else
-            GV = (GBV * GSV) / (GBV + GSV); // Total conductance to water vapour (single-sided value: hypostomatous; stomatal & bdry layer components in series), mol H2O m-2 s-1 //
+            GV = (GBV * GSV) / (GBV + GSV); // Total conductance to water vapour (single-sided value: hypostomatous; stomatal & bdry ctx.diag.layer components in series), mol H2O m-2 s-1 //
 
         if (isnan(GSV) || isnan(GV) || (GSV < 0))
         {
@@ -2227,7 +2227,7 @@ void Tree::CalcLAImax()
         float effLA = 0.66 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                // convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
         float effLA_night = 0.83 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
-        // float effLA = 0.5 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep; //convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last layer and fill it with old leaves at maximum.
+        // float effLA = 0.5 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep; //convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last ctx.diag.layer and fill it with old leaves at maximum.
         // float effLA_night = 0.75 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep;  //same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
         GPP_LAI *= effLA;
@@ -3040,13 +3040,13 @@ void Tree::Death()
 
     // new v.2.4: statistics are now calculated inside the Death() function
     // tree death statistics
-    nbdead_n1++;
-    nblivetrees--;
+    ctx.diag.nbdead_n1++;
+    ctx.diag.nblivetrees--;
     if ((S[t_sp_lab].s_nbind) > 0)
         (S[t_sp_lab].s_nbind)--;
     if (t_dbh * ctx.grid.LH > 0.1)
     {
-        nbdead_n10++;
+        ctx.diag.nbdead_n10++;
         if ((S[t_sp_lab].s_nbind10) > 0)
             (S[t_sp_lab].s_nbind10)--;
 #ifdef Output_ABC
@@ -3058,7 +3058,7 @@ void Tree::Death()
     }
     if (t_dbh * ctx.grid.LH > 0.3)
     {
-        nbdead_n30++;
+        ctx.diag.nbdead_n30++;
         if ((S[t_sp_lab].s_nbind30) > 0)
             (S[t_sp_lab].s_nbind30)--;
     }
@@ -3142,9 +3142,9 @@ void Tree::Update()
     if (t_age)
     {
         if (t_dbh > 0.1)
-            nbtrees_n10++;
+            ctx.diag.nbtrees_n10++;
         if (t_dbh > 0.3)
-            nbtrees_n30++;
+            ctx.diag.nbtrees_n30++;
 
 #ifdef WATER
         // !!!: changed by FF, t_PPFD has been removed in v.2.5 (along with t_VPD, t_T). It was never updated, because, although formally passed on to DeathRate(), it was never used in the DeathRate() function. Furthermore, these quantities were dangerous, because they were defined at the tree level, but could change throughout the crown. Now passed by reference only where they are needed. This makes checking whether they are actually needed easier as well. Whether this affects any procedures in WATER module, needs to be checked)
@@ -3185,11 +3185,11 @@ void Tree::Update()
 void Tree::Treefall(float angle)
 {
     // treefall statistics
-    nbTreefall1++;
+    ctx.diag.nbTreefall1++;
 #ifdef Output_ABC
     if (t_dbh * ctx.grid.LH > 0.1)
     {
-        nbTreefall10++;
+        ctx.diag.nbTreefall10++;
         int row = t_site / ctx.grid.cols;
         int col = t_site % ctx.grid.cols;
         if (row >= row_start && row < row_end && col >= col_start && col < col_end)
@@ -3197,10 +3197,10 @@ void Tree::Treefall(float angle)
     }
 #else
     if (t_dbh * ctx.grid.LH > 0.1)
-        nbTreefall10++;
+        ctx.diag.nbTreefall10++;
 #endif
     if (t_dbh * ctx.grid.LH > 0.3)
-        nbTreefall30++;
+        ctx.diag.nbTreefall30++;
     int xx, yy;
     int row0, col0, h_int, r_int;
     float h_true = t_height * ctx.grid.LV;
@@ -3297,9 +3297,9 @@ void Tree::Average()
 void Tree::histdbh()
 {
     if (t_age)
-        nbdbh[int(100. * t_dbh * ctx.grid.LH)]++;
+        ctx.diag.nbdbh[int(100. * t_dbh * ctx.grid.LH)]++;
     // where dbh is in cm (it is in number of horizontal cells throughout the code)
-    // values are always rounded down (so nbdbh[30] gives you trees with more than 30 cm dbh, and less than 31))
+    // values are always rounded down (so ctx.diag.nbdbh[30] gives you trees with more than 30 cm dbh, and less than 31))
 }
 
 #ifdef WATER
@@ -3458,15 +3458,15 @@ float CalcRdark(float LMA, float Nmass, float Pmass, float Vcmax)
 
 #ifdef CROWN_UMBRELLA
 //! - Global function: the following function is not a member function of the Tree class object, but operates at the tree level and could be converted to member functions. They're therefore defined next to the other tree level functions. Whether conversion to Tree members adds any benefit in terms of performance should be tested.
-//! - the main function is a template to loop through one crown shell (i.e. a 1m layer of the tree) and do something within the tree's canopy, such as allocating leaves or computing the flux. It is supported by a second template that simulates the actual loop. The crown shell can be bent via a function to simulate the umbrella like crown shapes
+//! - the main function is a template to loop through one crown shell (i.e. a 1m ctx.diag.layer of the tree) and do something within the tree's canopy, such as allocating leaves or computing the flux. It is supported by a second template that simulates the actual loop. The crown shell can be bent via a function to simulate the umbrella like crown shapes
 //! - variables to be provided to the template:
-//! -# crown properties, including the crown position (row, col), the tree height, the crown radius, the crown depth, the fraction of filled voxels (inverse of gap fraction) as well as the layer/shell counting from the tree top
-//! -# a function "GetRadiusLayer" that creates the "umbrella" shape. It defines the change in crown radius between the top of the crown and the second layer above the crown base. Here by default a linear slope
+//! -# crown properties, including the crown position (row, col), the tree height, the crown radius, the crown depth, the fraction of filled voxels (inverse of gap fraction) as well as the ctx.diag.layer/shell counting from the tree top
+//! -# a function "GetRadiusLayer" that creates the "umbrella" shape. It defines the change in crown radius between the top of the crown and the second ctx.diag.layer above the crown base. Here by default a linear slope
 //! -# crown statistics to be updated, one as input, one as output. These statistics are updated by the function "ModifyCrownStatistic" and then applied across the crown with the function "UpdateCrownStatistic". While they always have to be provided, they do not always have to be used.
 //!
 //! EXAMPLE 1: for adding volume to a voxel field, the input statistic would be +1, for removing volume, -1, the ModifyCrownStatistic function empty, and the update function would simply add the input value to the Voxel3D field
 //!
-//! EXAMPLE 2: for adding leaves to the LAI field, the input statistic would be the tree LAI, or for removing, -LAI, ModifyCrownStatistic would convert the LAI to density within a specific layer, and the update function would simply add the resulting density values to the LAI3D field
+//! EXAMPLE 2: for adding leaves to the LAI field, the input statistic would be the tree LAI, or for removing, -LAI, ModifyCrownStatistic would convert the LAI to density within a specific ctx.diag.layer, and the update function would simply add the resulting density values to the LAI3D field
 //! - Input and output variables can be separate types (e.g. int and float) and of different length (e.g. input can be a single variable, output can be a vector. This is needed, for example, to compute PPFD, VPD, Tmp and leafarea in Fluxh)
 //! - In the current implementation, crowns below 3m in crown depth are simply treated as cylinders, this could be changed in future implementations
 template <typename I, typename O, typename M, typename F>
@@ -3488,11 +3488,11 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
     }
     else
     {
-        // This function computes the extent of the crown at every height layer, given a specific function
+        // This function computes the extent of the crown at every height ctx.diag.layer, given a specific function
         // it separates out the innermost sector (a slowly increasing cylinder), and the surrounding parts of the crown
         // first the metrics with respect to the internal crown structure (i.e. z coordinate with respect to crown base)
         float crownshell_base = height - CD + 2.0;                   // lower reference point for the crown slope function is two layers up from the crown base
-        float crownshell_extent = height - crownshell_base;          // this is the extent from the "base layer" to the top
+        float crownshell_extent = height - crownshell_base;          // this is the extent from the "base ctx.diag.layer" to the top
         float crownshell_extent_toplayer = floor(crownshell_extent); // this is the extent to the lower limit of the toplayer
         // then we translate the crown coordinates into discretised variables with respect to the absolute location in the voxel field, as needed for location in the voxel field, with layers defined from top to bottom
         int height_innermost = crown_top - shell_fromtop;
@@ -3518,8 +3518,8 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
         // now loop through the outer crown shell cylinders
         for (int h_outer = height_toplayer; h_outer >= height_baselayer; h_outer--)
         {
-            // calculating the radius of the current layer depending on the respective slopes, to be replaced by function
-            // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest layer, i.e. h == height_baselayer, radius = t_CR
+            // calculating the radius of the current ctx.diag.layer depending on the respective slopes, to be replaced by function
+            // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest ctx.diag.layer, i.e. h == height_baselayer, radius = t_CR
             int extent_layerouter = h_outer - height_baselayer;
             float radius_height = GetRadiusLayer(CR, crownshell_extent, extent_layerouter);
             int crown_intarea = GetCrownIntarea(radius_height);
@@ -3531,7 +3531,7 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
 
 //! - Global function: the following function is not a member function of the Tree class object, but operates at the tree level and could be converted to member functions. They're therefore defined next to the other tree level functions. Whether conversion to Tree members adds any benefit in terms of performance should be tested.
 //! - this is the template that simulates the actual circling through a crown shell, between a given start and stop position (i.e. between a starting crown area and a stopping crown area)
-//! - If the crown shells are bent, i.e. extend across several canopy layers, the starting position within a lower layer is the stopping position of the layer just above
+//! - If the crown shells are bent, i.e. extend across several canopy layers, the starting position within a lower ctx.diag.layer is the stopping position of the ctx.diag.layer just above
 template <typename I, typename O, typename F>
 void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int pos_start, int pos_end, float fraction_filled_target, float &fraction_filled_actual, int height_layer, I CrownStatistic_input, O &CrownStatistic_output, F UpdateCrownStatistic)
 {
@@ -3592,7 +3592,7 @@ int GetCrownIntarea(float crown_radius)
     return (crown_intarea);
 }
 
-// Global function: deduces within-crown densities from LAI with a gradient from 50% in top layer to 25% in belowtop and 25% in all shells underneath (1 layer for umbrella-like shape)
+// Global function: deduces within-crown densities from LAI with a gradient from 50% in top ctx.diag.layer to 25% in belowtop and 25% in all shells underneath (1 ctx.diag.layer for umbrella-like shape)
 void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens)
 {
     if (CD < 2.0)
@@ -3638,8 +3638,8 @@ void KeepIntAsIs(int input, int &output, float CD, float height, int layer_fromt
     output = input;
 }
 
-// Global function: a modifying function that converts LAI to the density of a specific layer, using the GetDensity functions
-//! - modifier for GPP calculation where we need the leaves per layer to weight our results
+// Global function: a modifying function that converts LAI to the density of a specific ctx.diag.layer, using the GetDensity functions
+//! - modifier for GPP calculation where we need the leaves per ctx.diag.layer to weight our results
 //! - LAI is the input, dens_layer the output
 void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, int layer_fromtop)
 {
@@ -3663,7 +3663,7 @@ void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, in
     }
     else
     {
-        float fraction_layer = height - floor(height); /* this is the fraction that each layer apart from the topmost layer will extend into the voxel above */
+        float fraction_layer = height - floor(height); /* this is the fraction that each ctx.diag.layer apart from the topmost ctx.diag.layer will extend into the voxel above */
         if (layer_fromtop == 0)
             dens_layer = dens_top * fraction_layer;
         else if (layer_fromtop == 1)
@@ -3675,8 +3675,8 @@ void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, in
     }
 }
 
-// Global function: a modifying function that converts LAI to the density of a specific layer, using the GetDensity functions
-//! - modifier for GPP calculation where we need the leaves per layer to weight our results
+// Global function: a modifying function that converts LAI to the density of a specific ctx.diag.layer, using the GetDensity functions
+//! - modifier for GPP calculation where we need the leaves per ctx.diag.layer to weight our results
 //! - LAI is the input, dens_layer the output
 void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fromtop)
 {
@@ -3702,7 +3702,7 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
     }
     else
     {
-        float fraction_layer = height - floor(height);         // this is the fraction that each layer apart from the topmost layer will extend into the voxel above
+        float fraction_layer = height - floor(height);         // this is the fraction that each ctx.diag.layer apart from the topmost ctx.diag.layer will extend into the voxel above
         float fraction_layer_fromabove = 1.0 - fraction_layer; // the inverse of the fraction above
 
         if (layer_fromtop == 0)
@@ -3841,7 +3841,7 @@ void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR,
         // For the rest of the crown, we go through different crown shells. We separate out the innermost sector (a slowly increasing cylinder), and the surrounding parts of the crown
         // first the metrics with respect to the internal crown structure (i.e. z coordinate with respect to crown base)
         float crownshell_base = height - CD + 2.0;                   // lower reference point for the crown slope function is two layers up from the crown base
-        float crownshell_extent = height - crownshell_base;          // this is the extent from the "base layer" to the top
+        float crownshell_extent = height - crownshell_base;          // this is the extent from the "base ctx.diag.layer" to the top
         float crownshell_extent_toplayer = floor(crownshell_extent); // this is the extent to the lower limit of the toplayer
         // then we translate the crown coordinates into discretised variables with respect to the absolute location in the voxel field, as needed for location in the voxel field, with layers defined from top to bottom
         int shell_fromtop = 0;
@@ -3860,8 +3860,8 @@ void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR,
         // now loop through the outer crown shell cylinders
         for (int h_outer = height_toplayer; h_outer >= crown_base; h_outer--)
         {
-            // calculating the radius of the current layer depending on the respective slopes, to be replaced by function
-            // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest layer, i.e. h == height_baselayer, radius = t_CR
+            // calculating the radius of the current ctx.diag.layer depending on the respective slopes, to be replaced by function
+            // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest ctx.diag.layer, i.e. h == height_baselayer, radius = t_CR
             int extent_layerouter = max(h_outer - height_baselayer, 0); // we also fill up underneath the baselayer
             float radius_height = GetRadiusSlope(CR, crownshell_extent, extent_layerouter);
             int crown_intarea = GetCrownIntarea(radius_height);
@@ -4032,7 +4032,7 @@ int main(int argc, char *argv[])
     //!** Evolution loop  **
     //!*********************
 
-    cout << "Simulation starts with " << nblivetrees << " trees." << endl;
+    cout << "Simulation starts with " << ctx.diag.nblivetrees << " trees." << endl;
 
     //** Information in file info **
     //******************************
@@ -4098,7 +4098,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    cout << "Simulation ends with " << nblivetrees << " trees." << endl;
+    cout << "Simulation ends with " << ctx.diag.nblivetrees << " trees." << endl;
 
     // final pattern
     if (ctx.opt._OUTPUT_extended & !ctx.opt._OUTPUT_inventory)
@@ -4828,7 +4828,7 @@ void ReadInputClimate()
 
 #ifdef WATER
 //! Global function: This function reads inputs from the soil input file
-//! - in v.3.0, all soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
+//! - in v.3.0, all soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each ctx.diag.layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
 //! - Sat_SWC and Res_SWC are here computed according Tomasella & Hodnett 1998 from soil texture information (see Table 2 in Marthews et al. 2014)
 void ReadInputSoil()
 {
@@ -4894,7 +4894,7 @@ void ReadInputSoil()
             cumulative_depth += layer_thickness[l];
             layer_depth[l] = cumulative_depth;
         }
-        // (added in the header but kept in here) in this version, all soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
+        // (added in the header but kept in here) in this version, all soil parameters (Sat_SWC, Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each ctx.diag.layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (Sat_SWC, Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (Sat_SWC, Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
         // (added in the header but kept in here) Sat_SWC and Res_SWC are here computed according Tomasella & Hodnett 1998 from soil texture information (see Table 2 in Marthews et al. 2014)
         if (NULL == (Sat_SWC = new float[nblayers_soil]))
             cerr << "!!! Mem_Alloc Sat_SW" << endl;
@@ -4915,7 +4915,7 @@ void ReadInputSoil()
                 Sat_SWC[l] = 0.01 * (40.61 + (0.165 * proportion_Silt[l]) + (0.162 * proportion_Clay[l]) + (0.00137 * proportion_Silt[l] * proportion_Silt[l]) + (0.000018 * proportion_Silt[l] * proportion_Silt[l] * proportion_Clay[l])); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
             }
             Max_SWC[l] = Sat_SWC[l] * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // in m3
-            cout << "layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << " m3; Sat_SWC =" << Sat_SWC[l] << " MAX_SWC =" << Max_SWC[l] << " m3." << endl;
+            cout << "ctx.diag.layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << " m3; Sat_SWC =" << Sat_SWC[l] << " MAX_SWC =" << Max_SWC[l] << " m3." << endl;
         }
 
         if (NULL == (Ksat = new float[nblayers_soil]))
@@ -4923,7 +4923,7 @@ void ReadInputSoil()
         for (int l = 0; l < nblayers_soil; l++)
         {
             Ksat[l] = 0.007055556 * pow(10, (-0.60 - (0.0064 * proportion_Clay[l]) + (0.0126 * proportion_Sand[l]))); // according to Cosby et al. 1984 (the only expression of k_sat reported in Table 2 of Marthews et al. 2014). k_sat is here in mm/s or equivalently in kg/m2/s.
-            cout << "layer " << l << " Ksat=" << Ksat[l] << "mm/s or kg/m2/s  " << Ksat[l] * 9.8 / 18 << endl;
+            cout << "ctx.diag.layer " << l << " Ksat=" << Ksat[l] << "mm/s or kg/m2/s  " << Ksat[l] * 9.8 / 18 << endl;
         }
 
         if (NULL == (Res_SWC = new float[nblayers_soil]))
@@ -4944,7 +4944,7 @@ void ReadInputSoil()
             }
             Min_SWC[l] = Res_SWC[l] * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // in m3
 
-            cout << "layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << "m3; Res=" << Res_SWC[l] << " MIN_SWC =" << Min_SWC[l] << " m3" << endl;
+            cout << "ctx.diag.layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << "m3; Res=" << Res_SWC[l] << " MIN_SWC =" << Min_SWC[l] << " m3" << endl;
         }
 
         if (ctx.opt._WATER_RETENTION_CURVE == 1)
@@ -4968,9 +4968,9 @@ void ReadInputSoil()
                 b_vgm[l] = 1.0 / m_vgm[l];
                 c_vgm[l] = 1.0 - m_vgm[l];
 
-                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow((pow(0.01 * alpha, 1 / c_vgm[l]) + 1), -(1 / b_vgm[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
+                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow((pow(0.01 * alpha, 1 / c_vgm[l]) + 1), -(1 / b_vgm[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the ctx.diag.layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
 
-                cout << "layer " << l << " alpha=" << alpha << "\t" << "n_vgm=" << n_vgm << " FC_SWC=" << FC_SWC[l] << endl;
+                cout << "ctx.diag.layer " << l << " alpha=" << alpha << "\t" << "n_vgm=" << n_vgm << " FC_SWC=" << FC_SWC[l] << endl;
             }
         }
         else if (ctx.opt._WATER_RETENTION_CURVE == 0)
@@ -4986,9 +4986,9 @@ void ReadInputSoil()
                 // phi_e[l]=-0.00000001*pow(10.0,(2.17-(0.0063*proportion_Clay[l])-(0.0158*proportion_Sand[l])))*(1000*9.80665); // according to Cosby et al. 1984, non -tropical and texture-based but widely used, as reported in Table 2 in Marthews et al. 2014. In MPa.
                 // b[l]=3.10+0.157*proportion_Clay[l]-0.003*proportion_Sand[l]; // according to Cosby et al. 1984, non -tropical and texture-based but widely used, as reported in Table 2 in Marthews et al. 2014. Dimensionless.
 
-                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow(-0.01 / phi_e[l], -(1 / b[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the layer water content at filed capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
+                FC_SWC[l] = (Res_SWC[l] + (Sat_SWC[l] - Res_SWC[l]) * pow(-0.01 / phi_e[l], -(1 / b[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the ctx.diag.layer water content at filed capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
 
-                cout << "layer " << l << " phi_e=" << phi_e[l] << "\t" << "b=" << b[l] << " FC_SWC=" << FC_SWC[l] << endl;
+                cout << "ctx.diag.layer " << l << " phi_e=" << phi_e[l] << "\t" << "b=" << b[l] << " FC_SWC=" << FC_SWC[l] << endl;
             }
         }
         cout << "Successfully read the soil file" << endl;
@@ -5330,7 +5330,7 @@ void InitialiseLookUpTables()
             else
             {
                 // Flux is now computed simply as absorption on a per m2 plant matter basis, and not incident flux, since the FvCB model requires a transformation of incident into absorbed flux (cf. original Farquhar 1980 paper, or Medlyn et al. 2002, Plant, Cell & Environment). For example, Medlyn et al. use 0.093 quantum yield, 4 mol electron/mol photon and an absorptance of leaves of 0.8 to arrive at a factor of 0.3 to be multiplied with incident PPFD. Now, in a dense forest, kpar modifies the absorbed PPFD per leaf area. For simplicity, we separate the 0.093 and 4 mol electrion/mol photon from the absorptance and calculate the latter directly from an effective kpar which includes a general k (i.e. leaf angle distribution) and a leaf absorptance factor, e.g. 0.9. The main effect of this scheme is that lowering k (reflecting, for example, steeper leaf angles) may result in more incident light per m2 ground, but absorption also gets lower, since leaves are not perfectly illuminated
-                // To calculate absorbed PPFD, a formula can either be derived through integration or be motivated as follows: 1) incoming flux is exp(-kpar * absorb_prev), equivalent to what was previously computed as flux, 2) the absorbed fraction of the incoming flux in a layer of "absorb_delta" is (1.0 - exp(-kpar * absorb_delta), and 3) the amount of leaf area per ground area is absorb_delta, which is needed as divisor to convert to absorption per m2 leaf area
+                // To calculate absorbed PPFD, a formula can either be derived through integration or be motivated as follows: 1) incoming flux is exp(-kpar * absorb_prev), equivalent to what was previously computed as flux, 2) the absorbed fraction of the incoming flux in a ctx.diag.layer of "absorb_delta" is (1.0 - exp(-kpar * absorb_delta), and 3) the amount of leaf area per ground area is absorb_delta, which is needed as divisor to convert to absorption per m2 leaf area
                 // Since PPFD is a density (i.e. given relative to m2 leaf area), a lower absorb_delta results in slightly higher PPFD. A lower absorb_delta implies that leaves are less densely distributed in space, so there is a slight increase in absorbed photons per leaf area, even though overall absorbed photon numbers decrease. While an absorb_delta = 0 implies zero absorption, in the limit of very low absorb_delta (-> 0), the absorption approaches kpar (Taylor expansion: exp(x) ~ 1 + x, so (1 - exp(-kpar*x))/x ~ kpar*x/x ~ kpar). This is not realistic, since leaves cannot get infinitesimally small and the assumptions of Beer-Lambert breaks down beforehand. But since the linear approximation should be justified in low density layers, maybe this could be used to accelerate the computation?
                 LookUp_flux_absorption[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / absorb_delta;
 
@@ -5743,7 +5743,7 @@ void Initialise(Context &ctx)
 
     ctx.time.iter = -1; // changed in v.3.0.1, previously undefined; new function GetTimeofyear accepts also negative iterations
 
-    nblivetrees = 0;
+    ctx.diag.nblivetrees = 0;
 
     ReadInputSpecies();
 #ifdef FULL_CLIMATE
@@ -5769,7 +5769,7 @@ void Initialise(Context &ctx)
         // FF: not sure this check is necessary anymore (it's a check for memory allocation problems, I presume?), but I kept it just in case
         if (&T_site.t_soil_layer_weight[0] == &T_site.t_root_biomass[4])
         {
-            cout << "Warning mem_alloc root biomass and soil layer weight at site " << site << ": " << endl;
+            cout << "Warning mem_alloc root biomass and soil ctx.diag.layer weight at site " << site << ": " << endl;
             cout << "t_soil_layer_weight adresses: " << &T_site.t_soil_layer_weight[0] << "\t" << &T_site.t_soil_layer_weight[1] << "\t" << &T_site.t_soil_layer_weight[2] << "\t" << &T_site.t_soil_layer_weight[3] << "\t" << &T_site.t_soil_layer_weight[4] << endl;
             cout << "t_root biomass adresses: " << &T_site.t_root_biomass[0] << "\t" << &T_site.t_root_biomass[1] << "\t" << &T_site.t_root_biomass[2] << "\t" << &T_site.t_root_biomass[3] << "\t" << &T_site.t_root_biomass[4] << endl;
         }
@@ -6210,7 +6210,7 @@ void ReadInputInventory()
                 float inter = 1 - pow((1 - pow(theta_w, b_vgm[l])), m_vgm[l]);
                 Ks[l][d] = Ksat[l] * pow(theta_w, 0.5) * inter * inter;                           // this is the van Genuchten-Mualem model (as in Table 1 in Marthews et al. 2014)
                 if (isnan(soil_phi3D[l][d]) || isnan(Ks[l][d]) || (SWC3D[l][d] - Min_SWC[l]) < 0) //|| KsPhi[l][d]==0.0 || Ks[l][d]==0.0 || soil_phi3D[l][d]==0.0)
-                    cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl;
+                    cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl;
             }
             else if (ctx.opt._WATER_RETENTION_CURVE == 0)
             {
@@ -6218,7 +6218,7 @@ void ReadInputInventory()
                 Ks[l][d] = Ksat[l] * pow(theta_w, 2.5 + 2 * b[l]);                                                      // this is the hydraulic conductivity curve of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                 KsPhi[l][d] = Ksat[l] * phi_e[l] * pow(theta_w, 2.5 + b[l]);                                            // Ks times soil_phi3D, computed directly as the exact power of theta.
                 if (isnan(soil_phi3D[l][d]) || isnan(Ks[l][d]) || isnan(KsPhi[l][d]) || (SWC3D[l][d] - Min_SWC[l]) < 0) //|| KsPhi[l][d]==0.0 || Ks[l][d]==0.0 || soil_phi3D[l][d]==0.0)
-                    cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " phi_e=" << phi_e[l] << " b[l]=" << b[l] << " KsPhi[l][d]=" << KsPhi[l][d] << " Ks[l][d]=" << Ks[l][d] << endl;
+                    cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " phi_e=" << phi_e[l] << " b[l]=" << b[l] << " KsPhi[l][d]=" << KsPhi[l][d] << " Ks[l][d]=" << Ks[l][d] << endl;
             }
         }
     }
@@ -6318,10 +6318,10 @@ void AllocMem(Context &ctx)
 
     //** Initialization of dynamic Fields **
     //**************************************
-    if (NULL == (nbdbh = new int[ctx.grid.dbhmaxincm]))
+    if (NULL == (ctx.diag.nbdbh = new int[ctx.grid.dbhmaxincm]))
         cerr << "!!! Mem_Alloc\n"; // Field for DBH histogram
-    if (NULL == (layer = new float[ctx.grid.HEIGHT + 1]))
-        cerr << "!!! Mem_Alloc\n"; // Field for variables averaged by vertical layer
+    if (NULL == (ctx.diag.layer = new float[ctx.grid.HEIGHT + 1]))
+        cerr << "!!! Mem_Alloc\n"; // Field for variables averaged by vertical ctx.diag.layer
 #ifdef Output_ABC
     if (NULL == (abundances_species = new int[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep
@@ -6532,8 +6532,8 @@ void Evolution(Context &ctx)
 #endif
 
     UpdateField(); // Update light fields and seed banks
-    nbtrees_n10 = nbtrees_n30 = nbdead_n1 = nbdead_n10 = nbdead_n30 = 0;
-    nbtrees_carbstarv_n1 = nbtrees_carbstarv_n10 = nbtrees_carbstarv_n30 = 0;
+    ctx.diag.nbtrees_n10 = ctx.diag.nbtrees_n30 = ctx.diag.nbdead_n1 = ctx.diag.nbdead_n10 = ctx.diag.nbdead_n30 = 0;
+    ctx.diag.nbtrees_carbstarv_n1 = ctx.diag.nbtrees_carbstarv_n10 = ctx.diag.nbtrees_carbstarv_n30 = 0;
 
 #ifdef Output_ABC
     nbdead_n10_abc = 0;
@@ -6838,7 +6838,7 @@ void UpdateField()
     {
         //****   BUCKET MODEL in each dcell   ****
         // the unit used for water volume throughout the bucket model is m3.
-        // NOTE: under the assumption of a flat terrain and no lateral fluxes, as it is assumed here for a first implementation, the order with which dcells are visited during the loop does not matter. With topography, we will need to visit the soil voxels (ie. dcells*layer) from highest to lowest elevation so that run-off from highest voxels contribute to the water flux entering the lowest ones.
+        // NOTE: under the assumption of a flat terrain and no lateral fluxes, as it is assumed here for a first implementation, the order with which dcells are visited during the loop does not matter. With topography, we will need to visit the soil voxels (ie. dcells*ctx.diag.layer) from highest to lowest elevation so that run-off from highest voxels contribute to the water flux entering the lowest ones.
         //  to be investigated: does the order in which transpiration and evaporation are retrieved from the soil affect the overall outcome? which one should be retrieved first?
 
         // Water uptake through tree transpiration
@@ -6862,7 +6862,7 @@ void UpdateField()
 
         // if this should be negligible in dense forest understory, it should have a more important effect in open areas, especially through species filtering at germination stage, at the beginning of a succession or in gaps in drier conditions; see Marthews et al. 2008 Ecological Modelling
         // However it is sometimes neglected and not represented in models, eg. Laio et al. 2001, Guterriez et al. 2014, Fischer et al. 2014.
-        // note that, in this version, evaporation only depletes the most superficial soil layer. This could be changed, especially if the superficial soil layer is particularly thin and the energy reaching the soil high.
+        // note that, in this version, evaporation only depletes the most superficial soil ctx.diag.layer. This could be changed, especially if the superficial soil ctx.diag.layer is particularly thin and the energy reaching the soil high.
 
         // here, we use a phenomenological approach, following Granier et al. 1999 Ecological Modelling and Wagner et al. 2011 AFM, which assumed that evaporation is proportional to the energy reaching the soil.[this is an approximation as as the soil gets drier, more energy would be needed to remove the same amount of water from the soil as water molecules should be more tighly bound to soil particules and cavitation also occur in the soil...] ==> see if a model under which evaporation also depends on the soil water potential would not be better -- I guess so.
         // parameter values are not so clear, so TO BE CHECKED.
@@ -6872,7 +6872,7 @@ void UpdateField()
         // the value 0.1 is drawn from Wagner et al. 2011, but not really explained... to be checked!
         // ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
 
-        // in this newer version, we used the framework provided by Sellers et al. 1992, which is better mechanistically grounded: depends on the soil layer resistance, which varies with its water potential, and the aerodynamic resistance in series and the differences of vapour pressure between the top soil layer and air just above
+        // in this newer version, we used the framework provided by Sellers et al. 1992, which is better mechanistically grounded: depends on the soil ctx.diag.layer resistance, which varies with its water potential, and the aerodynamic resistance in series and the differences of vapour pressure between the top soil ctx.diag.layer and air just above
         float absorb_prev = LAI_DCELL[1][d];
         float absorb_current = LAI3D[0][d];
         float absorb_delta = absorb_current - absorb_prev;
@@ -6882,14 +6882,14 @@ void UpdateField()
         float VPDground = VPDDailyMean * LookUp_VPD[intabsorb] * 1000; // in Pa
         float Tsoil = tDailyMean - LookUp_T[intabsorb];
         float esat_ground = 611.21 * exp((18.678 - (Tsoil / 234.5)) * (Tsoil / (257.14 + Tsoil))); // Buck equation; in Pa (see Jones p. 348)
-        float esoil = esat_ground * exp(2.17 * soil_phi3D[0][d] / (Tsoil - ABSZERO));              // esoil variation with the top soil layer water potential, following Duursma & Medlyn 2012 equ. 17, Cochard et al. 2021 equ. 36., see equ. 5.14 in Jones (p. 102), in Pa
+        float esoil = esat_ground * exp(2.17 * soil_phi3D[0][d] / (Tsoil - ABSZERO));              // esoil variation with the top soil ctx.diag.layer water potential, following Duursma & Medlyn 2012 equ. 17, Cochard et al. 2021 equ. 36., see equ. 5.14 in Jones (p. 102), in Pa
         float eair = esat_ground - VPDground;                                                      // in Pa
         // float r_soil = exp(8.206 - 4.255*SWC3D[0][d]/Max_SWC[0]) ; // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
         float r_soil = exp(8.206 - 4.255 * SWC3D[0][d] / FC_SWC[0]); // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
 #ifdef FULL_CLIMATE
-        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / (WSDailyMean * TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
+        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / (WSDailyMean * TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #else
-        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
+        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #endif
         float Rtot = r_soil + r_aero;                                                                                 // in s m-1
         float e = ctx.time.nbhours_covered * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
@@ -6971,7 +6971,7 @@ void UpdateField()
             }
         }
         else
-        { // if the top soil layer is already saturated (eg. inundated forest), throughfall -> runoff
+        { // if the top soil ctx.diag.layer is already saturated (eg. inundated forest), throughfall -> runoff
             Runoff[d] = Throughfall[d];
         }
         // Leakage
@@ -7000,7 +7000,7 @@ void UpdateField()
                 Ks[l][d] = Ksat[l] * pow(theta_w, 0.5) * inter * inter; // this is the van Genuchten-Mualem model (as in Table 1 in Marthews et al. 2014)
 
                 if (isnan(soil_phi3D[l][d]) || isnan(Ks[l][d]) || (SWC3D[l][d] - Min_SWC[l]) < 0) //|| KsPhi[l][d]==0.0 || Ks[l][d]==0.0 || soil_phi3D[l][d]==0.0)
-                    cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl;
+                    cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " Ks[l][d]=" << Ks[l][d] << endl;
             }
             else if (ctx.opt._WATER_RETENTION_CURVE == 0)
             {
@@ -7009,7 +7009,7 @@ void UpdateField()
                 KsPhi[l][d] = Ksat[l] * phi_e[l] * pow(theta_w, 2.5 + b[l]); // Ks times soil_phi3D, computed directly as the exact power of theta.
 
                 if (isnan(soil_phi3D[l][d]) || isnan(Ks[l][d]) || isnan(KsPhi[l][d]) || (SWC3D[l][d] - Min_SWC[l]) < 0) //|| KsPhi[l][d]==0.0 || Ks[l][d]==0.0 || soil_phi3D[l][d]==0.0)
-                    cout << "In bucket model, layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " phi_e=" << phi_e[l] << " b[l]=" << b[l] << " KsPhi[l][d]=" << KsPhi[l][d] << " Ks[l][d]=" << Ks[l][d] << endl;
+                    cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " SWC3D[l][d]-Min_SWC[l]=" << (SWC3D[l][d] - Min_SWC[l]) << " soil_phi3D[l][d]=" << soil_phi3D[l][d] << " Ksat=" << Ksat[l] << " phi_e=" << phi_e[l] << " b[l]=" << b[l] << " KsPhi[l][d]=" << KsPhi[l][d] << " Ks[l][d]=" << Ks[l][d] << endl;
                 // KsPhi2[l][d]=Ksat[l]*phi_e[l]*pow(theta_w, 2.5);
                 //  we may want to shift to the van Genuchten-Mualem expressions of soil_phi3D and Ks, as the van genuchten-Mualem model is currently defacto the more standard soil hydraulic model (see ref in Table 1 in Marthews et al. 2014). To do so, see if we have data of soil pH, cation exchange capacity, organic carbon content, to explicitly compute the parameters with Hodnett & Tomasella 2002 (as recommended by Marthews et al. 2014 -- Table 2; or instead directly use the parameter provided by the map in Marthews et al. 2014.
             }
@@ -7155,9 +7155,9 @@ void TriggerTreefall()
 //! - in the limit of p_tfsecondary = 0.0, this is equivalent to the previous computation
 void TriggerTreefallSecondary()
 {
-    nbTreefall1 = 0;
-    nbTreefall10 = 0;
-    nbTreefall30 = 0;
+    ctx.diag.nbTreefall1 = 0;
+    ctx.diag.nbTreefall10 = 0;
+    ctx.diag.nbTreefall30 = 0;
 #ifdef Output_ABC
     nbTreefall10_abc = 0;
 #endif
@@ -7340,10 +7340,10 @@ void Average(void)
         cout.precision(2);
 
 #ifdef WATER
-        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << " *** Transpiration (mm): ";
+        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * ctx.diag.nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * ctx.diag.nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * ctx.diag.nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << " *** Transpiration (mm): ";
 #else
 
-        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << endl;
+        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * ctx.diag.nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * ctx.diag.nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * ctx.diag.nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << endl;
 #endif
 
         if (ctx.opt._OUTPUT_extended)
@@ -7361,9 +7361,9 @@ void Average(void)
                 output_extended[1] << ctx.time.iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
 
             if (ctx.opt._BASICTREEFALL)
-                output_extended[2] << ctx.time.iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << "\t" << nbTreefall1 * inbhectares << "\t" << nbTreefall10 * inbhectares << endl;
+                output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << "\t" << ctx.diag.nbTreefall1 * inbhectares << "\t" << ctx.diag.nbTreefall10 * inbhectares << endl;
             else
-                output_extended[2] << ctx.time.iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << endl;
+                output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << endl;
         }
     }
 
@@ -7376,11 +7376,11 @@ void Average(void)
         {
             if (T[site].t_NPP <= 0.0)
             {
-                nbtrees_carbstarv_n1++;
+                ctx.diag.nbtrees_carbstarv_n1++;
                 if (T[site].t_dbh >= 0.1)
-                    nbtrees_carbstarv_n10++;
+                    ctx.diag.nbtrees_carbstarv_n10++;
                 if (T[site].t_dbh >= 0.3)
-                    nbtrees_carbstarv_n30++;
+                    ctx.diag.nbtrees_carbstarv_n30++;
             }
         }
     }
@@ -7680,32 +7680,32 @@ void OutputField()
         // output fields, ctx.time.nbout times during simulation (every ctx.time.freqout iterations)
         int d;
         for (d = 0; d < ctx.grid.dbhmaxincm; d++)
-            nbdbh[d] = 0;
+            ctx.diag.nbdbh[d] = 0;
         for (site = 0; site < ctx.grid.sites; site++)
             T[site].histdbh();
 
         for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
-            layer[h] = 0;
+            ctx.diag.layer[h] = 0;
             for (site = 0; site < ctx.grid.sites; site++)
-                layer[h] += LAI3D[h][site + ctx.grid.SBORD];
+                ctx.diag.layer[h] += LAI3D[h][site + ctx.grid.SBORD];
         }
 
 #ifdef MPI
         MPI_Status status;
-        MPI_Reduce(nbdbh, nbdbh, ctx.grid.dbhmaxincm, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce(layer, layer, ctx.grid.HEIGHT, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(ctx.diag.nbdbh, ctx.diag.nbdbh, ctx.grid.dbhmaxincm, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(ctx.diag.layer, ctx.diag.layer, ctx.grid.HEIGHT, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
 #endif
         if (!mpi_rank)
         {
             // output of the dbh histograms (output[31])
             for (d = 1; d < ctx.grid.dbhmaxincm; d++)
-                output[31] << d << "\t" << nbdbh[d] << "\n";
+                output[31] << d << "\t" << ctx.diag.nbdbh[d] << "\n";
             output[31] << "\n";
             // output of the mean LAI per height class (output[32])
             float norm = 1.0 / float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH * mpi_size);
             for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
-                output[32] << ctx.time.iter << "\t" << h * ctx.grid.LV << "\t" << layer[h] * norm << "\n";
+                output[32] << ctx.time.iter << "\t" << h * ctx.grid.LV << "\t" << ctx.diag.layer[h] * norm << "\n";
             output[32] << "\n";
         }
     }
@@ -9877,7 +9877,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
 //  Global ABC function: ABC outputs
 // ##############################################
 //! - this function creates various transmittance and lidar metrics, from the LAI field and the simulated lidar
-//! - the output variables are: avg transmittance per layer within all voxels of that layer (i.e. transmittance_full), only within voxels of that layer that are also inside the canopy (i.e. transmittance_incanopy, voxels below the CHM, if there is a gap with an average canopy height of 3m for example, then voxelsat 10m won't be counted for the transmittance avg at 10m), and transmittance only in filled voxes (i.e. only voxels with leaves, transmittance_nogaps)
+//! - the output variables are: avg transmittance per ctx.diag.layer within all voxels of that ctx.diag.layer (i.e. transmittance_full), only within voxels of that ctx.diag.layer that are also inside the canopy (i.e. transmittance_incanopy, voxels below the CHM, if there is a gap with an average canopy height of 3m for example, then voxelsat 10m won't be counted for the transmittance avg at 10m), and transmittance only in filled voxes (i.e. only voxels with leaves, transmittance_nogaps)
 //! - additional metrics are the total number of voxels that have been considered for the averages
 //! - all metrics will be computed normalized to the ground (suffix z) and normalized to the canopy (suffix d), and both for the actual 3D canopy (no additional suffix) and a simulated lidar (additional suffix ALS)
 //! - !!!: TODO, detailed documentation
@@ -9908,7 +9908,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
         }
     }
 
-    // Compute the voxels for heights greater 2 separately, as the lowest layer in TROLL can be a bit difficult to interpret (lots of seedlings by default)
+    // Compute the voxels for heights greater 2 separately, as the lowest ctx.diag.layer in TROLL can be a bit difficult to interpret (lots of seedlings by default)
     int voxcrown_total = voxcrown[0] + voxcrown[1];
     int voxcrown_greater2 = 0;
 
@@ -10128,8 +10128,8 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
 
     // Finally we create PAI distributions, similar to efforts to estimate PAI from lidar simulations (cf. Greg's work)
     //  interpretation outside of an ABC context is a bit problematic, since we have many NA values that need to be imputated (otherwise PAI estimate is biased downwards), and since mean(log(x)) != log(mean(x))
-    //  we fill up voxels within canopy with mean canopy layer value, this decreases variance, but it does so for both empirical and simulated distributions, and the effect can be investigated given that we also have the direct measurements form LAI3D field
-    //  furthermore, the canopy height will probably have a stronger effect on the distribution of PAI values than local variation within one layer
+    //  we fill up voxels within canopy with mean canopy ctx.diag.layer value, this decreases variance, but it does so for both empirical and simulated distributions, and the effect can be investigated given that we also have the direct measurements form LAI3D field
+    //  furthermore, the canopy height will probably have a stronger effect on the distribution of PAI values than local variation within one ctx.diag.layer
     //  as above, we will calculate the actual distribution and the ALS-inferred one
     int stepsize = 10;
     int PAIhist[80] = {0}, PAIhist_ALS[80] = {0}; // for values going from 0 to 20, anything beyond is put into the 20 bin
@@ -10196,7 +10196,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
         }
     }
 
-    // Calculate summary statistics for crown packing analysis, i.e. the crown volume per voxel, average per layer and canopy height
+    // Calculate summary statistics for crown packing analysis, i.e. the crown volume per voxel, average per ctx.diag.layer and canopy height
     //  first compute maxheight
     int height_max = 0;
     for (int r = row_start; r < row_end; r++)
@@ -10450,8 +10450,8 @@ void CloseOutputs()
 //!  Free dynamic memory
 void FreeMem()
 {
-    delete[] nbdbh;
-    delete[] layer;
+    delete[] ctx.diag.nbdbh;
+    delete[] ctx.diag.layer;
     delete[] SPECIES_GERM;
 #ifdef WATER
     delete[] ctx.grid.site_DCELL;
