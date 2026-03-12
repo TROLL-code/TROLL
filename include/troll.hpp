@@ -131,14 +131,6 @@ int sites;       //!< Global variable: number of pixels in the scene (cols*rows)
 int cols;        //!< Global variable: number of columns in the scene
 int rows;        //!< Global variable: number of rows in the scene
 int nbspp;       //!< Global variable: number of species
-int iterperyear; //!< Global variable: number of iterations per year (=12 if monthly timestep, =365 if daily timestep)
-int nbiter;      //!< Global variable: total number of timesteps
-int iter;        //!< Global variable: current timestep
-int nbout;       //!< Global variable: number of outputs
-int freqout;     //!< Global variable: frequency HDF outputs
-#ifdef FULL_CLIMATE
-int nbdays; //!< Global variable: number of days with explicit daily climate variation provided in input
-#endif      // FULL_CLIMATE
 
 // Random number generator for trait covariance calculation
 gsl_rng *gslrand;                           //!< Global variable: random number generator
@@ -166,7 +158,6 @@ float NV;               //!< Global variable: number of cells per m (vertical)
 float NH;               //!< Global variable: number of cells per m (horizontal)
 float LV;               //!< Global variable: LV = 1.0/NV; NV is vertical number of cells per m
 float LH;               //!< Global variable: LH = 1.0/NH; NH is horizontal number of cells per m
-float timestep;         //!< Global variable: duration of one timestep (in years)=1/iterperyear
 
 float p_nonvert; //!< Global variable: ratio of non-vertical incident light
 float Cseedrain; //!< Global variable: constant used to scale total seed rain per hectare across species
@@ -197,9 +188,6 @@ vector<float> varday_light; //!< Global vector: light irradiance variation durin
 vector<float> varday_vpd;   //!< Global vector: Vapour pressure deficit (VPD) variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
 vector<float> varday_T;     //!< Global vector: Temperature variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
 vector<float> varday_WS;    //!< Global vector: Wind speed variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
-int nbsteps_varday;         //!< Global variable: number of steps for environmental variables
-float inv_nbsteps_varday;   //!< Global variable: the inverse of the step number for environmental variables
-float nbhours_covered;      //!< Global variable: number of hours of environmental variables in the environmental input file
 
 // Climate input data; as provided in the input file. File structure depends on the timestep and scenario used for the simulation
 // new version 2.2, updated in 2.5: use mean temperatures instead of maxima as reference point. This corrects an overestimation of all environmental variables (daily cycle in input file has been adjusted accordingly)

@@ -91,6 +91,7 @@ struct TimeState
     int nbsteps_varday;
     float inv_nbsteps_varday;
     float nbhours_covered;
+    float timestep;
 };
 
 struct Climate

@@ -64,9 +64,8 @@
 //
 // For now, these declarations prevent circular include dependencies.
 
-extern int cols, rows, HEIGHT, length_dcell, nbiter;
+extern int cols, rows, HEIGHT, length_dcell;
 extern float NV, NH;
-extern int nbout;
 extern float p_nonvert, SWtoPPFD, klight;
 extern float absorptance_leaves, theta, phi, g1;
 extern float vC, DBH0, H0, CR_min, CR_a, CR_b, CD_a, CD_b, CD0;
@@ -254,12 +253,12 @@ void RegisterParameters(Context &ctx)
     add_int("rows", rows, 0, INT_MAX, 400);
     add_int("HEIGHT", HEIGHT, 0, 150, 70);
     add_int("length_dcell", length_dcell, 0, INT_MAX, 25);
-    add_int("nbiter", nbiter, 0, INT_MAX, 6000);
+    add_int("nbiter", ctx.time.nbiter, 0, INT_MAX, 6000);
 
     add_float("NV", NV, 0.0f, float(INT_MAX), 1.0f);
     add_float("NH", NH, 0.0f, float(INT_MAX), 1.0f);
 
-    add_int("nbout", nbout, 0, INT_MAX, 4);
+    add_int("nbout", ctx.time.nbout, 0, INT_MAX, 4);
     add_float("p_nonvert", p_nonvert, 0.0f, 1.0f, 0.05f);
     add_float("SWtoPPFD", SWtoPPFD, 0.0f, 5.0f, 2.29f);
     add_float("klight", klight, 0.0f, 1.0f, 0.5f);

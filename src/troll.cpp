@@ -566,7 +566,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 
         parameter_name = "age";
         parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
-        SetParameter(parameter_name, parameter_value, t_age, timestep, 10000.0f, 1.0f, quiet);
+        SetParameter(parameter_name, parameter_value, t_age, ctx.time.timestep, 10000.0f, 1.0f, quiet);
 
         parameter_name = "height";
         parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
@@ -737,7 +737,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         //*##############################*/
         //*## "Convenience" parameters ##*/
         //*##############################*/
-        // these parameters can be set to 0, as they are recomputed each timestep in the actual light environment
+        // these parameters can be set to 0, as they are recomputed each ctx.time.timestep in the actual light environment
         // will be computed for initial configuration after allocation of leaves to voxel field
         t_GPP = t_NPP = t_Rday = t_Rnight = t_Rstem = 0.0;
 
@@ -1402,16 +1402,16 @@ float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
     if (_LA_regulation == 0)
     {
         if (carbon_starv > t_leaflifespan)
-            dr += 1.0 / timestep;
+            dr += 1.0 / ctx.time.timestep;
     }
     else
     {
         if (carbon_starv <= 0.0 && t_NPP <= 0.0)
-            dr += 1.0 / timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            dr += 1.0 / ctx.time.timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
     }
     if (dd > 0)
         dr += dd;
-    return dr * timestep;
+    return dr * ctx.time.timestep;
 }
 
 #ifdef WATER
@@ -1421,28 +1421,28 @@ float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
     float basal = fmaxf(m - m1 * t_wsg, 0.0);
 
     dr = basal;
-    // if (carbon_starv > t_leaflifespan) dr+=1.0/timestep;
+    // if (carbon_starv > t_leaflifespan) dr+=1.0/ctx.time.timestep;
     if (_LA_regulation == 0)
     {
         if (carbon_starv > t_leaflifespan)
-            dr += 1.0 / timestep;
+            dr += 1.0 / ctx.time.timestep;
     }
     else
     {
         if (carbon_starv <= 0.0 && t_NPP <= 0.0)
-            dr += 1.0 / timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            dr += 1.0 / ctx.time.timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
     }
     // if the water availabiliy in the root zone is below the lethal level, the tree dies, !!!: not that deterministic, right?
     if (phi_root < (t_phi_lethal))
-        dr += 1.0 / timestep;
-    if (iter == int(nbiter - 1))
+        dr += 1.0 / ctx.time.timestep;
+    if (ctx.time.iter == int(ctx.time.nbiter - 1))
         output[26] << t_wsg << "\t" << basal << "\t" << dbh << "\t" << dr << "\n";
 
-    /*if (iter>=622 && dr*timestep>=0.8) {
-        cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; S[t_sp_lab].s_phi_lethal=" << S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
+    /*if (ctx.time.iter>=622 && dr*ctx.time.timestep>=0.8) {
+        cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*ctx.time.timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; S[t_sp_lab].s_phi_lethal=" << S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
     }*/
 
-    return dr * timestep;
+    return dr * ctx.time.timestep;
 }
 #else
 float Tree::DeathRate(float dbh, float carbon_starv)
@@ -1454,15 +1454,15 @@ float Tree::DeathRate(float dbh, float carbon_starv)
     if (_LA_regulation == 0)
     {
         if (carbon_starv > t_leaflifespan)
-            dr += 1.0 / timestep;
+            dr += 1.0 / ctx.time.timestep;
     }
     else
     {
         if (carbon_starv <= 0.0 && t_NPP <= 0.0)
-            dr += 1.0 / timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
+            dr += 1.0 / ctx.time.timestep; // newIM 2021: carbon starvation occurs when the carbon stocks has been completly depleted, and carbon_starv represents t_carbon_storage (while it represents t_NPPneg when _LA_regulation==0)
     }
 
-    return dr * timestep;
+    return dr * ctx.time.timestep;
 }
 #endif
 
@@ -1476,9 +1476,9 @@ float Tree::DeathRate(float dbh, float carbon_starv)
 //! - Tree::FluxesLeaf iterates on the leaf conditions (Tl, Cs and Dleaf) and calls another function Tree::Photosyn, which itself implements the models of photosynthsis and stomatal conductance.
 //! - When WATER option is on, the stomatal conductance parameter (g1) and photosynthetic capacities are reduced under water stressed conditions: stomatal and non-stomatal responses to water stress (see Egea et al. 2011 AFM, Zhou et al. 2013 AFM, Zhou et al. 2014 PCE, etc.). This is done by multipliying the values of g1 and of Vcmax and Jmax in absence of water stress by water stress factors (WSF and WSF_A respectively).
 //! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C m-2 s-1, and water fluxes (transpiration) in micromol H20 m-2 s-1.
-//! - It is converted into gC per m^2 of leaf per timestep by "nbhours_covered*15.7788*timestep" where 15.7788 = 3600*365.25*12/1000000 and nbhours_covered is the duration read in the daily variation file
-//! - NB1: 12 is the molar mass of carbon NB2: timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
-//! - BEWARE: slight inconsistency through use of 365.25 when daily timestep is likely to be given as 365, but not incorrect.
+//! - It is converted into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
+//! - NB1: 12 is the molar mass of carbon NB2: ctx.time.timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
+//! - BEWARE: slight inconsistency through use of 365.25 when daily ctx.time.timestep is likely to be given as 365, but not incorrect.
 //! - It uses lookup tables for acceleration of computation of T dependencies. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
 
 //!  the function Tree::FluxesLeaf implements an iterative algorithm to determine the leaf temperature, and CO2 concentration and VPD at the leaf surface, ie the ones that should be taken as arguments of the Farquhar and stomatal conductance models. The latters are themeselves implemented within the function Tree::Photosyn (analogy with the MAESTRA/MAESPA code from which this iterative scheme has been inspired, see Medlyn et al. 2007 Tree physiology). At each iteration, Tree::FluxesLeaf computes carbon and water fluxes at the leaf level using the Farqhuar model and the Penman-Monteith equation, and updates T, CO2 and VPD accordingly. Starting by assuming that leaf T, CO2 and VPD equal the ones of the surrounding air, the iterative scheme stops when the difference in leaf T between two consecutive iterations is negligble. The corresponding carbon assimilation and water transpiration are then retained and provided as outputs of Tree::FluxesLeaf.
@@ -1622,7 +1622,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
     // At the end of loop, return water (ET, in umol H2O m-2 s-1) and carbon (assimilation) fluxes
     ET = ET * 1e6;
 
-    // if (iter > 4000 && t_height> 10.0) {
+    // if (ctx.time.iter > 4000 && t_height> 10.0) {
     //     cout << " species:" << S[t_sp_lab].s_name << " Tree height=" << t_height << " ET=" << ET << " SLOPE=" << SLOPE << " Rnetiso=" << Rnetiso << " SLOPE*Rnetiso=" << SLOPE*Rnetiso <<  " 1000*VPDa*HDIVT=" << 1000.0*VPDa*HDIVT << " VPDa=" << VPDa << " HDIVT=" << HDIVT << " GAMMA*GH/GV=" << GAMMA*GH/GV << endl;
     // }
 
@@ -1802,7 +1802,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
     // cout << "In dailyFluxesLeaf PPFD=" << PPFD << "; T=" << T << "; VPD=" << VPD << "; W=" << W << endl;
 
-    for (int i = 0; i < nbsteps_varday; i++)
+    for (int i = 0; i < ctx.time.nbsteps_varday; i++)
     {
 
 #ifdef FULL_CLIMATE
@@ -1816,7 +1816,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
         float t_vardaytimestep = 0.0;
         float ws_vardaytimestep = 0.0;
 
-        if (iter == -1)
+        if (ctx.time.iter == -1)
         {
             ppfd_vardaytimestep = PPFD * WDailyMean_all[i] * SWtoPPFD;
             ppfd_top_vardaytimestep = WDailyMean_all[i] * SWtoPPFD;
@@ -1829,7 +1829,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
         }
         else
         {
-            int c = (iter % nbdays) * nbsteps_varday + i;
+            int c = (ctx.time.iter % ctx.time.nbdays) * ctx.time.nbsteps_varday + i;
             ppfd_vardaytimestep = PPFD * varday_light[c] * SWtoPPFD;
             ppfd_top_vardaytimestep = varday_light[c] * SWtoPPFD;
             t_top_vardaytimestep = varday_T[c];
@@ -1851,7 +1851,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
 #else
 
-        if (iter == -1)
+        if (ctx.time.iter == -1)
         {
             float ppfd_vardaytimestep = PPFD * varday_light[i];
             float ppfd_top_vardaytimestep = WDailyMean_year * varday_light[i];
@@ -1903,8 +1903,8 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
         //  deprecated in v.2.4.1: compute GPP only if enough light is available threshold is arbitrary, but set to be low: in full sunlight ppfd is aroung 700 W/m2, and even at dawn, it is ca 3% of the max value, or 20 W/m2. The minimum threshold is set to 0.1 W/m2
         //  Future update: compute slightly more efficiently, using 3-hourly values? This will have to be aligned with climate forcing layers (e.g. NCAR)
     }
-    dailyA *= inv_nbsteps_varday;
-    dailylT *= inv_nbsteps_varday;
+    dailyA *= ctx.time.inv_nbsteps_varday;
+    dailylT *= ctx.time.inv_nbsteps_varday;
 
     // cout << "In dailyFluxesLeaf, final daily average: dailyA=" << dailyA << "; dailylT=" << dailylT << endl;
 
@@ -1925,9 +1925,9 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 //! - Function Tree::GPPleaf when the WATER option is off, Tree::FluxesLeaf when WATER option is on
 //! - Includes the Farquhar model of photosynthesis and Medlyn et al. 2011 model of stomatal conductance: formula for s_fci (ci/ca) -- see also Prentice et al 2014 Ecology Letters and Lin et al 2015 Nature Climate Change; min added in order to prevent ci:ca bigger than 1 (even though Ehleringer et al 1986 reported some values above 1 (Fig3)
 //! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C/m^2/s.
-//! - It is converted into gC per m^2 of leaf per timestep by "nbhours_covered*15.7788*timestep" where 15.7788 = 3600*365.25*12/1000000 and nbhours_covered is the duration read in the daily variation file
-//! - NB1: 12 is the molar mass of carbon NB2: timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
-//! - BEWARE: slight inconsistency through use of 365.25 when daily timestep is likely to be given as 365, but not incorrect. Commented version below was in use prior to version 2.3.0
+//! - It is converted into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
+//! - NB1: 12 is the molar mass of carbon NB2: ctx.time.timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
+//! - BEWARE: slight inconsistency through use of 365.25 when daily ctx.time.timestep is likely to be given as 365, but not incorrect. Commented version below was in use prior to version 2.3.0
 //! lookup tables for acceleration of T dependence. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
 float Tree::GPPleaf(float PPFD, float VPD, float T)
 {
@@ -1964,7 +1964,7 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
 {
     float dailyA = 0.0;
 
-    for (int i = 0; i < nbsteps_varday; i++)
+    for (int i = 0; i < ctx.time.nbsteps_varday; i++)
     {
         // cout << t_site << " i: " << i << " tempRday: " << tempRday << endl;
         float ppfd_vardaytimestep = PPFD * varday_light[i];
@@ -1984,7 +1984,7 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
         // hhA*=alpha/(D*(alpha-1))*log(alpha/(1+(alpha-1)*exp(-D)));
         // dailyA+=hhA;
     }
-    dailyA *= inv_nbsteps_varday;
+    dailyA *= ctx.time.inv_nbsteps_varday;
     return dailyA;
 }
 
@@ -1994,7 +1994,7 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
 {
     float ppfde, dailyA = 0.0;
 
-    for (int i = 0; i < nbsteps_varday; i++)
+    for (int i = 0; i < ctx.time.nbsteps_varday; i++)
     {
         ppfde = PPFD * varday_light[i];
         if (ppfde > 0.1)
@@ -2015,7 +2015,7 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
     float D = klight * LAI;                                                         // D is a non-dimensional figure used to compute the multiplier below, update in v.2.5: replaced dens * CD by LAI
     dailyA *= alpha / (D * (alpha - 1)) * log(alpha / (1 + (alpha - 1) * exp(-D))); // the FvCB assimilation rate computed at the top of the tree crown is multiplied by a multiplier<1, to account for the lower rate at lower light level within the crown depth. This multiplier is computed assuming that change in photosynthetic assimilation rate within a tree crown is mainly due to light decrease due to self-shading following a Michealis-menten relationship (ie. we assume that 1/ the change is not due to changes in VPD or temperature, which are supposed homogeneous at the intra-crown scale, and 2/ that other tree contributions to light decrease is neglected).
 
-    dailyA *= inv_nbsteps_varday;
+    dailyA *= ctx.time.inv_nbsteps_varday;
     return dailyA;
 }
 
@@ -2041,7 +2041,7 @@ float Tree::Rdayleaf(float T)
 float Tree::dailyRdayleaf(float T)
 {
     float Rdayleaf_daily = 0.0;
-    for (int i = 0; i < nbsteps_varday; i++)
+    for (int i = 0; i < ctx.time.nbsteps_varday; i++)
         Rdayleaf_daily += Tree::Rdayleaf(T * varday_T[i]);
     Rdayleaf_daily *= 0.0417;
     return Rdayleaf_daily;
@@ -2101,10 +2101,10 @@ void Tree::CalcLeafLifespan()
         t_leaflifespan = predLeafLifespanKikuzawa();
     }
 
-    t_leaflifespan *= 0.08333333 * iterperyear; // Converts leaflifespan from month unit to timestep units, this is needed for UpdateLeafDynamics and nppneg (0.08333333=1/12)
+    t_leaflifespan *= 0.08333333 * ctx.time.iterperyear; // Converts leaflifespan from month unit to ctx.time.timestep units, this is needed for UpdateLeafDynamics and nppneg (0.08333333=1/12)
 
     // float time_young=fminf(t_leaflifespan/3.0,1.0);
-    float time_young = fminf(t_leaflifespan / 3.0, 1.0 * 0.08333333 * iterperyear); // modified IM jan23
+    float time_young = fminf(t_leaflifespan / 3.0, 1.0 * 0.08333333 * ctx.time.iterperyear); // modified IM jan23
     float time_mature = t_leaflifespan / 3.0;
     float time_old = t_leaflifespan - time_mature - time_young;
 
@@ -2188,7 +2188,7 @@ void Tree::CalcLAImax()
         float absorb_delta = 0.5; // calculate everything, assuming a medium leaf density in the lower canopy, TODO: if the crown has a non-cylindric shape, this should probably be taken as a third of LAImax, or if LAI_gradient is activated, as 25% of LAImax
         int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
 
-#ifdef FULL_CLIMATE // if FULL_CLIMATE is defined, then the terms just below should be only the relative attenuation due to the vertical structure of the canopy. Currently, CalcLAImax is defined depending on the climate conditions on the day of birth (see iter, in dailyFluxesLeaf), and not to the climate yearly mean as before. This needs to be rethought and changed.
+#ifdef FULL_CLIMATE // if FULL_CLIMATE is defined, then the terms just below should be only the relative attenuation due to the vertical structure of the canopy. Currently, CalcLAImax is defined depending on the climate conditions on the day of birth (see ctx.time.iter, in dailyFluxesLeaf), and not to the climate yearly mean as before. This needs to be rethought and changed.
 
         // get PPFD, VPD, and temperature at each discretisation step
         float PPFD_LAI = LookUp_flux_absorption[intabsorb];
@@ -2224,11 +2224,11 @@ void Tree::CalcLAImax()
         float GPP_LAI = Tree::dailyGPPleaf(PPFD_LAI, VPD_LAI, Tmp_LAI);
         float Rday_LAI = Tree::dailyRdayleaf(Tmp_LAI);
 #endif
-        float effLA = 0.66 * nbhours_covered * 15.7788 * timestep;                // convert  from micromoles C/m^2/s into gC per m^2 of leaf per timestep by "nbhours_covered*15.7788*timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
-        float effLA_night = 0.83 * (24.0 - nbhours_covered) * 15.7788 * timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
+        float effLA = 0.66 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                // convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
+        float effLA_night = 0.83 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
-        // float effLA = 0.5 * nbhours_covered * 15.7788 * timestep; //convert  from micromoles C/m^2/s into gC per m^2 of leaf per timestep by "nbhours_covered*15.7788*timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last layer and fill it with old leaves at maximum.
-        // float effLA_night = 0.75 * (24.0 - nbhours_covered) * 15.7788 * timestep;  //same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
+        // float effLA = 0.5 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep; //convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last layer and fill it with old leaves at maximum.
+        // float effLA_night = 0.75 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep;  //same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
         GPP_LAI *= effLA;
 
@@ -2365,7 +2365,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
 #ifdef TRACK_INDIVIDUALS
     if (t_month_born >= 0)
     {
-        t_LAIabove_effavgyear += LAIexperienced_eff * timestep;
+        t_LAIabove_effavgyear += LAIexperienced_eff * ctx.time.timestep;
         t_LAIeffcum += LAIexperienced_eff;
         t_LAIeffsquared_cum += LAIexperienced_eff * LAIexperienced_eff;
     }
@@ -2435,7 +2435,7 @@ float Tree::predLeafLifespanKikuzawa()
     float GPP_effective = (GPP - Rtot_by_Rabove * Rday - Rtot_by_Rabove * Rnight); // in gC m^-2 day-1  we assume that Rday/Rnight decreases linearly as well, so we will use a GPP_eff = GPP - Rday;
 #endif
 
-    GPP_effective *= nbhours_covered * 3600.0 * 12.0 / 1000000.0; // we convert micromoles C/m^2/s into gC/m^2/day (factor 12.0 for conversion into gC, 3600 for second-hour conversion, and 10^6 to convert micromoles to moles; finally, we divide by the total leaf area that intercepted the light, since
+    GPP_effective *= ctx.time.nbhours_covered * 3600.0 * 12.0 / 1000000.0; // we convert micromoles C/m^2/s into gC/m^2/day (factor 12.0 for conversion into gC, 3600 for second-hour conversion, and 10^6 to convert micromoles to moles; finally, we divide by the total leaf area that intercepted the light, since
 
     int convT = int(iTaccuracy * 25.0); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
     float Vcmax_25_mass = t_Vcmax * LookUp_VcmaxT[convT] / t_LMA;
@@ -2454,7 +2454,7 @@ float Tree::predLeafLifespanKikuzawa()
 void Tree::Growth()
 {
     // update age
-    t_age += timestep; // new v.2.2: increments are not 1 yr, but the duration of the timestep (usually 1 or <1, i.e. 1/12 if monthly, 1/365 if daily
+    t_age += ctx.time.timestep; // new v.2.2: increments are not 1 yr, but the duration of the ctx.time.timestep (usually 1 or <1, i.e. 1/12 if monthly, 1/365 if daily
 
     // Set growth carbon to zero
     t_carbon_biometry = 0.0;
@@ -2520,7 +2520,7 @@ void Tree::Growth()
         // if NPP is still negative, even after compensating for it through stored carbon, then carbon starvation sets in.
         if (t_NPP < 0.0)
         {
-            // t_NPPneg++; //newIM 2021: if NPP still negative, this means that the tree has completly depleted its minimal carbon stock pool, ie. is not viable anymore (Martinez-Vilalta et al. 2016) ==> death at the next timestep (the previous version made a mix between the use of NPPneg (that was introduced in absence of a variable for carbon storage and a dynamic monitoring and allocation to this carbon storage pool: NPPneg is not needed anymore when _LA_regulation >0)
+            // t_NPPneg++; //newIM 2021: if NPP still negative, this means that the tree has completly depleted its minimal carbon stock pool, ie. is not viable anymore (Martinez-Vilalta et al. 2016) ==> death at the next ctx.time.timestep (the previous version made a mix between the use of NPPneg (that was introduced in absence of a variable for carbon storage and a dynamic monitoring and allocation to this carbon storage pool: NPPneg is not needed anymore when _LA_regulation >0)
             t_NPP = 0.0;
             // v.2.3.0 -- Line of code below was odd. If NPP <0.0, then to ensure C balance it should be simply reset to NPP=0 at this stage
             // t_NPP=t_GPP - 1.5*(t_Rday+t_Rnight+t_Rstem); REMOVED AS OF v.2.3.0.a4
@@ -2541,11 +2541,11 @@ void Tree::Growth()
     UpdateVolumeDensity();
 
 #ifdef WATER
-    if (iter == (nbiter - 90))
+    if (ctx.time.iter == (ctx.time.nbiter - 90))
         OutputTreeStandard(output[28]);
-    if (iter == (nbiter - 45))
+    if (ctx.time.iter == (ctx.time.nbiter - 45))
         OutputTreeStandard(output[29]);
-    if (iter == (nbiter - 1))
+    if (ctx.time.iter == (ctx.time.nbiter - 1))
         OutputTreeStandard(output[30]);
 
     if (t_site == 4)
@@ -2700,14 +2700,14 @@ void Tree::CalcRespGPP()
 #endif
     }
 
-    float effLA = 0.5 * (t_LA + t_matureLA) * nbhours_covered * 15.7788 * timestep;                        // we convert  from micromoles C/m^2/s into gC per m^2 of leaf per timestep by "nbhours_covered*15.7788*timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and nbhours_covered is the amount of time that is covered by the daily variation file.
-    float effLA_night = (0.75 * t_LA + 0.25 * t_matureLA) * (24.0 - nbhours_covered) * 15.7788 * timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), and assuming that respiration of young and old leaves are 75% the one of mature leaves:  Kitajima et al. 2002 found no or small reductions in respiration with leaf age, Reich et al. 2009 did (Rdark/Amax constant), but often respiration declines are less steep than photosynthetic capacity, cf. Villar et al. 1995.
+    float effLA = 0.5 * (t_LA + t_matureLA) * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                        // we convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file.
+    float effLA_night = (0.75 * t_LA + 0.25 * t_matureLA) * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), and assuming that respiration of young and old leaves are 75% the one of mature leaves:  Kitajima et al. 2002 found no or small reductions in respiration with leaf age, Reich et al. 2009 did (Rdark/Amax constant), but often respiration declines are less steep than photosynthetic capacity, cf. Villar et al. 1995.
 
     t_GPP *= effLA;
 
 #ifdef WATER
-    float effLAT = (0.75 * t_LA + 0.25 * t_matureLA) * nbhours_covered * 23.652 * 0.000001 * timestep; // assuming that the decline in stomatal conductance of young and old leaves is less than for photosynthetic capacities (cf. ALbert et al. 2018)(75% the one of mature leaves), ie the water use efficiencies is lower of young and old leaves. Note that idally the Farquhar model should be applied to each leaf cohorts separately... 23.652=18.10^-6 * 3600*365, where 18.10^-6 is to convert micromol H20 into g, 3600*365 to convert s into year (as timestep is given in year); and 0.000001 is to convert g in m3.
-    t_transpiration *= effLAT;                                                                         // this is the amount of water transpired by the tree during the timestep in m3.  CHECK: from our WILT data of sapflow of several canopy mature trees, and assuming a constant sapwood thickness of 4cm, this can be 5-110 liter/day, ie. 0.005-0.11 m3/day. See also values in Granier et al. 1996 (0.250-0.3 m3/day for a big dominant canopy tree), or Andrade et al. 1998 Oecologia (46-379 kg/day, ie. 0.046-0.379 m3/day). Note, in this version, we never account for nighttime transpiration... to be discussed.
+    float effLAT = (0.75 * t_LA + 0.25 * t_matureLA) * ctx.time.nbhours_covered * 23.652 * 0.000001 * ctx.time.timestep; // assuming that the decline in stomatal conductance of young and old leaves is less than for photosynthetic capacities (cf. ALbert et al. 2018)(75% the one of mature leaves), ie the water use efficiencies is lower of young and old leaves. Note that idally the Farquhar model should be applied to each leaf cohorts separately... 23.652=18.10^-6 * 3600*365, where 18.10^-6 is to convert micromol H20 into g, 3600*365 to convert s into year (as ctx.time.timestep is given in year); and 0.000001 is to convert g in m3.
+    t_transpiration *= effLAT;                                                                         // this is the amount of water transpired by the tree during the ctx.time.timestep in m3.  CHECK: from our WILT data of sapflow of several canopy mature trees, and assuming a constant sapwood thickness of 4cm, this can be 5-110 liter/day, ie. 0.005-0.11 m3/day. See also values in Granier et al. 1996 (0.250-0.3 m3/day for a big dominant canopy tree), or Andrade et al. 1998 Oecologia (46-379 kg/day, ie. 0.046-0.379 m3/day). Note, in this version, we never account for nighttime transpiration... to be discussed.
     tree_transpiration_1016 *= (0.75 * t_LA + 0.25 * t_matureLA) * 0.0324 * 0.000001;                  // where 0.0324= 18.10^-6*3600*0.5
     transpiration_1016 += tree_transpiration_1016;
 #endif
@@ -3019,20 +3019,20 @@ void Tree::Death()
         float agb = 1000.0 * CalcAGB();
         if (t_dbh >= 0.1)
         {
-            output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t" << t_height - t_height_tracked << "\t" << t_CR << "\t" << t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear << "\t" << t_carbon_storage_avgyear << endl;
+            output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t" << t_height - t_height_tracked << "\t" << t_CR << "\t" << t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear << "\t" << t_carbon_storage_avgyear << endl;
         }
 
-        output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum << "\t" << t_LAIeffsquared_cum << endl;
+        output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum << "\t" << t_LAIeffsquared_cum << endl;
     }
 #endif
 
 #ifdef MIP_Lichstein
-    if (_FromInventory || (!_FromInventory && iter >= (nbiter - 100 * iterperyear)))
+    if (_FromInventory || (!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)))
     {
         if (t_dbh * LH >= 0.01 && t_inInventory == 1)
         {
             float agb = 0.5 * CalcAGB(); // in kg C
-            output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+            output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             t_inInventory = 0;
         }
     }
@@ -3065,11 +3065,11 @@ void Tree::Death()
     // New v.2.2. new outputs
     if (_OUTPUT_extended)
     {
-        if (iter == 2)
+        if (ctx.time.iter == 2)
             output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
-        if (iter == int(nbiter / 2))
+        if (ctx.time.iter == int(ctx.time.nbiter / 2))
             output[24] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
-        if (iter == int(nbiter - 1))
+        if (ctx.time.iter == int(ctx.time.nbiter - 1))
             output[25] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
     }
 
@@ -3281,12 +3281,12 @@ void Tree::Average()
 #endif
 
 #ifdef MIP_Lichstein
-        if (iter % iterperyear == 364 && (_FromInventory || (!_FromInventory && iter >= (nbiter - 100 * iterperyear))))
+        if (ctx.time.iter % ctx.time.iterperyear == 364 && (_FromInventory || (!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear))))
         {
             if (t_dbh * LH >= 0.01)
             {
                 t_inInventory = 1;
-                output_MIP_ind << iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+                output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             }
         }
 #endif
@@ -3306,7 +3306,7 @@ void Tree::histdbh()
 // Standard outputs during the simulation -- written to file
 void Tree::OutputTreeStandard(fstream &output)
 {
-    output << iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
+    output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
     for (int l = 0; l < nblayers_soil; l++)
         output << "\t" << t_root_biomass[l];
     for (int l = 0; l < nblayers_soil; l++)
@@ -3316,7 +3316,7 @@ void Tree::OutputTreeStandard(fstream &output)
 // Standard outputs during the simulation -- written to screen in real time
 void Tree::OutputTreeStandard()
 {
-    cout << iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
+    cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
     for (int l = 0; l < nblayers_soil; l++)
         cout << "\t" << t_root_biomass[l];
     for (int l = 0; l < nblayers_soil; l++)
@@ -3366,8 +3366,8 @@ float Tree::StartTracking()
 {
     // Only tracks trees born in a mature forest at year 501
     // currently hardcoded
-    if (iter >= 6000 && iter < 6012)
-        t_timeofyear_born = iter % iterperyear;
+    if (ctx.time.iter >= 6000 && ctx.time.iter < 6012)
+        t_timeofyear_born = ctx.time.iter % ctx.time.iterperyear;
     else
         t_timeofyear_born = -1;
 
@@ -3744,7 +3744,7 @@ void OutputCrownSliced(int height, int site, int row_slice, vector<float> &outpu
     int col_current = site % cols;
     if (row_current == row_slice && col_current >= mincol_visual && col_current < maxcol_visual)
     {
-        output_visual[1] << iter << "\t" << row_current << "\t" << col_current << "\t" << height;
+        output_visual[1] << ctx.time.iter << "\t" << row_current << "\t" << col_current << "\t" << height;
         for (int i = 0; i < output_statistics.size(); i++)
         {
             output_visual[1] << "\t" << output_statistics[i];
@@ -4044,8 +4044,8 @@ int main(int argc, char *argv[])
         output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
         output_info << "\n            + one species label \n\n";
         output_info << " Number of sites      : " << rows << "x" << cols << "\n";
-        output_info << " Number of iterations : " << nbiter << "\n";
-        output_info << " Duration of timestep : " << timestep << " years\n";
+        output_info << " Number of iterations : " << ctx.time.nbiter << "\n";
+        output_info << " Duration of timestep : " << ctx.time.timestep << " years\n";
         output_info << " Number of Species    : " << nbspp << "\n\n";
         output_info.flush();
     }
@@ -4060,7 +4060,7 @@ int main(int argc, char *argv[])
 
     double start_time, stop_time, duration = 0.0; // for simulation duration
     stop_time = clock();
-    for (iter = 0; iter < nbiter; iter++)
+    for (ctx.time.iter = 0; ctx.time.iter < ctx.time.nbiter; ctx.time.iter++)
     {
         start_time = stop_time;
 
@@ -4075,16 +4075,16 @@ int main(int argc, char *argv[])
                 OutputVisual();
         }
 
-        /*if(_OUTPUT_pointcloud > 0 && iter == iter_pointcloud_generation){
+        /*if(_OUTPUT_pointcloud > 0 && ctx.time.iter == iter_pointcloud_generation){
             ExportPointcloud(mean_beam_pc, sd_beam_pc, klaser_pc, transmittance_laser, output_pointcloud); // v.3.1.6
         }*/
 
 #ifdef Output_ABC
-        int timespan_abc = 10 * iterperyear; // every 10 years, modified in v.3.0
-        int last_abc = ((nbiter + 5) / timespan_abc);
+        int timespan_abc = 10 * ctx.time.iterperyear; // every 10 years, modified in v.3.0
+        int last_abc = ((ctx.time.nbiter + 5) / timespan_abc);
         last_abc *= timespan_abc;
         last_abc += -5;
-        if ((iter + 5) % timespan_abc == 0 || iter == last_abc - 43)
+        if ((ctx.time.iter + 5) % timespan_abc == 0 || ctx.time.iter == last_abc - 43)
         {
             // simulated lidar, based on data from Nouragues ALS, assuming NIR laser
             float transmittance_nir = 0.4; // transmittance of leaves in near infrared, used to calculate chances of laser hit
@@ -4247,7 +4247,7 @@ void AssignValuePointcloud(string parameter_name, string parameter_value)
     }
     else if (parameter_name == "iter_pointcloud_generation")
     {
-        SetParameter(parameter_name, parameter_value, iter_pointcloud_generation, 0, nbiter - 1, nbiter - 1, quiet);
+        SetParameter(parameter_name, parameter_value, iter_pointcloud_generation, 0, ctx.time.nbiter - 1, ctx.time.nbiter - 1, quiet);
     }
 }
 
@@ -4299,8 +4299,8 @@ void ReadInputGeneral(Context &ctx)
 #endif
         LV = 1.0 / NV;
         LH = 1.0 / NH;
-        if (nbout)
-            freqout = nbiter / nbout;
+        if (ctx.time.nbout)
+            ctx.time.freqout = ctx.time.nbiter / ctx.time.nbout;
 
         kpar = klight * absorptance_leaves; // kpar is the klight factor times the absorptance of leaves
         // convert correlations to covariances
@@ -4506,8 +4506,8 @@ void ReadInputDailyvar()
         InDaily.getline(buffer, 256, '\n'); // read in header
 
         // we go through all lines in the input file
-        nbsteps_varday = 0;
-        nbhours_covered = 12.0; // quick fixed, but I should provide both endtime and startime for each half-hour iteration.
+        ctx.time.nbsteps_varday = 0;
+        ctx.time.nbhours_covered = 12.0; // quick fixed, but I should provide both endtime and startime for each half-hour iteration.
 
         float day_current, starttime_current, varday_light_current, varday_vpd_current, varday_T_current, varday_WS_current;
 
@@ -4540,64 +4540,64 @@ void ReadInputDailyvar()
                 cout << "Warning, wind is <=0.1, on day " << day_current << " at " << starttime_current << "h." << endl;
             }
 
-            // nbhours_covered += nbhours_current;
+            // ctx.time.nbhours_covered += nbhours_current;
             varday_light.push_back(varday_light_current);
             varday_vpd.push_back(varday_vpd_current);
             varday_T.push_back(varday_T_current);
             varday_WS.push_back(varday_WS_current);
-            // cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[nbsteps_varday] << " vardaytime_T: "<< varday_T[nbsteps_varday] << " vardaytime_WS: "<< varday_WS[nbsteps_varday] << endl;
-            nbsteps_varday++;
+            // cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: "<< varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: "<< varday_WS[ctx.time.nbsteps_varday] << endl;
+            ctx.time.nbsteps_varday++;
         }
 
-        nbsteps_varday /= nbdays;
+        ctx.time.nbsteps_varday /= ctx.time.nbdays;
 
-        cout << "Read in: " << nbsteps_varday << " timesteps per day, covering " << nbhours_covered << " hours of the day." << endl;
+        cout << "Read in: " << ctx.time.nbsteps_varday << " timesteps per day, covering " << ctx.time.nbhours_covered << " hours of the day." << endl;
         cout << "Successfully read in daytime variation file" << endl;
-        inv_nbsteps_varday = 1.0 / float(nbsteps_varday);
+        ctx.time.inv_nbsteps_varday = 1.0 / float(ctx.time.nbsteps_varday);
     }
     else
     {
         cout << "ERROR with the daily variation file" << endl;
     }
 
-    if (NULL == (WDailyMean_all = new float[nbsteps_varday]))
+    if (NULL == (WDailyMean_all = new float[ctx.time.nbsteps_varday]))
         cerr << "!!! WDailyMean_all" << endl;
-    if (NULL == (tDailyMean_all = new float[nbsteps_varday]))
+    if (NULL == (tDailyMean_all = new float[ctx.time.nbsteps_varday]))
         cerr << "!!! tDailyMean_all" << endl;
-    if (NULL == (VPDDailyMean_all = new float[nbsteps_varday]))
+    if (NULL == (VPDDailyMean_all = new float[ctx.time.nbsteps_varday]))
         cerr << "!!! VPDDailyMean_all" << endl;
-    if (NULL == (windDailyMean_all = new float[nbsteps_varday]))
+    if (NULL == (windDailyMean_all = new float[ctx.time.nbsteps_varday]))
         cerr << "!!! windDailyMean_all" << endl;
 
-    for (int j = 0; j < nbsteps_varday; j++)
+    for (int j = 0; j < ctx.time.nbsteps_varday; j++)
     {
         WDailyMean_all[j] = tDailyMean_all[j] = VPDDailyMean_all[j] = windDailyMean_all[j] = 0.0;
     }
 
     WDailyMean_year = 0.0;
 
-    for (int i = 0; i < nbdays; i++)
+    for (int i = 0; i < ctx.time.nbdays; i++)
     {
 
         float DailyMeanTemperature_current = 0.0, DailyMeanWindSpeed_current = 0.0, DailyMeanIrradiance_current = 0.0, DailyMeanVapourPressureDeficit_current = 0.0;
 
-        for (int j = 0; j < nbsteps_varday; j++)
+        for (int j = 0; j < ctx.time.nbsteps_varday; j++)
         {
-            DailyMeanTemperature_current += varday_T[i * nbsteps_varday + j];
-            DailyMeanWindSpeed_current += varday_WS[i * nbsteps_varday + j];
-            DailyMeanIrradiance_current += varday_light[i * nbsteps_varday + j];
-            DailyMeanVapourPressureDeficit_current += varday_vpd[i * nbsteps_varday + j];
+            DailyMeanTemperature_current += varday_T[i * ctx.time.nbsteps_varday + j];
+            DailyMeanWindSpeed_current += varday_WS[i * ctx.time.nbsteps_varday + j];
+            DailyMeanIrradiance_current += varday_light[i * ctx.time.nbsteps_varday + j];
+            DailyMeanVapourPressureDeficit_current += varday_vpd[i * ctx.time.nbsteps_varday + j];
 
-            WDailyMean_all[j] += varday_light[i * nbsteps_varday + j];
-            VPDDailyMean_all[j] += varday_vpd[i * nbsteps_varday + j];
-            tDailyMean_all[j] += varday_T[i * nbsteps_varday + j];
-            windDailyMean_all[j] += varday_WS[i * nbsteps_varday + j];
+            WDailyMean_all[j] += varday_light[i * ctx.time.nbsteps_varday + j];
+            VPDDailyMean_all[j] += varday_vpd[i * ctx.time.nbsteps_varday + j];
+            tDailyMean_all[j] += varday_T[i * ctx.time.nbsteps_varday + j];
+            windDailyMean_all[j] += varday_WS[i * ctx.time.nbsteps_varday + j];
         }
 
-        DailyMeanTemperature_current *= inv_nbsteps_varday;
-        DailyMeanWindSpeed_current *= inv_nbsteps_varday;
-        DailyMeanIrradiance_current *= inv_nbsteps_varday;
-        DailyMeanVapourPressureDeficit_current *= inv_nbsteps_varday;
+        DailyMeanTemperature_current *= ctx.time.inv_nbsteps_varday;
+        DailyMeanWindSpeed_current *= ctx.time.inv_nbsteps_varday;
+        DailyMeanIrradiance_current *= ctx.time.inv_nbsteps_varday;
+        DailyMeanVapourPressureDeficit_current *= ctx.time.inv_nbsteps_varday;
 
         WDailyMean_year += DailyMeanIrradiance_current;
 
@@ -4607,15 +4607,15 @@ void ReadInputDailyvar()
         DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
     }
 
-    for (int j = 0; j < nbsteps_varday; j++)
+    for (int j = 0; j < ctx.time.nbsteps_varday; j++)
     {
-        WDailyMean_all[j] /= nbdays;
-        VPDDailyMean_all[j] /= nbdays;
-        tDailyMean_all[j] /= nbdays;
-        windDailyMean_all[j] /= nbdays;
+        WDailyMean_all[j] /= ctx.time.nbdays;
+        VPDDailyMean_all[j] /= ctx.time.nbdays;
+        tDailyMean_all[j] /= ctx.time.nbdays;
+        windDailyMean_all[j] /= ctx.time.nbdays;
     }
 
-    WDailyMean_year *= SWtoPPFD / nbdays;
+    WDailyMean_year *= SWtoPPFD / ctx.time.nbdays;
 
     tnight = NightTemperature[0];
     precip = Rainfall[0];
@@ -4626,7 +4626,7 @@ void ReadInputDailyvar()
 }
 
 //! Global function: This function reads inputs from the environmental variation input file
-//! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=iter and not iterperyear) and change iterperyear by nbiter here.
+//! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
 void ReadInputClimate()
 {
     cout << endl
@@ -4637,7 +4637,7 @@ void ReadInputClimate()
     if (InClim)
     {
         // we go through all lines in the input file
-        nbdays = 0;
+        ctx.time.nbdays = 0;
         InClim.getline(buffer, 256, '\n');
         // cout << "Header line: " << buffer << endl;
 
@@ -4651,28 +4651,28 @@ void ReadInputClimate()
 
             NightTemperature.push_back(NightTemperature_current);
             Rainfall.push_back(Rainfall_current);
-            nbdays++;
+            ctx.time.nbdays++;
         }
 
 #ifdef WATER
-        iterperyear = 365;
+        ctx.time.iterperyear = 365;
 #else
-        // if (nbdays%365==0) iterperyear=365; //check if this guarantees iterperyear is correctly infered
-        iterperyear = 12;
+        // if (ctx.time.nbdays%365==0) ctx.time.iterperyear=365; //check if this guarantees ctx.time.iterperyear is correctly infered
+        ctx.time.iterperyear = 12;
 #endif
 
-        timestep = 1.0 / float(iterperyear);
-        cout << "Read in climate data for " << nbdays << " days, with" << iterperyear << " iterations per year." << endl;
+        ctx.time.timestep = 1.0 / float(ctx.time.iterperyear);
+        cout << "Read in climate data for " << ctx.time.nbdays << " days, with" << ctx.time.iterperyear << " iterations per year." << endl;
         // choose average conditions
 
         Tnight_year = 0.0;
 
-        for (int i = 0; i < nbdays; i++)
+        for (int i = 0; i < ctx.time.nbdays; i++)
         {
             Tnight_year += NightTemperature[i];
         }
 
-        Tnight_year *= 1.0 / float(nbdays);
+        Tnight_year *= 1.0 / float(ctx.time.nbdays);
 
         cout << "Successfully read the climate file" << endl;
     }
@@ -4699,8 +4699,8 @@ void ReadInputDailyvar()
         InDaily.getline(buffer, 256, '\n'); // read in header
 
         // we go through all lines in the input file
-        nbsteps_varday = 0;
-        nbhours_covered = 0.0;
+        ctx.time.nbsteps_varday = 0;
+        ctx.time.nbhours_covered = 0.0;
 
         string line;
         while (getline(InDaily, line))
@@ -4715,29 +4715,29 @@ void ReadInputDailyvar()
             else
                 nbhours_current = 24.0 - (starttime_current - endtime_current); // i.e. if starttime is 23.5 and endtime is 0.5, etc. Calculate the inverse time window and then subtract from 24
 
-            nbhours_covered += nbhours_current;
+            ctx.time.nbhours_covered += nbhours_current;
             varday_light.push_back(varday_light_current);
             varday_vpd.push_back(varday_vpd_current);
             varday_T.push_back(varday_T_current);
             varday_WS.push_back(varday_WS_current);
-            cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[nbsteps_varday] << " vardaytime_T: " << varday_T[nbsteps_varday] << " vardaytime_WS: " << varday_WS[nbsteps_varday] << endl;
-            nbsteps_varday++;
+            cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: " << varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: " << varday_WS[ctx.time.nbsteps_varday] << endl;
+            ctx.time.nbsteps_varday++;
         }
 
 #ifdef WATER
         totday_light = 0.0;
-        for (int i = 0; i < nbsteps_varday; i++)
+        for (int i = 0; i < ctx.time.nbsteps_varday; i++)
         {
             totday_light += varday_light[i];
             cout << i << "\t" << varday_light[i] << endl;
         }
         cout << totday_light << endl;
-        totday_light *= 1.0 / float(nbsteps_varday);
+        totday_light *= 1.0 / float(ctx.time.nbsteps_varday);
         cout << totday_light << endl;
 #endif
-        cout << "Read in: " << nbsteps_varday << " timesteps per day, covering " << nbhours_covered << " hours of the day." << endl;
+        cout << "Read in: " << ctx.time.nbsteps_varday << " timesteps per day, covering " << ctx.time.nbhours_covered << " hours of the day." << endl;
         cout << "Successfully read in daytime variation file" << endl;
-        inv_nbsteps_varday = 1.0 / float(nbsteps_varday);
+        ctx.time.inv_nbsteps_varday = 1.0 / float(ctx.time.nbsteps_varday);
     }
     else
     {
@@ -4746,7 +4746,7 @@ void ReadInputDailyvar()
 }
 
 //! Global function: This function reads inputs from the environmental variation input file
-//! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=iter and not iterperyear) and change iterperyear by nbiter here.
+//! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
 void ReadInputClimate()
 {
     cout << endl
@@ -4757,7 +4757,7 @@ void ReadInputClimate()
     if (InClim)
     {
         // we go through all lines in the input file
-        iterperyear = 0;
+        ctx.time.iterperyear = 0;
         InClim.getline(buffer, 256, '\n');
         // cout << "Header line: " << buffer << endl;
 
@@ -4776,18 +4776,18 @@ void ReadInputClimate()
             DailyMeanIrradiance.push_back(DailyMeanIrradiance_current);
             DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
             // cout <<  DailyMeanTemperature_current << "\t" <<  NightTemperature_current << "\t" <<  Rainfall_current << "\t" <<  DailyMeanWindSpeed_current << "\t" <<  DailyMeanIrradiance_current << "\t" <<   DailyMeanVapourPressureDeficit_current << endl;
-            iterperyear++;
+            ctx.time.iterperyear++;
         }
 
-        timestep = 1.0 / float(iterperyear);
-        cout << "Read in climate data for " << iterperyear << " iterations per year." << endl;
+        ctx.time.timestep = 1.0 / float(ctx.time.iterperyear);
+        cout << "Read in climate data for " << ctx.time.iterperyear << " iterations per year." << endl;
         // choose average conditions
         WDailyMean_year = tDailyMean_year = VPDDailyMean_year = Tnight_year = 0.0;
 #ifdef WATER
         windDailyMean_year = 0.0;
 #endif
 
-        for (int i = 0; i < iterperyear; i++)
+        for (int i = 0; i < ctx.time.iterperyear; i++)
         {
             // DailyMeanVapourPressureDeficit[i]*=1.33; test main_1.33VPD on MESO@LR - 13/05/22
 
@@ -4800,21 +4800,21 @@ void ReadInputClimate()
             Tnight_year += NightTemperature[i];
         }
 
-        WDailyMean_year *= 1.0 / float(iterperyear);
-        tDailyMean_year *= 1.0 / float(iterperyear);
-        VPDDailyMean_year *= 1.0 / float(iterperyear);
+        WDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        tDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        VPDDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
 #ifdef WATER
-        windDailyMean_year *= 1.0 / float(iterperyear);
+        windDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
 #endif
         // cout << "WDailyMean: " << WDailyMean_year << endl;
-        Tnight_year *= 1.0 / float(iterperyear);
+        Tnight_year *= 1.0 / float(ctx.time.iterperyear);
 
-        tnight = NightTemperature[iter % iterperyear];
-        precip = Rainfall[iter % iterperyear];
-        WSDailyMean = DailyMeanWindSpeed[iter % iterperyear];
-        WDailyMean = DailyMeanIrradiance[iter % iterperyear] * SWtoPPFD;
-        tDailyMean = DailyMeanTemperature[iter % iterperyear];
-        VPDDailyMean = DailyMeanVapourPressureDeficit[iter % iterperyear];
+        tnight = NightTemperature[ctx.time.iter % ctx.time.iterperyear];
+        precip = Rainfall[ctx.time.iter % ctx.time.iterperyear];
+        WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
+        WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+        tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
+        VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
         cout << "Successfully read the climate file" << endl;
     }
@@ -5245,7 +5245,7 @@ void InitialiseLookUpTables()
         LookUp_JmaxT[i] = exp(17.57 - 43.54 / (0.00831 * (temper + 273.15)));  // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
         // LookUp_Rday[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
         LookUp_Rleaf[i] = exp((temper - 25.0) * 0.1 * log(3.09 - 0.0215 * (25.0 + temper))); // this is equ. 1 in Atkin et al. 2015 New phytologist //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-        LookUp_Rstem[i] = 39.6 * 378.7 * timestep * exp(((temper - 25.0) / 10.0) * log(2.0));
+        LookUp_Rstem[i] = 39.6 * 378.7 * ctx.time.timestep * exp(((temper - 25.0) / 10.0) * log(2.0));
         // LookUp_Rnight[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
         //  exp((temp-25)/10*log(2)) is the temperature dependency of Rstem, supposing a constant Q10=2, according to Ryan et al 1994 and Meir & Grace 2002 exp((tnight-25)*0.1*log(3.09-0.0215*(25+tnight))) is the temperature dependencies used by Atkin 2015 (equ1)
 #ifdef WATER
@@ -5742,7 +5742,7 @@ void Initialise(Context &ctx)
     //** Initialization of the simulation parameters **
     //*************************************************
 
-    iter = -1; // changed in v.3.0.1, previously undefined; new function GetTimeofyear accepts also negative iterations
+    ctx.time.iter = -1; // changed in v.3.0.1, previously undefined; new function GetTimeofyear accepts also negative iterations
 
     nblivetrees = 0;
 
@@ -6325,20 +6325,20 @@ void AllocMem(Context &ctx)
         cerr << "!!! Mem_Alloc\n"; // Field for variables averaged by vertical layer
 #ifdef Output_ABC
     if (NULL == (abundances_species = new int[nbspp + 1]))
-        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded timestep
+        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep
     if (NULL == (abundances_species10 = new int[nbspp + 1]))
-        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded timestep (dbh > 10cm)
+        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep (dbh > 10cm)
     if (NULL == (biomass_species = new float[nbspp + 1]))
-        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded timestep (dbh > 10cm)
+        cerr << "!!! Mem_Alloc\n"; // vector to save species abundances every recorded ctx.time.timestep (dbh > 10cm)
 
     if (NULL == (traits_species = new float *[nbspp + 1]))
-        cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded timestep
+        cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded ctx.time.timestep
 
     for (int spp = 0; spp < (nbspp + 1); spp++)
         if (NULL == (traits_species[spp] = new float[10]))
             cerr << "!!! Mem_Alloc\n";
     if (NULL == (traits_species10 = new float *[nbspp + 1]))
-        cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded timestep  (dbh > 10cm)
+        cerr << "!!! Mem_Alloc\n"; // vector to save species traits every recorded ctx.time.timestep  (dbh > 10cm)
     for (int spp = 0; spp < (nbspp + 1); spp++)
         if (NULL == (traits_species10[spp] = new float[10]))
             cerr << "!!! Mem_Alloc\n";
@@ -6385,7 +6385,7 @@ void AllocMem(Context &ctx)
     if (_NDD)
         if (NULL == (PROB_S = new float[nbspp + 1]))
             cerr << "!!! Mem_Alloc\n";
-    //  if (NULL==(persist=new long int[nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
+    //  if (NULL==(persist=new long int[ctx.time.nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
     //  if (NULL==(distr=new int[cols])) cerr<<"!!! Mem_Alloc\n";
 
     if (NULL == (LAI3D = new float *[HEIGHT + 1]))             // Field 3D
@@ -6516,12 +6516,12 @@ void AllocMem(Context &ctx)
 }
 
 // ######################################
-//  Global function: Evolution at each timestep
+//  Global function: Evolution at each ctx.time.timestep
 // ######################################
 void Evolution(Context &ctx)
 {
 #ifdef CHECK_CARBON
-    if (iter == 0)
+    if (ctx.time.iter == 0)
     {
         carbon_assimilated_total = 0.0;
         carbon_net_total = 0.0;
@@ -6577,7 +6577,7 @@ void UpdateSeeds()
 {
     // With MPI option: Pass seeds across processors => two more fields to be communicated between n.n. (nearest neighbor) processors. NB: dispersal distance is bounded by the value of 'rows'. At least 99 % of the seeds should be dispersed within the stripe or on the n.n. stripe. Hence rows > 4.7*max(dist_moy_dissemination),for an exponential dispersal kernel.
     // dispersal only once a year
-    if (iter % iterperyear == 0)
+    if (ctx.time.iter % ctx.time.iterperyear == 0)
     {
         // acceleration, using the multinomial distribution
         int ha = sites / 10000;
@@ -6639,26 +6639,26 @@ void UpdateSeeds()
 //  Global function: Update all fields
 // #################################
 //! - This is an important function for TROLL -- Includes many of the operations
-//! - set the iteration environment -- nb: the current structure of code suppose that environment is periodic (a period = a year), if one wants to input a variable climate, with interannual variation and climate change along the simulation, a full climatic input needs to be input (ie number of columns=iter and not iterperyear) and change iterperyear by nbiter here.
+//! - set the iteration environment -- nb: the current structure of code suppose that environment is periodic (a period = a year), if one wants to input a variable climate, with interannual variation and climate change along the simulation, a full climatic input needs to be input (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
 void UpdateField()
 {
 
 #ifdef FULL_CLIMATE
 
-    tnight = NightTemperature[iter % nbdays];
-    precip = Rainfall[iter % nbdays];
-    WSDailyMean = DailyMeanWindSpeed[iter % nbdays];
-    WDailyMean = DailyMeanIrradiance[iter % nbdays] * SWtoPPFD;
-    tDailyMean = DailyMeanTemperature[iter % nbdays];
-    VPDDailyMean = DailyMeanVapourPressureDeficit[iter % nbdays];
+    tnight = NightTemperature[ctx.time.iter % ctx.time.nbdays];
+    precip = Rainfall[ctx.time.iter % ctx.time.nbdays];
+    WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.nbdays];
+    WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.nbdays] * SWtoPPFD;
+    tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.nbdays];
+    VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.nbdays];
 
 #else
-    tnight = NightTemperature[iter % iterperyear];
-    precip = Rainfall[iter % iterperyear];
-    WSDailyMean = DailyMeanWindSpeed[iter % iterperyear];
-    WDailyMean = DailyMeanIrradiance[iter % iterperyear] * SWtoPPFD;
-    tDailyMean = DailyMeanTemperature[iter % iterperyear];
-    VPDDailyMean = DailyMeanVapourPressureDeficit[iter % iterperyear];
+    tnight = NightTemperature[ctx.time.iter % ctx.time.iterperyear];
+    precip = Rainfall[ctx.time.iter % ctx.time.iterperyear];
+    WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
+    WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+    tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
+    VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
 #endif // FULL_CLIMATE
 
@@ -6674,10 +6674,10 @@ void UpdateField()
 
             for (int spp = 1; spp <= nbspp; spp++)
             {
-                // if ((iter == int(nbiter-1))&&(site>80000)&&(site<85000))  { sor[142]<< T[site].t_NDDfield[spp] << "\t" ;}
+                // if ((ctx.time.iter == int(ctx.time.nbiter-1))&&(site>80000)&&(site<85000))  { sor[142]<< T[site].t_NDDfield[spp] << "\t" ;}
                 T[site].t_NDDfield[spp] = 0;
             }
-            // if (iter == int(nbiter-1))  sor[142]<< "\n";
+            // if (ctx.time.iter == int(ctx.time.nbiter-1))  sor[142]<< "\n";
 
             int row0 = T[site].t_site / cols;
             int col0 = T[site].t_site % cols;
@@ -6745,7 +6745,7 @@ void UpdateField()
         TopWindSpeed_DCELL[d] = 0.0;
     }
 
-    // LAI_DCELL[h][dcell] provide the average LAI at height h in dcell, to estimate water interception and evaporation in each dcell at each timestep, as well as wind speed for a given height (this latter is new and was added simultaneously to BOUNDARY LAYER_ITERATIVE_SCHEME (IM June 2021).
+    // LAI_DCELL[h][dcell] provide the average LAI at height h in dcell, to estimate water interception and evaporation in each dcell at each ctx.time.timestep, as well as wind speed for a given height (this latter is new and was added simultaneously to BOUNDARY LAYER_ITERATIVE_SCHEME (IM June 2021).
     for (int site = 0; site < sites; site++)
     {
 
@@ -6789,7 +6789,7 @@ void UpdateField()
 #ifdef FULL_CLIMATE
         if (Canopy_height_DCELL[d] <= MeteoStation_Height)
         {
-            TopWindSpeed_DCELL[d] = 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
+            TopWindSpeed_DCELL[d] = 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the ctx.time.timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
         }
         else
             TopWindSpeed_DCELL[d] = exp(alphaInoue * (1 - MeteoStation_Height / Canopy_height_DCELL[d]));
@@ -6800,13 +6800,13 @@ void UpdateField()
 #else
         if (Canopy_height_DCELL[d] <= MeteoStation_Height)
         {
-            TopWindSpeed_DCELL[d] = WSDailyMean * 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
+            TopWindSpeed_DCELL[d] = WSDailyMean * 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the ctx.time.timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
         }
         else
             TopWindSpeed_DCELL[d] = WSDailyMean * exp(alphaInoue * (1 - MeteoStation_Height / Canopy_height_DCELL[d]));
 #endif
 
-        // cout << "iter=" << iter << " WSDailyMean=" << WSDailyMean << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] << " HSum_DCELL[d]=" << HSum_DCELL[d] <<" TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d];
+        // cout << "iter=" << ctx.time.iter << " WSDailyMean=" << WSDailyMean << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] << " HSum_DCELL[d]=" << HSum_DCELL[d] <<" TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d];
         // if (d==225) cout << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] ;
         // cout << endl;
     }
@@ -6833,7 +6833,7 @@ void UpdateField()
 #ifdef WATER
     //**  Evolution of belowground hydraulic fields: Soil bucket model
 
-    // for(int site=0;site<sites;site++) T[site].Water_uptake(); // Update of Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one timestep)
+    // for(int site=0;site<sites;site++) T[site].Water_uptake(); // Update of Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one ctx.time.timestep)
 
     for (int d = 0; d < nbdcells; d++)
     {
@@ -6867,9 +6867,9 @@ void UpdateField()
 
         // here, we use a phenomenological approach, following Granier et al. 1999 Ecological Modelling and Wagner et al. 2011 AFM, which assumed that evaporation is proportional to the energy reaching the soil.[this is an approximation as as the soil gets drier, more energy would be needed to remove the same amount of water from the soil as water molecules should be more tighly bound to soil particules and cavitation also occur in the soil...] ==> see if a model under which evaporation also depends on the soil water potential would not be better -- I guess so.
         // parameter values are not so clear, so TO BE CHECKED.
-        // float e_factor=PPFDtoSW * 3600*0.000001*nbhours_covered* 0.1 * sites_per_dcell*LH*LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
+        // float e_factor=PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * sites_per_dcell*LH*LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
         // float e_Granier = e_factor* WDailyMean * exp(-klight*LAI_DCELL[0][d]);
-        // 3600*0.000001*nbhours_covered to convert Wmax in micromol of PAR /s /m2 into  Joule, and 10^-6 to MJoule as in Wagner et al. 2011 (however the value provided by Wagner et al. 2011 seems really weird -too high-, and the values we obtained here are in agreement with the ones reported in Marthews et al. 2014.
+        // 3600*0.000001*ctx.time.nbhours_covered to convert Wmax in micromol of PAR /s /m2 into  Joule, and 10^-6 to MJoule as in Wagner et al. 2011 (however the value provided by Wagner et al. 2011 seems really weird -too high-, and the values we obtained here are in agreement with the ones reported in Marthews et al. 2014.
         // the value 0.1 is drawn from Wagner et al. 2011, but not really explained... to be checked!
         // sites_per_dcell*LH*LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
 
@@ -6893,7 +6893,7 @@ void UpdateField()
         float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #endif
         float Rtot = r_soil + r_aero;                                                                                 // in s m-1
-        float e = nbhours_covered * sites_per_dcell * LH * LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*nbhours_covered*sites_per_dcell*LH*LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
+        float e = ctx.time.nbhours_covered * sites_per_dcell * LH * LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*sites_per_dcell*LH*LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
 
         // if (soil_phi3D[0][d] < -1) {
         //  cout << "r_soil=" << r_soil << " r_soil_sellers=" << r_soil_sellers <<" r_aero=" <<r_aero << " VPDground=" << VPDground << " esat_ground=" << esat_ground << " esoil=" << esoil << " eair=" << eair << " soil_phi3D[0][d]=" << soil_phi3D[0][d] << " Tsoil=" << Tsoil << " TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d] << " Wind ground level=" << exp(-alphaInoue*(1-1/Canopy_height_DCELL[d]))*TopWindSpeed_DCELL[d] << " evaporation S92=" << e  << " evaporation S92_sellers=" << e_sellers << " e_granier=" << e_Granier << " SWC3D[0][d]-Min_SWC[0]=" << SWC3D[0][d]-Min_SWC[0] << endl;
@@ -7119,7 +7119,7 @@ void TriggerTreefall()
             float angle = 0.0, c_forceflex = 0.0;
             if (_BASICTREEFALL)
             {
-                c_forceflex = (1 - (1 - gsl_rng_uniform(gslrand)) / (12 * timestep)) * T[site].t_height; // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
+                c_forceflex = (1 - (1 - gsl_rng_uniform(gslrand)) / (12 * ctx.time.timestep)) * T[site].t_height; // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if ctx.time.timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
                 angle = float(twoPi * gsl_rng_uniform(gslrand));                                         // random angle
             }
             // above a given stress threshold the tree falls
@@ -7172,8 +7172,8 @@ void TriggerTreefallSecondary()
         if (T[site].t_age)
         {
             float height_threshold = T[site].t_height / T[site].t_mult_height; // since 2.5: a tree's stability is defined by its species' average height, i.e. we divide by the intraspecific height multiplier to account for lower stability in quickly growing trees; otherwise slender, faster growing trees would be treated preferentially and experience less secondary treefall than more heavily built trees
-            if (2.0 * T[site].t_hurt * (1 - (1 - gsl_rng_uniform(gslrand)) / (12 * timestep)) > height_threshold)
-            { // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when timestep=1/12, gslrand <= 1.0 - 0.5 * t_height/t_hurt, or gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
+            if (2.0 * T[site].t_hurt * (1 - (1 - gsl_rng_uniform(gslrand)) / (12 * ctx.time.timestep)) > height_threshold)
+            { // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when ctx.time.timestep=1/12, gslrand <= 1.0 - 0.5 * t_height/t_hurt, or gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
                 if (p_tfsecondary > gsl_rng_uniform(gslrand))
                 {                                                          // check whether tree falls or dies otherwise
                     float angle = float(twoPi * gsl_rng_uniform(gslrand)); // random angle
@@ -7202,10 +7202,10 @@ int GetTimeofyear()
 {
     // new function to derive time of year, extended to negative iterations (-1 would be treated as last iteration of previous year)
     int timeofyear;
-    if (iter < 0)
-        timeofyear = iterperyear - abs(iter) % iterperyear;
+    if (ctx.time.iter < 0)
+        timeofyear = ctx.time.iterperyear - abs(ctx.time.iter) % ctx.time.iterperyear;
     else
-        timeofyear = iter % iterperyear;
+        timeofyear = ctx.time.iter % ctx.time.iterperyear;
     return (timeofyear);
 };
 float CalcHeightBaseline(float &ah, float &hmax, float &dbh)
@@ -7261,7 +7261,7 @@ int CalcIntabsorb(float absorb_prev)
 // ##############################################
 
 // ##############################################
-//  Global function: calculation of the global averages every timestep
+//  Global function: calculation of the global averages every ctx.time.timestep
 // ##############################################
 
 void Average(void)
@@ -7324,16 +7324,16 @@ void Average(void)
             litterfall += S[spp].s_litterfall;
 
             // if(_OUTPUT_extended){
-            output_extended[0] << iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
+            output_extended[0] << ctx.time.iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
             //}
         }
 
-        output_basic[0] << iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
+        output_basic[0] << ctx.time.iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
 
 #ifdef MIP_Lichstein
-        if ((!_FromInventory && iter >= (nbiter - 100 * iterperyear)) || _FromInventory)
+        if ((!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || _FromInventory)
         {
-            output_MIP_eco << iter << "\t" << iter << "\t" << iter << "\t" << gpp * 100 << "\t" << npp * 100 << "\t";
+            output_MIP_eco << ctx.time.iter << "\t" << ctx.time.iter << "\t" << ctx.time.iter << "\t" << gpp * 100 << "\t" << npp * 100 << "\t";
         }
 #endif
 
@@ -7341,10 +7341,10 @@ void Average(void)
         cout.precision(2);
 
 #ifdef WATER
-        cout << iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * iterperyear << " NPP " << npp * iterperyear << " litterfall (Mg/ha/yr) " << litterfall * iterperyear << " *** Transpiration (mm): ";
+        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << " *** Transpiration (mm): ";
 #else
 
-        cout << iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * iterperyear << " NPP " << npp * iterperyear << " litterfall (Mg/ha/yr) " << litterfall * iterperyear << endl;
+        cout << ctx.time.iter << "\tTrees (1/ha): " << sum1 << " | " << sum10 << " | " << sum30 << " *** nbdead (%): " << 100.0 * nbdead_n1 * inbhectares / sum1 << " | " << 100.0 * nbdead_n10 * inbhectares / sum10 << " | " << 100.0 * nbdead_n30 * inbhectares / sum30 << " *** AGB (t/ha): " << round(agb / 1000.0) << " GPP (MgC/ha/yr) " << gpp * ctx.time.iterperyear << " NPP " << npp * ctx.time.iterperyear << " litterfall (Mg/ha/yr) " << litterfall * ctx.time.iterperyear << endl;
 #endif
 
         if (_OUTPUT_extended)
@@ -7358,13 +7358,13 @@ void Average(void)
             }
             tototest /= float(sites * LH * LH); // Average light flux (PPFD) on the ground
             tototest2 /= float(sites * LH * LH);
-            if (iter)
-                output_extended[1] << iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
+            if (ctx.time.iter)
+                output_extended[1] << ctx.time.iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
 
             if (_BASICTREEFALL)
-                output_extended[2] << iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << "\t" << nbTreefall1 * inbhectares << "\t" << nbTreefall10 * inbhectares << endl;
+                output_extended[2] << ctx.time.iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << "\t" << nbTreefall1 * inbhectares << "\t" << nbTreefall10 * inbhectares << endl;
             else
-                output_extended[2] << iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << endl;
+                output_extended[2] << ctx.time.iter << "\t" << nbdead_n1 * inbhectares << "\t" << nbdead_n10 * inbhectares << endl;
         }
     }
 
@@ -7389,7 +7389,7 @@ void Average(void)
 #ifdef CHECK_CARBON
     float carbon_stored_leaves_previous, carbon_stored_trunk_previous = 0.0, carbon_stored_free_previous = 0.0, carbon_assimilated_total_previous = 0.0, carbon_net_total_previous = 0.0;
 
-    if (iter == 0)
+    if (ctx.time.iter == 0)
     {
         carbon_stored_leaves_previous = 0.0;
         carbon_stored_trunk_previous = 0.0;
@@ -7425,8 +7425,8 @@ void Average(void)
     cout.setf(ios::fixed, ios::floatfield);
     cout.precision(5);
 
-    cout << iter << "\tTrunkC: " << carbon_stored_trunk * factor_weight << " LeavesC: " << carbon_stored_leaves * factor_weight << " FreeC: " << carbon_stored_free * factor_weight << " Total AssimC: " << carbon_assimilated_total * factor_weight << " Total NetC: " << carbon_net_total * factor_weight << endl;
-    cout << iter << "\tTrunkC change: " << (carbon_stored_trunk - carbon_stored_trunk_previous) * factor_weight << " LeavesC: " << (carbon_stored_leaves - carbon_stored_leaves_previous) * factor_weight << " FreeC: " << (carbon_stored_free - carbon_stored_free_previous) * factor_weight << endl;
+    cout << ctx.time.iter << "\tTrunkC: " << carbon_stored_trunk * factor_weight << " LeavesC: " << carbon_stored_leaves * factor_weight << " FreeC: " << carbon_stored_free * factor_weight << " Total AssimC: " << carbon_assimilated_total * factor_weight << " Total NetC: " << carbon_net_total * factor_weight << endl;
+    cout << ctx.time.iter << "\tTrunkC change: " << (carbon_stored_trunk - carbon_stored_trunk_previous) * factor_weight << " LeavesC: " << (carbon_stored_leaves - carbon_stored_leaves_previous) * factor_weight << " FreeC: " << (carbon_stored_free - carbon_stored_free_previous) * factor_weight << endl;
 
 #endif
 
@@ -7456,8 +7456,8 @@ void Average(void)
     lai *= icells;
     transpiration_1016 *= isites;
 
-    output[11] << iter << "\t" << precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
-    output[21] << iter << "\t" << lai << endl;
+    output[11] << ctx.time.iter << "\t" << precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
+    output[21] << ctx.time.iter << "\t" << lai << endl;
 
 #ifdef MIP_Lichstein
     float transpitot = 0.0;
@@ -7484,7 +7484,7 @@ void Average(void)
     cout << transpiration_1016 * 1000 << " | " << endl;
 
 #ifdef MIP_Lichstein
-    if ((!_FromInventory && iter >= (nbiter - 100 * iterperyear)) || _FromInventory)
+    if ((!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || _FromInventory)
     {
         output_MIP_eco << (transpitot + evapo) * 1000 << "\t" << lai << "\t" << litterfall * 0.5 * 100 << "\t";
     }
@@ -7563,29 +7563,29 @@ void Average(void)
     SW3 /= LT3;
     // SW4/=LT4;     //Tapajos
 
-    if ((!_FromInventory && iter >= (nbiter - 100 * iterperyear)) || _FromInventory)
+    if ((!_FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || _FromInventory)
     {
         output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
     }
 #endif
 
-    if (iter == (nbiter - 90) || iter == (nbiter - 45) || iter == (nbiter - 1))
+    if (ctx.time.iter == (ctx.time.nbiter - 90) || ctx.time.iter == (ctx.time.nbiter - 45) || ctx.time.iter == (ctx.time.nbiter - 1))
     {
 
         int o_swc, o_swp, o_wfluxes;
-        if (iter == (nbiter - 90))
+        if (ctx.time.iter == (ctx.time.nbiter - 90))
         {
             o_swc = 1;
             o_swp = 4;
             o_wfluxes = 18;
         }
-        if (iter == (nbiter - 45))
+        if (ctx.time.iter == (ctx.time.nbiter - 45))
         {
             o_swc = 2;
             o_swp = 5;
             o_wfluxes = 19;
         }
-        if (iter == (nbiter - 1))
+        if (ctx.time.iter == (ctx.time.nbiter - 1))
         {
             o_swc = 3;
             o_swp = 6;
@@ -7628,9 +7628,9 @@ void Average(void)
         }
     }
 
-    output[22] << iter << "\t";
-    output[23] << iter << "\t";
-    output[24] << iter << "\t";
+    output[22] << ctx.time.iter << "\t";
+    output[23] << ctx.time.iter << "\t";
+    output[24] << ctx.time.iter << "\t";
     for (int l = 0; l < HEIGHT + 1; l++)
     {
         LAI_young[l] *= isites;
@@ -7651,7 +7651,7 @@ void Average(void)
     abund10_phi_root *= inbhectares / sum10;
     agb_phi_root *= inbhectares / agb;
 
-    output[31] << iter << "\t" << abund_phi_root << "\t" << abund10_phi_root << "\t" << agb_phi_root << endl;
+    output[31] << ctx.time.iter << "\t" << abund_phi_root << "\t" << abund10_phi_root << "\t" << agb_phi_root << endl;
 
 #endif
 
@@ -7671,14 +7671,14 @@ void Average(void)
 }
 
 // ##############################################
-//  Global function: output of the field variables every timestep
+//  Global function: output of the field variables every ctx.time.timestep
 // ##############################################
 void OutputField()
 {
     int site, h;
-    if ((nbout) && ((iter % freqout) == freqout - 1))
+    if ((ctx.time.nbout) && ((ctx.time.iter % ctx.time.freqout) == ctx.time.freqout - 1))
     {
-        // output fields, nbout times during simulation (every freqout iterations)
+        // output fields, ctx.time.nbout times during simulation (every ctx.time.freqout iterations)
         int d;
         for (d = 0; d < dbhmaxincm; d++)
             nbdbh[d] = 0;
@@ -7706,7 +7706,7 @@ void OutputField()
             // output of the mean LAI per height class (output[32])
             float norm = 1.0 / float(sites * LH * LH * mpi_size);
             for (h = 0; h < (HEIGHT + 1); h++)
-                output[32] << iter << "\t" << h * LV << "\t" << layer[h] * norm << "\n";
+                output[32] << ctx.time.iter << "\t" << h * LV << "\t" << layer[h] * norm << "\n";
             output[32] << "\n";
         }
     }
@@ -7791,7 +7791,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
                 // we currently do not output the t_NDDfield vector, as it is too large
 
 #ifdef WATER
-                output << iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_leafarea << "\t" << T[site].t_tlp << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_mult_leafarea << "\t" << T[site].t_mult_tlp << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
+                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_leafarea << "\t" << T[site].t_tlp << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_mult_leafarea << "\t" << T[site].t_mult_tlp << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
 
                 output << "\t" << T[site].t_root_depth << "\t" << T[site].t_phi_root << "\t" << T[site].t_WSF << "\t" << T[site].t_WSF_A << "\t" << T[site].t_transpiration << "\t" << T[site].t_g1 << "\t" << T[site].t_g1_0;
 #ifdef PHENO_DROUGHT
@@ -7808,7 +7808,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
                 }
 
 #else
-                output << iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
+                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
 #endif
 
 #ifdef Output_ABC
@@ -7902,7 +7902,7 @@ void OutputVisual()
                 if (LAI3D[h][site + SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site + SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site + SBORD] << endl;
         }
     }
 #else
@@ -7917,7 +7917,7 @@ void OutputVisual()
                 if (LAI3D[h][site + SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << LAI3D[0][site + SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << LAI3D[0][site + SBORD] << endl;
         }
     }
 #endif
@@ -8433,7 +8433,7 @@ void TrackingData_andOutput()
                 T[site].t_Rday_sumyear += T[site].t_Rday;
                 T[site].t_Rnight_sumyear += T[site].t_Rnight;
                 T[site].t_Rstem_sumyear += T[site].t_Rstem;
-                T[site].t_carbon_storage_avgyear += T[site].t_carbon_storage * timestep;
+                T[site].t_carbon_storage_avgyear += T[site].t_carbon_storage * ctx.time.timestep;
                 // these are the whole lifetime cumulated figures, never reset to zero and put out at tree death
                 T[site].t_GPPcum += T[site].t_GPP;
                 T[site].t_NPPcum += T[site].t_NPP;
@@ -8449,7 +8449,7 @@ void TrackingData_andOutput()
                     // write to output
                     if (T[site].t_dbh >= 0.1)
                     {
-                        output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t" << T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t" << T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear << "\t" << T[site].t_carbon_storage_avgyear << endl;
+                        output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << ctx.time.iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t" << T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t" << T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear << "\t" << T[site].t_carbon_storage_avgyear << endl;
                     }
                     // reset
                     T[site].t_time_carbonstarvation_year = 0;
@@ -8514,12 +8514,12 @@ void UpdateMovingAveragesABC()
         mortality_abc = 0.0;
         treefall_abc = 0.0;
     }
-    if (iter < 120)
+    if (ctx.time.iter < 120)
     {
-        GPP_MA[iter] = GPP_abc;
-        Litterfall_MA[iter] = litter_abc;
-        Mortality_MA[iter] = mortality_abc;
-        Treefall_MA[iter] = treefall_abc;
+        GPP_MA[ctx.time.iter] = GPP_abc;
+        Litterfall_MA[ctx.time.iter] = litter_abc;
+        Mortality_MA[ctx.time.iter] = mortality_abc;
+        Treefall_MA[ctx.time.iter] = treefall_abc;
     }
     else
     {
@@ -9096,7 +9096,7 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
         sd_random = 0.0;
     }
     // Write to output file
-    output_traitconservation << iter << "\t" << mu_random << "\t" << sd_random << "\t" << mu_height_varoutput << "\t" << sd_height_varoutput << "\t" << mu_CR_varoutput << "\t" << sd_CR_varoutput << "\t" << mu_CD_varoutput << "\t" << sd_CD_varoutput << "\t" << mu_P_varoutput << "\t" << sd_P_varoutput << "\t" << mu_N_varoutput << "\t" << sd_N_varoutput << "\t" << mu_LMA_varoutput << "\t" << sd_LMA_varoutput << "\t" << mu_wsg_varoutput << "\t" << sd_wsg_varoutput << "\t" << mu_dbhmax_varoutput << "\t" << sd_dbhmax_varoutput << "\t" << mu_height_varinput << "\t" << sd_height_varinput << "\t" << mu_CR_varinput << "\t" << sd_CR_varinput << "\t" << mu_CD_varinput << "\t" << sd_CD_varinput << "\t" << mu_P_varinput << "\t" << sd_P_varinput << "\t" << mu_N_varinput << "\t" << sd_N_varinput << "\t" << mu_LMA_varinput << "\t" << sd_LMA_varinput << "\t" << mu_wsg_varinput << "\t" << sd_wsg_varinput << "\t" << mu_dbhmax_varinput << "\t" << sd_dbhmax_varinput << "\t" << endl;
+    output_traitconservation << ctx.time.iter << "\t" << mu_random << "\t" << sd_random << "\t" << mu_height_varoutput << "\t" << sd_height_varoutput << "\t" << mu_CR_varoutput << "\t" << sd_CR_varoutput << "\t" << mu_CD_varoutput << "\t" << sd_CD_varoutput << "\t" << mu_P_varoutput << "\t" << sd_P_varoutput << "\t" << mu_N_varoutput << "\t" << sd_N_varoutput << "\t" << mu_LMA_varoutput << "\t" << sd_LMA_varoutput << "\t" << mu_wsg_varoutput << "\t" << sd_wsg_varoutput << "\t" << mu_dbhmax_varoutput << "\t" << sd_dbhmax_varoutput << "\t" << mu_height_varinput << "\t" << sd_height_varinput << "\t" << mu_CR_varinput << "\t" << sd_CR_varinput << "\t" << mu_CD_varinput << "\t" << sd_CD_varinput << "\t" << mu_P_varinput << "\t" << sd_P_varinput << "\t" << mu_N_varinput << "\t" << sd_N_varinput << "\t" << mu_LMA_varinput << "\t" << sd_LMA_varinput << "\t" << mu_wsg_varinput << "\t" << sd_wsg_varinput << "\t" << mu_dbhmax_varinput << "\t" << sd_dbhmax_varinput << "\t" << endl;
 }
 
 // ##############################################
@@ -9251,7 +9251,7 @@ void OutputABC_ground(fstream &output_field)
 
     // Now add the process metrics from moving averages
     float YearlyGPP = 0.0, YearlyLitterfall = 0.0, YearlyMortality = 0.0, YearlyTreefall = 0.0;
-    float nb_years = 120.0 / float(iterperyear);
+    float nb_years = 120.0 / float(ctx.time.iterperyear);
     float inb_years = 1.0 / nb_years;
 
     for (int i = 0; i < 120; i++)
@@ -9498,7 +9498,7 @@ void OutputABC_ground(fstream &output_field)
     //    }
 
     // Write to file
-    output_field << iter << "\t" << sites_abc << "\t" << NBspecies_realized10 << "\t" << NBspecies << "\t" << NBspecies10 << "\t" << Shannon << "\t" << Shannon10 << "\t" << Simpson << "\t" << Simpson10 << "\t" << Abu << "\t" << Abu10 << "\t" << Abu30 << "\t" << Abu10_retained << "\t" << Abu30_retained << "\t" << AGB << "\t" << AGB10 << "\t" << ba << "\t" << ba10 << "\t" << LoreyH << "\t" << LoreyH10 << "\t" << YearlyGPP << "\t" << YearlyLitterfall << "\t" << YearlyMortality << "\t" << YearlyTreefall << "\t" << mean_LMA << "\t" << mean_Nmass << "\t" << mean_Pmass << "\t" << mean_wsg << "\t" << mean_CR << "\t" << mean_LMA10 << "\t" << mean_Nmass10 << "\t" << mean_Pmass10 << "\t" << mean_wsg10 << "\t" << mean_CR10 << "\t" << mean_dbh << "\t" << sd_dbh;
+    output_field << ctx.time.iter << "\t" << sites_abc << "\t" << NBspecies_realized10 << "\t" << NBspecies << "\t" << NBspecies10 << "\t" << Shannon << "\t" << Shannon10 << "\t" << Simpson << "\t" << Simpson10 << "\t" << Abu << "\t" << Abu10 << "\t" << Abu30 << "\t" << Abu10_retained << "\t" << Abu30_retained << "\t" << AGB << "\t" << AGB10 << "\t" << ba << "\t" << ba10 << "\t" << LoreyH << "\t" << LoreyH10 << "\t" << YearlyGPP << "\t" << YearlyLitterfall << "\t" << YearlyMortality << "\t" << YearlyTreefall << "\t" << mean_LMA << "\t" << mean_Nmass << "\t" << mean_Pmass << "\t" << mean_wsg << "\t" << mean_CR << "\t" << mean_LMA10 << "\t" << mean_Nmass10 << "\t" << mean_Pmass10 << "\t" << mean_wsg10 << "\t" << mean_CR10 << "\t" << mean_dbh << "\t" << sd_dbh;
 
     for (int d = 0; d < 50; d++)
     {
@@ -9682,28 +9682,28 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
     }
 
     // Now create outputs
-    output_species << iter;
+    output_species << ctx.time.iter;
     for (int spp = 1; spp < nbspp + 1; spp++)
         output_species << "\t" << abundances_species[spp];
     output_species << endl;
 
-    output_species10 << iter;
+    output_species10 << ctx.time.iter;
     for (int spp = 1; spp < nbspp + 1; spp++)
         output_species10 << "\t" << abundances_species10[spp];
     output_species10 << endl;
 
-    output_biomass << iter;
+    output_biomass << ctx.time.iter;
     for (int spp = 1; spp < nbspp + 1; spp++)
         output_biomass << "\t" << biomass_species[spp];
     output_biomass << endl;
 
     //    for(int trait = 0; trait < 10; trait++){
     //
-    //        output_traits << iter << "\t" << trait_names[trait];
+    //        output_traits << ctx.time.iter << "\t" << trait_names[trait];
     //        for(int spp = 1; spp < nbspp+1; spp++) output_traits  << "\t" << traits_species[spp][trait];
     //        output_traits << endl;
     //
-    //        output_traits10 << iter << "\t" << trait_names[trait];
+    //        output_traits10 << ctx.time.iter << "\t" << trait_names[trait];
     //        for(int spp = 1; spp < nbspp+1; spp++) output_traits10  << "\t" << traits_species10[spp][trait];
     //        output_traits10 << endl;
     //    }
@@ -9839,7 +9839,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     //    }
 
     // Write to file
-    output_CHM << iter << "\t" << sites_abc << "\t" << mean_chm << "\t" << sd_chm << "\t";
+    output_CHM << ctx.time.iter << "\t" << sites_abc << "\t" << mean_chm << "\t" << sd_chm << "\t";
 
     for (int h = 0; h < 70; h++)
     {
@@ -9856,7 +9856,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
     }
 
     output_CHM << endl;
-    output_CHM_ALS << iter << "\t" << sites_abc << "\t" << mean_chm_ALS << "\t" << sd_chm_ALS << "\t";
+    output_CHM_ALS << ctx.time.iter << "\t" << sites_abc << "\t" << mean_chm_ALS << "\t" << sd_chm_ALS << "\t";
 
     for (int h = 0; h < 70; h++)
     {
@@ -10228,7 +10228,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     }
 
     // Write to file
-    output_transmittance << iter << "\t" << sites_abc << "\t";
+    output_transmittance << ctx.time.iter << "\t" << sites_abc << "\t";
 
     // Summary statistics
     output_transmittance << height_max << "\t" << voxcanopy_total << "\t" << voxmaxheight_total << "\t" << voxcanopy_filled_total << "\t" << voxcanopy_greater2 << "\t" << voxmaxheight_greater2 << "\t" << voxcanopy_filled_greater2 << "\t" << voxcrown_total << "\t" << voxcrown_greater2 << "\t";
@@ -10277,7 +10277,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     output_transmittance << endl;
 
     // Same as before, but for the simulated ALS scan
-    output_transmittance_ALS << iter << "\t" << sites_abc << "\t";
+    output_transmittance_ALS << ctx.time.iter << "\t" << sites_abc << "\t";
 
     for (int h = 0; h < 70; h++)
         output_transmittance_ALS << transmittance_nogaps_zALS[h] << "\t";
