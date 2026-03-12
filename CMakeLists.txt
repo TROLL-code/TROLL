@@ -18,7 +18,12 @@ MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 
 
 add_compile_options(-w) 
-add_executable(${PROJECT_NAME} src/troll.cpp src/lookUpTables_cache.cpp src/params/param_registry.cpp)
+add_executable(${PROJECT_NAME}
+    src/troll.cpp
+    src/species.cpp
+    src/lookUpTables_cache.cpp
+    src/params/param_registry.cpp
+)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE

@@ -223,9 +223,9 @@ float carbon_stored_free;       //!< Global variable: --  !!!UPDATE
 #endif
 
 // PROCESSORS FOR MPI OPTION
-int mpi_rank;     //!< Global variable: processor rank (Message Passing Interface)
-int mpi_size;     //!< Global variable: processor number (Message Passing Interface)
-int easympi_rank; //!< Global variable: processor rank (easy Message Passing Interface)
+extern int mpi_rank;     //!< Global variable: processor rank (Message Passing Interface)
+extern int mpi_size;     //!< Global variable: processor number (Message Passing Interface)
+extern int easympi_rank; //!< Global variable: processor rank (easy Message Passing Interface)
 
 // MPI PROCEDURES
 #ifdef MPI
