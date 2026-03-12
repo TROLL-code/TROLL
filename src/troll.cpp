@@ -35,28 +35,28 @@ void Species::Init()
     s_ds = 40.0; // !!!UPDATE
 
     if (ctx.opt._SEEDTRADEOFF)
-        s_nbext = (int(s_regionalfreq * Cseedrain * s_iseedmass) + 1);
+        s_nbext = (int(s_regionalfreq * ctx.params.Cseedrain * s_iseedmass) + 1);
     else
-        s_nbext = int(s_regionalfreq * Cseedrain * (ctx.grid.sites * ctx.grid.LH * ctx.grid.LH / 10000));
+        s_nbext = int(s_regionalfreq * ctx.params.Cseedrain * (ctx.grid.sites * ctx.grid.LH * ctx.grid.LH / 10000));
 
     s_nbind = 0;
 
 #ifdef LCP_alternative
 #else
-    // Computation of the light compensation point from dark respiration and the quantum yield phi
-    // By definition, Rdark is in micromolC/m^2/s and it is used in the Species::NPP() routine
+    // Computation of the light compensation point from dark respiration and the quantum yield ctx.params.phi
+    // By definition, Rdark is in micromolC/ctx.params.m^2/s and it is used in the Species::NPP() routine
     float Vcmax = CalcVcmaxm(s_LMA, s_Nmass, s_Pmass) * s_LMA;
-    s_LCP = (Rtot_by_Rabove * Rtotleaf_by_Rdark * CalcRdark(s_LMA, s_Nmass, s_Pmass, Vcmax)) / phi;
+    s_LCP = (Rtot_by_Rabove * Rtotleaf_by_Rdark * CalcRdark(s_LMA, s_Nmass, s_Pmass, Vcmax)) / ctx.params.phi;
 #endif
 
     s_sum1 = s_sum10 = s_sum30 = s_ba = s_ba10 = s_agb = s_gpp = s_npp = s_rday = s_rnight = s_rstem = s_litterfall = 0.0; // new in v.3.1
 
 #ifdef WATER
     // s_g1=-3.97*s_wsg+6.53;                      // from Lin et al. 2015 Nature Climate Change
-    // s_dWSF=1.0/(-0.00395145-0.3626778*s_tlp);         // this is the denominator of WSF= phi_sc - s_tlp, where phi_sc (for 'stomatal closure') corresponds to the onset of water stress, derived from the relationship between leaf phi at 50%loss of stomatal closure (ie. WSF~0.5 considering only stomatal responses to water stress) and turgor loss point (drawn from Bartlett et al. 2016 PNAS), and given the shape of WSF factor here assumed
+    // s_dWSF=1.0/(-0.00395145-0.3626778*s_tlp);         // this is the denominator of WSF= phi_sc - s_tlp, where phi_sc (for 'stomatal closure') corresponds to the onset of water stress, derived from the relationship between leaf ctx.params.phi at 50%loss of stomatal closure (ie. WSF~0.5 considering only stomatal responses to water stress) and turgor loss point (drawn from Bartlett et al. 2016 PNAS), and given the shape of WSF factor here assumed
     // s_phi_lethal= -0.9842 + 3.1795*s_tlp;       // Inferred from data provided in Bartlett et al. 2016 PNAS
     // s_itlp=1/s_tlp;
-    // s_b=-2.23*s_itlp; // this results from the following assumption: (i) phi(TLP)=0.97*phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at phi(gs90)
+    // s_b=-2.23*s_itlp; // this results from the following assumption: (i) ctx.params.phi(TLP)=0.97*ctx.params.phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at ctx.params.phi(gs90)
 #endif
 }
 
@@ -120,7 +120,7 @@ void Tree::Birth(int nume, int site0)
     int index_LAImax = dev_rand + (nume - 1) * 10000;
     float LAImax_precomputed = ctx.lookup.LookUpLAImax[index_LAImax];
 
-    if (LAI3D[0][site0 + ctx.grid.SBORD] < LAImax_precomputed)
+    if (ctx.field.LAI3D[0][site0 + ctx.grid.SBORD] < LAImax_precomputed)
     {
 
 #endif
@@ -168,12 +168,12 @@ void Tree::Birth(int nume, int site0)
         t_wleaf = sqrt(t_leafarea * 0.0001);
         t_phi_lethal = -0.9842 + 3.1795 * t_tlp; // Inferred from data provided in Bartlett et al. 2016 PNAS
         t_itlp = 1 / t_tlp;
-        t_b = -2.23 * t_itlp; // this results from the following assumption: (i) phi(TLP)=0.97*phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at phi(gs90)
+        t_b = -2.23 * t_itlp; // this results from the following assumption: (i) ctx.params.phi(TLP)=0.97*ctx.params.phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at ctx.params.phi(gs90)
 #endif
 
-        t_Vcmax = CalcVcmaxm(t_LMA, t_Nmass, t_Pmass) * t_LMA; // in micromolC m-2 s-1
-        t_Jmax = CalcJmaxm() * t_LMA;                          // in micromolC m-2 s-1
-        t_Rdark = CalcRdark(t_LMA, t_Nmass, t_Pmass, t_Vcmax); // in micromolC m-2 s-1
+        t_Vcmax = CalcVcmaxm(t_LMA, t_Nmass, t_Pmass) * t_LMA; // in micromolC ctx.params.m-2 s-1
+        t_Jmax = CalcJmaxm() * t_LMA;                          // in micromolC ctx.params.m-2 s-1
+        t_Rdark = CalcRdark(t_LMA, t_Nmass, t_Pmass, t_Vcmax); // in micromolC ctx.params.m-2 s-1
 #ifdef WATER
         // t_g1_0=-0.0224 * t_LMA + 4.8278; // this is the relationship provided by Wu et al. 2019 GCB
         t_g1_0 = (-3.97 * t_wsg + 6.53); // this is the relationship provided by Lin et al. 2015
@@ -191,10 +191,10 @@ void Tree::Birth(int nume, int site0)
         t_hmax = S[t_sp_lab].s_hmax;
         t_ah = S[t_sp_lab].s_ah;
 
-        t_dbh = DBH0;
+        t_dbh = ctx.params.DBH0;
         t_dbhmax = S[t_sp_lab].s_dbhmax;
         t_dbhmax *= t_mult_dbhmax;
-        t_dbhmax = fmaxf(t_dbhmax, DBH0 * 2.0);
+        t_dbhmax = fmaxf(t_dbhmax, ctx.params.DBH0 * 2.0);
         t_dbhmature = t_dbhmax * 0.5; // Mean threshold of tree size to maturity - see Visser et al. 2016 Functional Ecology (suited to both understory and top-canopy species). NOTE that if we decide to keep it as a fixed species-specific value, this could be defined as a Species calss variable, and computed once in Species::Init. -- v230
 
         UpdateHeight();
@@ -246,9 +246,9 @@ void Tree::Birth(int nume, int site0)
         else
         {
 #ifdef CROWN_UMBRELLA
-            t_LAI = dens * fminf(t_CD, 3.0);
+            t_LAI = ctx.params.dens * fminf(t_CD, 3.0);
 #else
-        t_LAI = dens * t_CD;
+        t_LAI = ctx.params.dens * t_CD;
 #endif
             t_LA = t_LAI * crown_area_nogaps;
         }
@@ -526,7 +526,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         t_wleaf = sqrt(t_leafarea * 0.0001);
         t_phi_lethal = -0.9842 + 3.1795 * t_tlp; // Inferred from data provided in Bartlett et al. 2016 PNAS
         t_itlp = 1 / t_tlp;
-        t_b = -2.23 * t_itlp; // this results from the following assumption: (i) phi(TLP)=0.97*phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at phi(gs90)
+        t_b = -2.23 * t_itlp; // this results from the following assumption: (i) ctx.params.phi(TLP)=0.97*ctx.params.phi(gs90), from Martin-StPaul et al. 2017 Ecology letters; (ii) WSF=0.1 at ctx.params.phi(gs90)
 #endif
 
         // height allometry
@@ -686,9 +686,9 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
                 t_LAI = t_LA/crown_area_nogaps;
             } else {
 #ifdef CROWN_UMBRELLA
-                t_LAI = dens * fminf(t_CD, 3.0);
+                t_LAI = ctx.params.dens * fminf(t_CD, 3.0);
 #else
-                t_LAI = dens * t_CD;
+                t_LAI = ctx.params.dens * t_CD;
 #endif
                 t_LA = t_LAI * crown_area_nogaps;
             }
@@ -864,9 +864,9 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //            t_LAI = t_LA/crown_area_nogaps;
 //        } else {
 // #ifdef CROWN_UMBRELLA
-//            t_LAI = dens * fminf(t_CD, 3.0);
+//            t_LAI = ctx.params.dens * fminf(t_CD, 3.0);
 // #else
-//            t_LAI = dens * t_CD;
+//            t_LAI = ctx.params.dens * t_CD;
 // #endif
 //            t_LA = t_LAI * crown_area_nogaps;
 //        }
@@ -877,7 +877,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //            UpdateSapwoodArea(ddbh);
 //        }
 //
-//        // 2. allocate the leaves to the LAI3D field
+//        // 2. allocate the leaves to the ctx.field.LAI3D field
 //        // nota bene: we here use the same function as CalcLAI3D, with one exception: LAI2dens_cumulated instead of LAI2dens; this means that we allocate the cumulated LAI in each ctx.diag.layer and do not require any summation afterwards
 //        int site_crowncenter = t_site + t_CrownDisplacement;
 //        int row_crowncenter = site_crowncenter/ctx.grid.cols;
@@ -897,10 +897,10 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //}
 
 // ###############################################
-//  Update of the LAI3D field
+//  Update of the ctx.field.LAI3D field
 //! called by UpdateField
 // #################################################
-//! - modified in v.2.3: additional contribution to voxels that are not fully occupied by the tree crown. !!!: this does not calculate LAI3D directly, this only calculates the density in each voxel belonging to a tree. The final LAI field is calculated outside of the class Tree
+//! - modified in v.2.3: additional contribution to voxels that are not fully occupied by the tree crown. !!!: this does not calculate ctx.field.LAI3D directly, this only calculates the density in each voxel belonging to a tree. The final LAI field is calculated outside of the class Tree
 //! - modified in v.2.4 and v.2.5: introducing an alternative crown shape, "umbrella"-like, inspired by previous shell models and similar to the crown shapes in the PPA. If activated, crowns contain three layers of vegetation that, once the crown goes beyond 3m in depth, will bend downwards on the edges with a linear slope. Since v.2.5 all loops (CalcLAI, Fluxh, leafarea_max) are executed through the same template. This allows to implement other crown shapes in the future and ensures that modifications are carried through across the code
 #ifdef CROWN_UMBRELLA
 void Tree::CalcLAI()
@@ -975,7 +975,7 @@ void Tree::CalcLAI()
                     if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
                     {
                         int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
-                        LAI3D[h][site] += dens_layer;
+                        ctx.field.LAI3D[h][site] += dens_layer;
                     }
                 }
             }
@@ -1006,7 +1006,7 @@ void Tree::Water_availability()
     // t_root_depth=fminf(ctx.soil.layer_depth[(ctx.soil.nblayers_soil-1)],pow((0.001*total_root_biomass),0.1)*0.7);
     // t_root_depth=fmaxf(2.0, fminf(ctx.soil.layer_depth[(ctx.soil.nblayers_soil-1)],pow((0.001*total_root_biomass),0.1)*0.7));
     // t_root_depth=fminf(ctx.soil.layer_depth[(ctx.soil.nblayers_soil-1)], 0.06410256*t_height+1.435897);  // this dependency of tree root depth with tree height is highly questionable -- cf. eg. Stahl et al. 2013 Oecologia, but see also Brum et al. 2019 Journal of Ecology-- but parcimonious. Note that neither Stahl et al. 2013 nor Brum et al. 2019 reported actual root depth, but the "depth of water uptake". Should probably depends more on the total soil depth, and average soil water availabilty -- cf. distribution of maximal root depth per biomes in Canadell/Jackson et al.
-    // t_root_depth=0.22*pow(t_dbh*100, 0.54); // this is the allometry used in ED2, Xu et al. 2016, for evergreen trees. Parameter values were fixed based on Kenzo et al. 2009 Journal of Tropical Biology, which reported on data from excavated trees in wet secondary forests in Malaysia, although Xu et al. 2016 applied it in a seasonally dry tropical forests in Costa Rica. This allometry was then compared against the one obtained from excavated trees in a seasonally dry tropical forests in Costa Rica by Smith-Martin et al. 2019 New Phytologist: although the shape and the differences among the allometries for deciduous and evergreen trees were in overall agreement with observations, the ED2 allometry generally underestimated the observed root depth. As it seems that dry forest species have deeper root than wet forest species (see e.g. Holbrook et al. 1995, cited in Smith-Martin et al. 2019, or Markesteijn & Poorter 2009), this should be better suited to our application to wet forest although this remains to be confronted with data. This allometry gives a root depth of 22cm and 2.65 m for trees with dbh=1cm and 1m respectively. Note that in Xu et al., the first parameter (here 0.22) varied among phenological types, so that root depth of evergreen trees is about twice the ones of deciduous. This link between plant phenology and rooting depth was found empirically in Smith-Martin et al. 2019 New Phytologist, Hasselquist et al. 2010 Oecologia, while Markesteijn & Poorter found a correlation between root depth and stem density on first year seedling in Panama. This link between phenology and rooting depth with higher rooting depth for evergreen species was needed to sustain leaf cover in simulations with ED2, despite their higher leaf and stem drought tolerance (P50 and TLP; Smith-Martin et al. 2019). In absence of data, we here assumed this allometry suits to all species but this has to be discussed !
+    // t_root_depth=0.22*pow(t_dbh*100, 0.54); // this is the allometry used in ED2, Xu et al. 2016, for evergreen trees. Parameter values were fixed based on Kenzo et al. 2009 Journal of Tropical Biology, which reported on data from excavated trees in wet secondary forests in Malaysia, although Xu et al. 2016 applied it in a seasonally dry tropical forests in Costa Rica. This allometry was then compared against the one obtained from excavated trees in a seasonally dry tropical forests in Costa Rica by Smith-Martin et al. 2019 New Phytologist: although the shape and the differences among the allometries for deciduous and evergreen trees were in overall agreement with observations, the ED2 allometry generally underestimated the observed root depth. As it seems that dry forest species have deeper root than wet forest species (see e.g. Holbrook et al. 1995, cited in Smith-Martin et al. 2019, or Markesteijn & Poorter 2009), this should be better suited to our application to wet forest although this remains to be confronted with data. This allometry gives a root depth of 22cm and 2.65 ctx.params.m for trees with dbh=1cm and 1m respectively. Note that in Xu et al., the first parameter (here 0.22) varied among phenological types, so that root depth of evergreen trees is about twice the ones of deciduous. This link between plant phenology and rooting depth was found empirically in Smith-Martin et al. 2019 New Phytologist, Hasselquist et al. 2010 Oecologia, while Markesteijn & Poorter found a correlation between root depth and stem density on first year seedling in Panama. This link between phenology and rooting depth with higher rooting depth for evergreen species was needed to sustain leaf cover in simulations with ED2, despite their higher leaf and stem drought tolerance (P50 and TLP; Smith-Martin et al. 2019). In absence of data, we here assumed this allometry suits to all species but this has to be discussed !
     t_root_depth = fminf(0.35 * pow(t_dbh * 100, 0.54), ctx.soil.layer_depth[(ctx.soil.nblayers_soil - 1)]); // this is the allometry used in ED2-hydro, Xu et al. 2016, for evergreen trees, with one parameter, b1=root_depth(dbh=1cm), changed to correct the overall underestimation of tree rootdepth it leads to (cf. Smith-Martin et al. 2019 New phytol.). In absence of data on root depth (in general, and even more at the species level, see email with V. Freycon & B. Ferry january 20th 2020), this should probably be calibrated/fine-tuned.
     float i_root_depth = 1.0 / t_root_depth;
 
@@ -1102,7 +1102,7 @@ void Tree::Water_availability()
                 t_soil_layer_weight[l] = 0;
         }
 
-        // if(t_soil_layer_weight[l]<=0) cout << "t_soil_layer_weight[l]=" << t_soil_layer_weight[l] << " t_root_biomass[l]=" << t_root_biomass[l] << " ctx.soil.Ks=" << ctx.soil.Ks[l][ctx.grid.site_DCELL[t_site]] << " ctx.soil.Ks*Phi soil =" << ctx.soil.KsPhi[l][ctx.grid.site_DCELL[t_site]] << " phi soil=" <<   ctx.soil.soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << endl;
+        // if(t_soil_layer_weight[l]<=0) cout << "t_soil_layer_weight[l]=" << t_soil_layer_weight[l] << " t_root_biomass[l]=" << t_root_biomass[l] << " ctx.soil.Ks=" << ctx.soil.Ks[l][ctx.grid.site_DCELL[t_site]] << " ctx.soil.Ks*Phi soil =" << ctx.soil.KsPhi[l][ctx.grid.site_DCELL[t_site]] << " ctx.params.phi soil=" <<   ctx.soil.soil_phi3D[l][ctx.grid.site_DCELL[t_site]] << endl;
         // t_soil_layer_weight[l]=t_root_biomass[l]*10/(-log(sqrt(PI*t_root_biomass[l]*10)*0.001));
         // t_phi_root+=t_soil_layer_weight[l]*fmaxf(0.0,(KsPhi2[l][ctx.grid.site_DCELL[t_site]]-ctx.soil.KsPhi[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));  //the water potential in the root zone is computed as the weighted mean of the soil water potential in each soil ctx.diag.layer
         // t_soil_layer_weight[l]*=fmaxf(0.0,(ctx.soil.KsPhi[l][ctx.grid.site_DCELL[t_site]]-ctx.soil.Ks[l][ctx.grid.site_DCELL[t_site]]*t_s->s_tlp));
@@ -1191,8 +1191,8 @@ void Tree::Water_availability()
 
     // t_WSF=fminf(1.0, fmaxf(0.0, ((ctx.soil.SWC3D[0][ctx.grid.site_DCELL[t_site]]-ctx.soil.Min_SWC[0])/(ctx.soil.Max_SWC[0]-ctx.soil.Min_SWC[0])))); // this is the simple linear WSF, with SWC as independent varible, used in lots of model (see Powell et al. 2013 New Phytol, De Kauwe et al. 2015 Biogeosciences, Laio et al. 2001 Advances in Water resources, Egea et al. 2011 AFM....)
     // t_WSF=fminf(1.0, fmaxf(0.0, (t_phi_root-(t_s->s_tlp))*(t_s->s_dWSF))); // this is the linear WSF, with wtare potential as independent variable, used in CLM model (see Powell et al. 2013 New Phytologist, Verhoef & Egea 2011 AFM)
-    // t_WSF=exp((log(0.05)/t_s->s_tlp)*t_phi_root); // this is the WSF, to simulate stomatal limitation (ie. hinder g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences. If this version of WSF is finally adopted, the parameter b=log(0.05)/t_s->s_tlp, should be declare as species variable (instead of s_dWSF).
-    t_WSF = exp(t_b * t_phi_root); // this is the WSF shape used to simulate stomatal limitation (ie. hinder g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences, but with a different parameterization for the parameter b (using the relationship between phi_gs90 and tlp from Martin-StPaul et al. 2017 Ecology letters, and assuming the WSF=0.9 at phi_gs90).
+    // t_WSF=exp((log(0.05)/t_s->s_tlp)*t_phi_root); // this is the WSF, to simulate stomatal limitation (ie. hinder ctx.params.g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences. If this version of WSF is finally adopted, the parameter b=log(0.05)/t_s->s_tlp, should be declare as species variable (instead of s_dWSF).
+    t_WSF = exp(t_b * t_phi_root); // this is the WSF shape used to simulate stomatal limitation (ie. hinder ctx.params.g1), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences, but with a different parameterization for the parameter b (using the relationship between phi_gs90 and tlp from Martin-StPaul et al. 2017 Ecology letters, and assuming the WSF=0.9 at phi_gs90).
     // float par=t_s->s_tlp+1;
     // t_WSF_A=(1.0+exp(6.0*par))/(1.0+exp(6.0*(par-t_phi_root))); // this is the WSF, to simulate non-stomatal limitation (ie. hinder Vcmax and Jmax), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences
     // t_WSF_A=(1.0+exp(3.0*par))/(1.0+exp(3.0*(par-t_phi_root))); // this is the WSF, to simulate non-stomatal limitation (ie. hinder Vcmax and Jmax), drawn from Zhou et al. 2013 AFM, and de Kauwe et al. 2015 Biogeosciences
@@ -1216,7 +1216,7 @@ void Tree::Water_availability()
 //  Contribution of trees to the stand ctx.soil.Transpiration field. Called by UpdateField
 // ####################################################################
 //! - Adds up each tree contribution to the stand ctx.soil.Transpiration field, that is the water removed from the soil through all tree transpiration.
-//! - Similar to CalcLAI, that adds up each tree contribution to LAI3D field.
+//! - Similar to CalcLAI, that adds up each tree contribution to ctx.field.LAI3D field.
 void Tree::Water_uptake()
 {
     if (t_age > 0.0)
@@ -1330,8 +1330,8 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
             if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
             {
                 int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
-                float absorb_prev = LAI3D[h][site];
-                float absorb_current = LAI3D[h - 1][site];
+                float absorb_prev = ctx.field.LAI3D[h][site];
+                float absorb_current = ctx.field.LAI3D[h - 1][site];
                 float absorb_delta = absorb_current - absorb_prev;
                 if (absorb_delta < 0.0)
                     absorb_delta = 0.0; //! eliminate rounding errors
@@ -1386,7 +1386,7 @@ float Tree::CalcJmaxm()
 {
     float SLA = 10000.0 / t_LMA;                                                                                                                                // in cm2 g-1
     float Jmaxm = pow(10.0, fminf((-1.50 + 0.41 * log10(t_Nmass * 1000.0) + 0.45 * log10(SLA)), (-0.74 + 0.44 * log10(t_Pmass * 1000.0) + 0.32 * log10(SLA)))); // added as a Species member variable 14-04-2015; this is equ 2 in Domingues et al 2010 PCE (coefficients from fig7). s_Nmass and s_Pmass are given in g g-1, but should be in mg g-1 in equ 2 in Domingues et al. 2010, hence the mutiplication by 1000.
-    return (Jmaxm);                                                                                                                                             //  in micromol C m-2 s-1
+    return (Jmaxm);                                                                                                                                             //  in micromol C ctx.params.m-2 s-1
 }
 
 // #######################
@@ -1395,7 +1395,7 @@ float Tree::CalcJmaxm()
 float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
 {
     float dr = 0;
-    float basal = m * (1 - t_wsg);
+    float basal = ctx.params.m * (1 - t_wsg);
     float dd = ctx.crown.deltaD * ndd * (1 - 2 * dbh / t_dbhmax);
 
     dr = basal;
@@ -1418,7 +1418,7 @@ float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
 float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
 {
     float dr = 0;
-    float basal = fmaxf(m - m1 * t_wsg, 0.0);
+    float basal = fmaxf(ctx.params.m - ctx.params.m1 * t_wsg, 0.0);
 
     dr = basal;
     // if (carbon_starv > t_leaflifespan) dr+=1.0/ctx.time.timestep;
@@ -1448,7 +1448,7 @@ float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
 float Tree::DeathRate(float dbh, float carbon_starv)
 {
     float dr = 0.0;
-    float basal = fmaxf(m - m1 * t_wsg, 0.0);
+    float basal = fmaxf(ctx.params.m - ctx.params.m1 * t_wsg, 0.0);
 
     dr = basal;
     if (ctx.opt._LA_regulation == 0)
@@ -1474,9 +1474,9 @@ float Tree::DeathRate(float dbh, float carbon_starv)
 //! - Function Tree::GPPleaf when the WATER option is off, Tree::FluxesLeaf when WATER option is on
 //! - Includes the Farquhar model of photosynthesis and Medlyn et al. 2011 model of stomatal conductance -- see also Prentice et al 2014 Ecology Letters, Lin et al 2015 Nature Climate Change, Dewar et al. 2018 New phytologist; min added in order to prevent ci:ca bigger than 1 (even though Ehleringer et al 1986 reported some values above 1 (Fig3)
 //! - Tree::FluxesLeaf iterates on the leaf conditions (Tl, Cs and Dleaf) and calls another function Tree::Photosyn, which itself implements the models of photosynthsis and stomatal conductance.
-//! - When WATER option is on, the stomatal conductance parameter (g1) and photosynthetic capacities are reduced under water stressed conditions: stomatal and non-stomatal responses to water stress (see Egea et al. 2011 AFM, Zhou et al. 2013 AFM, Zhou et al. 2014 PCE, etc.). This is done by multipliying the values of g1 and of Vcmax and Jmax in absence of water stress by water stress factors (WSF and WSF_A respectively).
-//! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C m-2 s-1, and water fluxes (transpiration) in micromol H20 m-2 s-1.
-//! - It is converted into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
+//! - When WATER option is on, the stomatal conductance parameter (ctx.params.g1) and photosynthetic capacities are reduced under water stressed conditions: stomatal and non-stomatal responses to water stress (see Egea et al. 2011 AFM, Zhou et al. 2013 AFM, Zhou et al. 2014 PCE, etc.). This is done by multipliying the values of ctx.params.g1 and of Vcmax and Jmax in absence of water stress by water stress factors (WSF and WSF_A respectively).
+//! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C ctx.params.m-2 s-1, and water fluxes (transpiration) in micromol H20 ctx.params.m-2 s-1.
+//! - It is converted into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
 //! - NB1: 12 is the molar mass of carbon NB2: ctx.time.timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
 //! - BEWARE: slight inconsistency through use of 365.25 when daily ctx.time.timestep is likely to be given as 365, but not incorrect.
 //! - It uses lookup tables for acceleration of computation of T dependencies. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
@@ -1501,20 +1501,20 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
 
     // Computation of Penman-Monteith terms that do not depend on TLEAF, CS and DS :
 
-    // float RSOL = PPFD*PPFDtoSW;   // Incoming solar energy in J m-2 s-1 -- PPFDtoSW is to account for the fact that PAR actually account for ca. 50% of the total solar energy at the Earth's surface (ie after its way through the atmosphere), and Penman-Monteith should include all the shortwave energy (ie PAR + NIR), and convert from micromol quanta to J (PPFDtoSW~ 2.0/ 4.57).
-    float RSOL = 0.2188 * PPFD + 0.0015 * PPFDtop + 0.0174 * PPFDinc; // this is based on the relationship between NIR/PAR ratio in the understory and PARtop/PAR or LAI, reported in Kume et al. 2011 Journal of Plant Research (Fig. 4 therein), to account for the absorbed NIR. 0.2188=1/4.47; 0.0015=0.1/(4.57*14.48) with 0.1~leaf absorptance in NIR and 14.48 fitted parameter in Kumme et al; 0.0174=0.1*11.52/(4.57*14.48), with 11.52 the other fitted parameter in Kumme et al., and 1/4.57 is to convert from microml m-2 s-1 to J.
+    // float RSOL = PPFD*ctx.params.PPFDtoSW;   // Incoming solar energy in J ctx.params.m-2 s-1 -- ctx.params.PPFDtoSW is to account for the fact that PAR actually account for ca. 50% of the total solar energy at the Earth's surface (ie after its way through the atmosphere), and Penman-Monteith should include all the shortwave energy (ie PAR + NIR), and convert from micromol quanta to J (ctx.params.PPFDtoSW~ 2.0/ 4.57).
+    float RSOL = 0.2188 * PPFD + 0.0015 * PPFDtop + 0.0174 * PPFDinc; // this is based on the relationship between NIR/PAR ratio in the understory and PARtop/PAR or LAI, reported in Kume et al. 2011 Journal of Plant Research (Fig. 4 therein), to account for the absorbed NIR. 0.2188=1/4.47; 0.0015=0.1/(4.57*14.48) with 0.1~leaf absorptance in NIR and 14.48 fitted parameter in Kumme et al; 0.0174=0.1*11.52/(4.57*14.48), with 11.52 the other fitted parameter in Kumme et al., and 1/4.57 is to convert from microml ctx.params.m-2 s-1 to J.
     // if (PPFDinc/PPFDtop <0.8) {
     // cout << "PPFDtop=" << PPFDtop << " PPFD=" << PPFD <<" PPFDinc=" << PPFDinc << " RSOL=" << RSOL << " RSOL_NIR=" << RSOL_NIR << endl;
     // }
     float LHV = (H2OLV0 - 2.365e3 * Ta) * H2OMW;               // Latent heat of water vapour at air temperature (J mol-1) (this is the "landa" in PM equation)
     float SLOPE = ctx.lookup.LookUp_SLOPE[convTA];                        /* Slope of the dependence of saturated vapor pressure with temperature (Jones 2013, Equation (5.15), p.102)
                                                                 This is constant s in Penman-Monteith equation  (Pa K-1) */
-    float CMOLAR = 1000.0 * PRESS / (RCONST * (Ta - ABSZERO)); // 1000 because PRESS is in kPa
-    float GAMMA = 1000.0 * PRESS * CPAIR * AIRMA / LHV;        // Psychrometric constant; 1000.0 to convert kPa into Pa. !! IM to be checked !! factor AIRMA not consistent with Jérôme's note and Appendix 3 of Jones, but similar to Duursma 's package
-    float GRADN = ctx.lookup.LookUp_GRADN[convTA];                        // Radiation conductance (mol m-2 s-1) at air temperature (Jones 2013, Eq 5.10 p. 101). // IM to be double-checked with Jones (not fully consistent with Medlyn et al. 2007)
-    float GBHU = 0.003 * sqrt(WIND / t_wleaf) * CMOLAR;        // Boundary ctx.diag.layer conductance to heat transfer by forced convection (single sided) in mol m-2 s-1; Leuning et al (1995) PC&E 18:1183-1200 Eqn E1; Equation A2 in Medlyn et al. 2007
-    // Rnetiso = absorptance_leaves*RSOL - ctx.lookup.LookUp_INLR[convTA][convVPDA]; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100)
-    Rnetiso = RSOL - ctx.lookup.LookUp_INLR[convTAtop][convVPDAtop] * ExtinctLW; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100). No need of absorptance_leaves, since PPFD provided in argument is already the absorbed flux.
+    float CMOLAR = 1000.0 * ctx.params.PRESS / (RCONST * (Ta - ABSZERO)); // 1000 because ctx.params.PRESS is in kPa
+    float GAMMA = 1000.0 * ctx.params.PRESS * CPAIR * AIRMA / LHV;        // Psychrometric constant; 1000.0 to convert kPa into Pa. !! IM to be checked !! factor AIRMA not consistent with Jérôme's note and Appendix 3 of Jones, but similar to Duursma 's package
+    float GRADN = ctx.lookup.LookUp_GRADN[convTA];                        // Radiation conductance (mol ctx.params.m-2 s-1) at air temperature (Jones 2013, Eq 5.10 p. 101). // IM to be double-checked with Jones (not fully consistent with Medlyn et al. 2007)
+    float GBHU = 0.003 * sqrt(WIND / t_wleaf) * CMOLAR;        // Boundary ctx.diag.layer conductance to heat transfer by forced convection (single sided) in mol ctx.params.m-2 s-1; Leuning et al (1995) PC&E 18:1183-1200 Eqn E1; Equation A2 in Medlyn et al. 2007
+    // Rnetiso = ctx.params.absorptance_leaves*RSOL - ctx.lookup.LookUp_INLR[convTA][convVPDA]; // Calculation of isothermal net radiation (J ctx.params.m-2 s-1; Jones (2013) equation (5.4) p.100)
+    Rnetiso = RSOL - ctx.lookup.LookUp_INLR[convTAtop][convVPDAtop] * ExtinctLW; // Calculation of isothermal net radiation (J ctx.params.m-2 s-1; Jones (2013) equation (5.4) p.100). No need of ctx.params.absorptance_leaves, since PPFD provided in argument is already the absorbed flux.
 
     // if (ExtinctLW<0.2) {
     //    cout << "Rnetiso=" << Rnetiso << " RSOL=" << RSOL << " INLR=" << ctx.lookup.LookUp_INLR[convTA][convVPDA]  << " INLR_top=" << ctx.lookup.LookUp_INLR[convTAtop][convVPDAtop] << " //ExtinctLW=" << ExtinctLW <<  endl;
@@ -1524,7 +1524,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
 
     TLEAF = Ta; // Initialization of leaf T, CO2 & VPD at leaf surface equal to the ones of surrounding air
     DS = VPDa;
-    CS = Cair; // IM: check whether we should not make Cair vary across the canopy.
+    CS = ctx.params.Cair; // IM: check whether we should not make ctx.params.Cair vary across the canopy.
     leafFluxes ps;
 
     for (int ITER = 0; ITER < ITERMAX; ITER++)
@@ -1536,8 +1536,8 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         }
 
         ps = Photosyn(PPFD, TLEAF, CS, DS); // Compute CO2 assimilation rate and stomatal conductance at TLEAF, CS and DS
-        ALEAF = ps.carbon_flux;             // in micromolCO2 m-2 s-1
-        GSC = ps.water_flux;                // in mol CO2 m-2 s-1 by Photosyn function
+        ALEAF = ps.carbon_flux;             // in micromolCO2 ctx.params.m-2 s-1
+        GSC = ps.water_flux;                // in mol CO2 ctx.params.m-2 s-1 by Photosyn function
 
         if (isnan(GSC) || isnan(ALEAF))
         {
@@ -1545,7 +1545,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         }
 
         // Computation of the different conductance terms
-        float GBHF; // Boundary ctx.diag.layer conductance to heat transfer by free convection (single sided) in mol m-2 s-1. Leuning et al (1995) PC&E 18:1183-1200 Eqns E3 & E4. Equation A1 in Medlyn et al. 2007
+        float GBHF; // Boundary ctx.diag.layer conductance to heat transfer by free convection (single sided) in mol ctx.params.m-2 s-1. Leuning et al (1995) PC&E 18:1183-1200 Eqns E3 & E4. Equation A1 in Medlyn et al. 2007
         if (abs(TLEAF - Ta) > 0.01)
         { // this is to speed up: calculating GBHF involves a pow, so do only if difftemp is not zero.
             // float GRASHOF = 1.6e8 * abs(TLEAF-TAIR) * pow(WLEAF,3.0); // Grashof number
@@ -1554,23 +1554,23 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         }
         else
             GBHF = 0.0;
-        GBH = GBHU + GBHF;      // Total boundary ctx.diag.layer conductance to heat (single sided), in mol m-2 s-1
-        GH = 2 * (GBH + GRADN); // GH heat and radiative conductance (free & forced & radiative components), mol m-2 s-1, to be used in the isothermal version of the Penman-Monteith equation (always two sided, hence the factor 2)
+        GBH = GBHU + GBHF;      // Total boundary ctx.diag.layer conductance to heat (single sided), in mol ctx.params.m-2 s-1
+        GH = 2 * (GBH + GRADN); // GH heat and radiative conductance (free & forced & radiative components), mol ctx.params.m-2 s-1, to be used in the isothermal version of the Penman-Monteith equation (always two sided, hence the factor 2)
         // if (t_sp_lab==6) GBH*=2; // test to see if assuming that Cecropia obtusa is amphistomatous (and not hypostomatous) would solve the issue found when ALEAF is big, wleaf is big (and hence GBH small) that leads to negative CS.... IM 09/09/2021
-        HDIVT = GH * CPAIR * AIRMA; // in J m-2 s-1 K-1, useful in several calculations below
+        HDIVT = GH * CPAIR * AIRMA; // in J ctx.params.m-2 s-1 K-1, useful in several calculations below
         GBV = GBVGBH * GBH;         // Boundary ctx.diag.layer conductance for water vapour, for hypostomatous leaves (single-sided value). Note: we thus here assumed that all leaves are hypostomatous, this is a reasonable assumption as few species have been reported to have amphistomatous leaves in tropical forests (e.g. Drake et al. 2019 New phytologist; Muir 2015 Proc Roy Soc; email with Lawren Sack Oct. 29th 2020). Cf. comment in Leuning et al. 1995 after equ. E5.
-        GSV = GSVGSC * GSC;         // Stomatal conductance for water vapour, in mol H2O m-2 s-1
+        GSV = GSVGSC * GSC;         // Stomatal conductance for water vapour, in mol H2O ctx.params.m-2 s-1
         if ((GSV / GBV) > 100000)
             GV = GBV;
         else
-            GV = (GBV * GSV) / (GBV + GSV); // Total conductance to water vapour (single-sided value: hypostomatous; stomatal & bdry ctx.diag.layer components in series), mol H2O m-2 s-1 //
+            GV = (GBV * GSV) / (GBV + GSV); // Total conductance to water vapour (single-sided value: hypostomatous; stomatal & bdry ctx.diag.layer components in series), mol H2O ctx.params.m-2 s-1 //
 
         if (isnan(GSV) || isnan(GV) || (GSV < 0))
         {
             cout << "Warning in FluxesLeaf: " << " GV= " << GV << ", GSC= " << GSC << ", GBV= " << GBV << ", GSV=" << GSV << ", GSC=" << GSC << ", ALEAF=" << ALEAF << ", GSVGSC= " << GSVGSC << ", ALEAF=" << ALEAF << ", PPFD=" << PPFD << ", DS=" << DS << ", ITER=" << ITER << ", WIND=" << WIND << endl;
         }
 
-        // Computation of leaf-level evapotranspiration (ET) using the Penman-Monteith equation (mol H2O m-2 s-1).
+        // Computation of leaf-level evapotranspiration (ET) using the Penman-Monteith equation (mol H2O ctx.params.m-2 s-1).
         if (GV > 0.0)
             lambdaET = (SLOPE * Rnetiso + 1000.0 * VPDa * HDIVT) / (SLOPE + GAMMA * GH / GV);
         else
@@ -1580,18 +1580,18 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
         if (lambdaET < 0)
             ET = 0.0;
         else
-            ET = lambdaET / LHV; // in mol H2O m-2 s-1
+            ET = lambdaET / LHV; // in mol H2O ctx.params.m-2 s-1
 
         // Update of TLEAF, CS, and DS
-        CS = Cair - ALEAF * GBHGBC / GBH; // CO2 concentration at the leaf surface, in micromol mol-1
+        CS = ctx.params.Cair - ALEAF * GBHGBC / GBH; // CO2 concentration at the leaf surface, in micromol mol-1
         if (CS < 0.0)
             CS = 1.0;
-        DS = ET * PRESS / GSV; // in kPa; IM important change in regards to Duursma R package or MAESTRA/MAESPA code: GV replaced by GSV (cf for eg Medvigy et al. 2009 equ B16, cf. doc comments on Physiol V6)
-        // DS = ET * PRESS / GV; // test cluster 14/05/22
+        DS = ET * ctx.params.PRESS / GSV; // in kPa; IM important change in regards to Duursma R package or MAESTRA/MAESPA code: GV replaced by GSV (cf for eg Medvigy et al. 2009 equ B16, cf. doc comments on Physiol V6)
+        // DS = ET * ctx.params.PRESS / GV; // test cluster 14/05/22
 
         if (CS <= 0)
         {
-            cout << "Warning in FluxesLeaf: " << " CS= " << CS << ", Cair=" << Cair << ", ALEAF=" << ALEAF << ", GBH=" << GBH << ", GBHGBC=" << GBHGBC << endl;
+            cout << "Warning in FluxesLeaf: " << " CS= " << CS << ", Cair=" << ctx.params.Cair << ", ALEAF=" << ALEAF << ", GBH=" << GBH << ", GBHGBC=" << GBHGBC << endl;
         }
 
         /*if(DS < 0 ) {
@@ -1613,13 +1613,13 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
 
         if (isnan(DS) || isnan(ET) || isnan(ALEAF) || ET < 0.0 || TLEAF <= 0.0 || TLEAF > 50.0 || CS < 0 || DS < 0 || CS > 100000)
         {
-            cout << "Warning in FluxesLeaf: " << " ALEAF= " << ALEAF << ", ET= " << ET << ", CS= " << CS << ", PPFD=" << PPFD << ", DS= " << DS << ", TLEAF= " << TLEAF << ", GSV=" << GSV << ", GV= " << GV << ", Rnetsiso=" << Rnetiso << "; lambdaET=" << lambdaET << "; HDIVT=" << HDIVT << "; TDIFF=" << TDIFF << "; Ta=" << Ta << "; Cair=" << Cair << "; GBH=" << GBH << "; Cair=" << Cair << "; GBHGBC=" << GBHGBC << "; t_site=" << t_site << "; t_sp_lab=" << t_sp_lab << "; ITER=" << ITER << endl;
+            cout << "Warning in FluxesLeaf: " << " ALEAF= " << ALEAF << ", ET= " << ET << ", CS= " << CS << ", PPFD=" << PPFD << ", DS= " << DS << ", TLEAF= " << TLEAF << ", GSV=" << GSV << ", GV= " << GV << ", Rnetsiso=" << Rnetiso << "; lambdaET=" << lambdaET << "; HDIVT=" << HDIVT << "; TDIFF=" << TDIFF << "; Ta=" << Ta << "; Cair=" << ctx.params.Cair << "; GBH=" << GBH << "; Cair=" << ctx.params.Cair << "; GBHGBC=" << GBHGBC << "; t_site=" << t_site << "; t_sp_lab=" << t_sp_lab << "; ITER=" << ITER << endl;
         }
     }
 
     // cout << "itmax=" << itmax << endl;
 
-    // At the end of loop, return water (ET, in umol H2O m-2 s-1) and carbon (assimilation) fluxes
+    // At the end of loop, return water (ET, in umol H2O ctx.params.m-2 s-1) and carbon (assimilation) fluxes
     ET = ET * 1e6;
 
     // if (ctx.time.iter > 4000 && t_height> 10.0) {
@@ -1627,8 +1627,8 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
     // }
 
     leafFluxes outFluxes;
-    outFluxes.carbon_flux = ALEAF; // in micromol CO2 m-2 s-1
-    outFluxes.water_flux = ET;     // in micromol H20 m-2 s-1
+    outFluxes.carbon_flux = ALEAF; // in micromol CO2 ctx.params.m-2 s-1
+    outFluxes.water_flux = ET;     // in micromol H20 ctx.params.m-2 s-1
     return outFluxes;
 }
 
@@ -1650,8 +1650,8 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     if (DS < 0.0005)
         GSDIVA = (1.0 + t_g1 / sqrt(0.0005)) / CS; // VPDMIN in MAESPA/Plantecophys R package
     else
-        GSDIVA = (1.0 + t_g1 / sqrt(DS)) / CS; // Medlyn et al. 2011 Global Change Biology. Note that g1 is now a tree class variable that is initiated at tree birth (in Tree::Birth) and updated in Tree::Water_Availability depending on the tree water stress.
-    // float GSDIVA = (1.0 + g1/sqrt(VPD))/(CS-GammaT); //Dewar et al. 2018 New Phytologist
+        GSDIVA = (1.0 + t_g1 / sqrt(DS)) / CS; // Medlyn et al. 2011 Global Change Biology. Note that ctx.params.g1 is now a tree class variable that is initiated at tree birth (in Tree::Birth) and updated in Tree::Water_Availability depending on the tree water stress.
+    // float GSDIVA = (1.0 + ctx.params.g1/sqrt(VPD))/(CS-GammaT); //Dewar et al. 2018 New Phytologist
     if (GSDIVA <= 0 || isnan(GSDIVA))
     {
         cout << "Warning in Photosyn ! GSDIVA=" << GSDIVA << "; DS=" << DS << "; CS=" << CS << endl;
@@ -1664,9 +1664,9 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
     // Solution when Rubisco activity is limiting
     float VcmaxTW = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT] * t_WSF_A;
-    A = g0 + GSDIVA * (VcmaxTW - Rday);
-    B = (1.0 - CS * GSDIVA) * (VcmaxTW - Rday) + g0 * (KmT - CS) - GSDIVA * (VcmaxTW * GammaT + KmT * Rday);
-    C = -(1.0 - CS * GSDIVA) * (VcmaxTW * GammaT + KmT * Rday) - g0 * KmT * CS;
+    A = ctx.params.g0 + GSDIVA * (VcmaxTW - Rday);
+    B = (1.0 - CS * GSDIVA) * (VcmaxTW - Rday) + ctx.params.g0 * (KmT - CS) - GSDIVA * (VcmaxTW * GammaT + KmT * Rday);
+    C = -(1.0 - CS * GSDIVA) * (VcmaxTW * GammaT + KmT * Rday) - ctx.params.g0 * KmT * CS;
     float CIC = QUAD(A, B, C, 1); // Finds larger root of quadratic function
     if ((CIC <= 0.0) || (CIC - CS > 0.01))
     { // newIM: have replaced CIC>CS by (CIC-CS>0.01) to avoid error due to comparing floats (maybe there would be a best way to fix this...)
@@ -1677,12 +1677,12 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
     // Solution when electron transport rate is limiting
     float JmaxTW = t_Jmax * ctx.lookup.LookUp_JmaxT[convT] * t_WSF_A;
-    float I = alpha * PPFD;
-    float J = QUAD(theta, -(I + JmaxTW), JmaxTW * I, -1); // theta is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
+    float I = ctx.params.alpha * PPFD;
+    float J = QUAD(ctx.params.theta, -(I + JmaxTW), JmaxTW * I, -1); // ctx.params.theta is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
     float VJ = J * 0.25;
-    A = g0 + GSDIVA * (VJ - Rday);
-    B = (1.0 - CS * GSDIVA) * (VJ - Rday) + g0 * (2.0 * GammaT - CS) - GSDIVA * (VJ * GammaT + 2.0 * GammaT * Rday);
-    C = -(1.0 - CS * GSDIVA) * GammaT * (VJ + 2.0 * Rday) - g0 * 2.0 * GammaT * CS;
+    A = ctx.params.g0 + GSDIVA * (VJ - Rday);
+    B = (1.0 - CS * GSDIVA) * (VJ - Rday) + ctx.params.g0 * (2.0 * GammaT - CS) - GSDIVA * (VJ * GammaT + 2.0 * GammaT * Rday);
+    C = -(1.0 - CS * GSDIVA) * GammaT * (VJ + 2.0 * Rday) - ctx.params.g0 * 2.0 * GammaT * CS;
     float CIJ = QUAD(A, B, C, 1); // Finds larger root of quadratic function
     AJ = VJ * (CIJ - GammaT) / (CIC + 2.0 * GammaT);
     if ((AJ - Rday) < 1.0e-6)
@@ -1692,7 +1692,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     }
 
     // Co-limitation
-    Anet = fminf(AC, AJ) - Rday; // compute the *net* assimilation rate, in micromol C02 m-2 s-1
+    Anet = fminf(AC, AJ) - Rday; // compute the *net* assimilation rate, in micromol C02 ctx.params.m-2 s-1
 
     if (isnan(Anet) || isnan(GSDIVA))
     {
@@ -1705,10 +1705,10 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     }
 
     leafFluxes outPhotosyn;
-    outPhotosyn.carbon_flux = Anet;              // in micromol C02 m-2 s-1
-    outPhotosyn.water_flux = g0 + GSDIVA * Anet; // in mol CO2 m-2 s-1, the conversion to mol H20 is made in function FluxesLeaf.
-    if (outPhotosyn.water_flux < g0)
-        outPhotosyn.water_flux = g0;
+    outPhotosyn.carbon_flux = Anet;              // in micromol C02 ctx.params.m-2 s-1
+    outPhotosyn.water_flux = ctx.params.g0 + GSDIVA * Anet; // in mol CO2 ctx.params.m-2 s-1, the conversion to mol H20 is made in function FluxesLeaf.
+    if (outPhotosyn.water_flux < ctx.params.g0)
+        outPhotosyn.water_flux = ctx.params.g0;
 
     if (isnan(outPhotosyn.water_flux) || isnan(outPhotosyn.carbon_flux))
     {
@@ -1732,15 +1732,15 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     float Rday = t_Rdark * ctx.lookup.LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
 
     // Model of stomatal conductance for CO2
-    float GSDIVA = (1.0 + t_g1 / sqrt(DS)) / CS; // Medlyn et al. 2011 Global Change Biology. Note that g1 is now a tree class variable that is initiated at tree birth (in Tree::Birth) and updated in Tree::Water_Availability depending on the tree water stress.
-    // float GSDIVA = (1.0 + g1/sqrt(VPD))/(CS-GammaT); //Dewar et al. 2018 New Phytologist
+    float GSDIVA = (1.0 + t_g1 / sqrt(DS)) / CS; // Medlyn et al. 2011 Global Change Biology. Note that ctx.params.g1 is now a tree class variable that is initiated at tree birth (in Tree::Birth) and updated in Tree::Water_Availability depending on the tree water stress.
+    // float GSDIVA = (1.0 + ctx.params.g1/sqrt(VPD))/(CS-GammaT); //Dewar et al. 2018 New Phytologist
     if (GSDIVA <= 0 || isnan(GSDIVA))
     {
         cout << "Warning in Photosyn ! GSDIVA=" << GSDIVA << "; DS=" << DS << "; CS=" << CS << endl;
         cout << "In Photosyn: PPFD=" << PPFD << "; TLEAF=" << TLEAF << "; CS=" << CS << "; DS=" << DS << endl;
     }
 
-    // Internal CO2 concentration, assuming that minimal conductance (cf. Duursma et al. 2019 New Phytologist, ~cuticular conductance) is negligeable (g0~0) [Note that, if g0>0, then a quadratic solution must be computed, which complexifies and should lengthen the speed of the code ==> to try later]. Expression derived using Medlyn et al. 2011 GCB model (see equ. 7 in Marechaux & Chave 2017, and equ. 13 in Medlyn et al. 2011 corrigendum)
+    // Internal CO2 concentration, assuming that minimal conductance (cf. Duursma et al. 2019 New Phytologist, ~cuticular conductance) is negligeable (ctx.params.g0~0) [Note that, if ctx.params.g0>0, then a quadratic solution must be computed, which complexifies and should lengthen the speed of the code ==> to try later]. Expression derived using Medlyn et al. 2011 GCB model (see equ. 7 in Marechaux & Chave 2017, and equ. 13 in Medlyn et al. 2011 corrigendum)
     CI = CS * t_g1 / (t_g1 + sqrt(DS));
 
     // Farquhar model of photosynthesis
@@ -1755,15 +1755,15 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
         AC = VcmaxTW * (CI - GammaT) / (CI + KmT);
     // Solution when electron transport rate is limiting
     float JmaxTW = t_Jmax * ctx.lookup.LookUp_JmaxT[convT] * t_WSF_A;
-    float I = alpha * PPFD;
-    float J = (I + JmaxTW - sqrt((JmaxTW + I) * (JmaxTW + I) - 4.0 * theta * JmaxTW * I)) * 0.5 / theta; // THETA is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
+    float I = ctx.params.alpha * PPFD;
+    float J = (I + JmaxTW - sqrt((JmaxTW + I) * (JmaxTW + I) - 4.0 * ctx.params.theta * JmaxTW * I)) * 0.5 / ctx.params.theta; // THETA is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
     AJ = 0.25 * J * (CI - GammaT) / (CI + 2.0 * GammaT);
     if ((AJ - Rday) < 1.0e-6)
     {
         CI = CS; // Below light compensation point
         AJ = 0.25 * J * (CI - GammaT) / (CI + 2.0 * GammaT);
     }
-    Anet = fminf(AC, AJ) - Rday; // compute the *net* assimilation rate, in micromol C02 m-2 s-1
+    Anet = fminf(AC, AJ) - Rday; // compute the *net* assimilation rate, in micromol C02 ctx.params.m-2 s-1
 
     if (isnan(Anet) || isnan(GSDIVA))
     {
@@ -1776,12 +1776,12 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     }
 
     leafFluxes outPhotosyn;
-    outPhotosyn.carbon_flux = Anet; // in micromol C02 m-2 s-1
+    outPhotosyn.carbon_flux = Anet; // in micromol C02 ctx.params.m-2 s-1
     if (fabs(GSDIVA * Anet) < 1.0e-6)
         outPhotosyn.water_flux = 1.0e-5; // GSC should not have null values
     else
-        outPhotosyn.water_flux = fabs(GSDIVA * Anet); // in mol CO2 m-2 s-1, the conversion to mol H20 is made in function FluxesLeaf. Note that it is here assumed that the minimal stomatal conductance (g0) is negligeable.
-    // if (outPhotosyn.water_flux<g0) outPhotosyn.water_flux=g0; // just as a reminder: in both Duursma's pacakage and Vezy's MAESPA code, such line is added (in Duursma, it is written: "# Extra step here; GS can be negative", in Vezy, it is written: "! Set nearly zero conductance (for numerical reasons)". this results in no possible negative values or zero values for GSC.
+        outPhotosyn.water_flux = fabs(GSDIVA * Anet); // in mol CO2 ctx.params.m-2 s-1, the conversion to mol H20 is made in function FluxesLeaf. Note that it is here assumed that the minimal stomatal conductance (ctx.params.g0) is negligeable.
+    // if (outPhotosyn.water_flux<ctx.params.g0) outPhotosyn.water_flux=ctx.params.g0; // just as a reminder: in both Duursma's pacakage and Vezy's MAESPA code, such line is added (in Duursma, it is written: "# Extra step here; GS can be negative", in Vezy, it is written: "! Set nearly zero conductance (for numerical reasons)". this results in no possible negative values or zero values for GSC.
 
     if (isnan(outPhotosyn.water_flux) || isnan(outPhotosyn.carbon_flux))
     {
@@ -1794,7 +1794,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 #endif
 
 //! - Function Tree::dailyGPPleaf when the WATER option is off, Tree::dailyFluxesLeaf when WATER option is on
-//! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf, or Tree::FluxesLeaf) averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/m^2/s.
+//! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf, or Tree::FluxesLeaf) averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/ctx.params.m^2/s.
 leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float ExtinctLW, float PPFDinc, float &wf_1016)
 {
     float dailyA = 0.0;
@@ -1818,11 +1818,11 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
         if (ctx.time.iter == -1)
         {
-            ppfd_vardaytimestep = PPFD * ctx.climate.WDailyMean_all[i] * SWtoPPFD;
-            ppfd_top_vardaytimestep = ctx.climate.WDailyMean_all[i] * SWtoPPFD;
+            ppfd_vardaytimestep = PPFD * ctx.climate.WDailyMean_all[i] * ctx.params.SWtoPPFD;
+            ppfd_top_vardaytimestep = ctx.climate.WDailyMean_all[i] * ctx.params.SWtoPPFD;
             t_top_vardaytimestep = ctx.climate.tDailyMean_all[i];
             vpd_top_vardaytimestep = ctx.climate.VPDDailyMean_all[i];
-            ppfd_inc_vardaytimestep = ctx.climate.WDailyMean_all[i] * SWtoPPFD;
+            ppfd_inc_vardaytimestep = ctx.climate.WDailyMean_all[i] * ctx.params.SWtoPPFD;
             vpd_vardaytimestep = VPD * ctx.climate.VPDDailyMean_all[i];
             t_vardaytimestep = ctx.climate.tDailyMean_all[i] - T;
             ws_vardaytimestep = W * ctx.climate.windDailyMean_all[i];
@@ -1830,11 +1830,11 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
         else
         {
             int c = (ctx.time.iter % ctx.time.nbdays) * ctx.time.nbsteps_varday + i;
-            ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[c] * SWtoPPFD;
-            ppfd_top_vardaytimestep = ctx.climate.varday_light[c] * SWtoPPFD;
+            ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[c] * ctx.params.SWtoPPFD;
+            ppfd_top_vardaytimestep = ctx.climate.varday_light[c] * ctx.params.SWtoPPFD;
             t_top_vardaytimestep = ctx.climate.varday_T[c];
             vpd_top_vardaytimestep = ctx.climate.varday_vpd[c];
-            ppfd_inc_vardaytimestep = PPFDinc * ctx.climate.varday_light[c] * SWtoPPFD;
+            ppfd_inc_vardaytimestep = PPFDinc * ctx.climate.varday_light[c] * ctx.params.SWtoPPFD;
             vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[c];
             t_vardaytimestep = ctx.climate.varday_T[c] - T;
             ws_vardaytimestep = W * ctx.climate.varday_WS[c];
@@ -1909,8 +1909,8 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
     // cout << "In dailyFluxesLeaf, final daily average: dailyA=" << dailyA << "; dailylT=" << dailylT << endl;
 
     leafFluxes dailyF;
-    dailyF.carbon_flux = dailyA; // in micromol C02 m-2 s-1
-    dailyF.water_flux = dailylT; // in micromol H20 m-2 s-1
+    dailyF.carbon_flux = dailyA; // in micromol C02 ctx.params.m-2 s-1
+    dailyF.water_flux = dailylT; // in micromol H20 ctx.params.m-2 s-1
 
     if (isnan(dailyA) || isnan(dailylT))
     {
@@ -1924,17 +1924,17 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
 //! - Function Tree::GPPleaf when the WATER option is off, Tree::FluxesLeaf when WATER option is on
 //! - Includes the Farquhar model of photosynthesis and Medlyn et al. 2011 model of stomatal conductance: formula for s_fci (ci/ca) -- see also Prentice et al 2014 Ecology Letters and Lin et al 2015 Nature Climate Change; min added in order to prevent ci:ca bigger than 1 (even though Ehleringer et al 1986 reported some values above 1 (Fig3)
-//! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C/m^2/s.
-//! - It is converted into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
+//! - Returns the primary productivity (assimilation) per unit leaf area, i.e. in micromoles C/ctx.params.m^2/s.
+//! - It is converted into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 and ctx.time.nbhours_covered is the duration read in the daily variation file
 //! - NB1: 12 is the molar mass of carbon NB2: ctx.time.timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
 //! - BEWARE: slight inconsistency through use of 365.25 when daily ctx.time.timestep is likely to be given as 365, but not incorrect. Commented version below was in use prior to version 2.3.0
 //! lookup tables for acceleration of T dependence. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
 float Tree::GPPleaf(float PPFD, float VPD, float T)
 {
-    // v.2.3.0: theta defined as a global variable
-    // theta=0.7;   // this is the fixed value of theta used by von Caemmerer 2000
+    // v.2.3.0: ctx.params.theta defined as a global variable
+    // ctx.params.theta=0.7;   // this is the fixed value of ctx.params.theta used by von Caemmerer 2000
 
-    // float theta=0.76+0.018*T-0.00037*T*T;         // theta, but temperature dependent cf. Bernacchi et al 2003 PCE
+    // float ctx.params.theta=0.76+0.018*T-0.00037*T*T;         // ctx.params.theta, but temperature dependent cf. Bernacchi et al 2003 PCE
 
     // Parameters for Farquhar model, with temperature dependencies
     int convT = int(ctx.lookup.iTaccuracy * T); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
@@ -1943,15 +1943,15 @@ float Tree::GPPleaf(float PPFD, float VPD, float T)
     float KmT = ctx.lookup.LookUp_KmT[convT];
     float GammaT = ctx.lookup.LookUp_GammaT[convT];
 
-    // float g1 = -3.97 * t_wsg + 6.53 (Lin et al. 2015)
+    // float ctx.params.g1 = -3.97 * t_wsg + 6.53 (Lin et al. 2015)
 
-    float t_fci = g1 / (g1 + sqrt(VPD));
+    float t_fci = ctx.params.g1 / (ctx.params.g1 + sqrt(VPD));
     float VcmaxT = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT];
     float JmaxT = t_Jmax * ctx.lookup.LookUp_JmaxT[convT];
 
     // Farquhar - -von Caemmerer - Berry model of carbon assimilation rate
-    float I = alpha * PPFD;
-    float J = (I + JmaxT - sqrt((JmaxT + I) * (JmaxT + I) - 4.0 * theta * JmaxT * I)) * 0.5 / theta;
+    float I = ctx.params.alpha * PPFD;
+    float J = (I + JmaxT - sqrt((JmaxT + I) * (JmaxT + I) - 4.0 * ctx.params.theta * JmaxT * I)) * 0.5 / ctx.params.theta;
     float A = fminf(VcmaxT / (t_fci + KmT), 0.25 * J / (t_fci + 2.0 * GammaT)) * (t_fci - GammaT);
 
     return A;
@@ -1959,7 +1959,7 @@ float Tree::GPPleaf(float PPFD, float VPD, float T)
 
 //! - Function Tree::dailyGPPleaf when the WATER option is off, Tree::dailyFluxesLeaf when WATER option is on
 //! - Includes Medlyn et al. 2011 model of stomatal conductance: formula for s_fci (ci/ca) -- see also Prentice et al 2014 Ecology Letters and Lin et al 2015 Nature Climate Change; min added in order to prevent ci:ca bigger than 1 (even though Ehleringer et al 1986 reported some values above 1 (Fig3)
-//! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf)averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/m^2/s.
+//! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf)averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/ctx.params.m^2/s.
 float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
 {
     float dailyA = 0.0;
@@ -1979,9 +1979,9 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
         // the 6 lines in comment below corresponds to a finer version in which the multiplier is computed and used every 48 half hour, ie. with the corresponding environment instead of assuming a constant multiplier correponding the one at maximum incoming irradiance
         // float hhA=0;
         // hhA=GPPleaf(PPFD*vardaytime_light[i], VPD*vardaytime_vpd[i], T*vardaytime_T[i]);
-        // float alpha=phi*PPFD*vardaytime_light[i]/hhA;
-        // float D=klight*dens*CD;
-        // hhA*=alpha/(D*(alpha-1))*log(alpha/(1+(alpha-1)*exp(-D)));
+        // float ctx.params.alpha=ctx.params.phi*PPFD*vardaytime_light[i]/hhA;
+        // float D=ctx.params.klight*ctx.params.dens*CD;
+        // hhA*=ctx.params.alpha/(D*(ctx.params.alpha-1))*log(ctx.params.alpha/(1+(ctx.params.alpha-1)*exp(-D)));
         // dailyA+=hhA;
     }
     dailyA *= ctx.time.inv_nbsteps_varday;
@@ -2004,16 +2004,16 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
         // the 6 lines in comment below corresponds to a finer version in which the multiplier is computed and used every 48 half hour, ie. with the corresponding environment instead of assuming a constant multiplier correponding the one at maximum incoming irradiance
         // float hhA=0;
         // hhA=GPPleaf(PPFD*vardaytime_light[i], VPD*vardaytime_vpd[i], T*vardaytime_T[i]);
-        // float alpha=phi*PPFD*vardaytime_light[i]/hhA;
-        // float D=klight*LAI;
-        // hhA*=alpha/(D*(alpha-1))*log(alpha/(1+(alpha-1)*exp(-D)));
+        // float ctx.params.alpha=ctx.params.phi*PPFD*vardaytime_light[i]/hhA;
+        // float D=ctx.params.klight*LAI;
+        // hhA*=ctx.params.alpha/(D*(ctx.params.alpha-1))*log(ctx.params.alpha/(1+(ctx.params.alpha-1)*exp(-D)));
         // dailyA+=hhA;
     }
     // vardaytime_light is the averaged (across one year, meteo station Nouragues DZ) and normalized (from 0 to 1) daily fluctuation of light, with half-hour time step, during the day time (from 7am to 7pm, ie 12 hours in total), same for vardaytime_vpd and vardaytime_T. Taking into account these daily variation is necessary considering the non-linearity of FvCB model
 
-    float alpha = phi * PPFD / GPPleaf(PPFD, VPD, T);                               // alpha is a non-dimensional figure used to compute the multiplier below
-    float D = klight * LAI;                                                         // D is a non-dimensional figure used to compute the multiplier below, update in v.2.5: replaced dens * CD by LAI
-    dailyA *= alpha / (D * (alpha - 1)) * log(alpha / (1 + (alpha - 1) * exp(-D))); // the FvCB assimilation rate computed at the top of the tree crown is multiplied by a multiplier<1, to account for the lower rate at lower light level within the crown depth. This multiplier is computed assuming that change in photosynthetic assimilation rate within a tree crown is mainly due to light decrease due to self-shading following a Michealis-menten relationship (ie. we assume that 1/ the change is not due to changes in VPD or temperature, which are supposed homogeneous at the intra-crown scale, and 2/ that other tree contributions to light decrease is neglected).
+    float alpha_crown = ctx.params.phi * PPFD / GPPleaf(PPFD, VPD, T); // RENAMED: ctx.params.alpha → alpha_crown (FvCB canopy integration ratio; distinct from global ctx.params.alpha = apparent quantum yield)
+    float D = ctx.params.klight * LAI;                                                         // D is a non-dimensional figure used to compute the multiplier below, update in v.2.5: replaced ctx.params.dens * CD by LAI
+    dailyA *= alpha_crown / (D * (alpha_crown - 1)) * log(alpha_crown / (1 + (alpha_crown - 1) * exp(-D))); // the FvCB assimilation rate computed at the top of the tree crown is multiplied by a multiplier<1, to account for the lower rate at lower light level within the crown depth. This multiplier is computed assuming that change in photosynthetic assimilation rate within a tree crown is mainly due to light decrease due to self-shading following a Michealis-menten relationship (ie. we assume that 1/ the change is not due to changes in VPD or temperature, which are supposed homogeneous at the intra-crown scale, and 2/ that other tree contributions to light decrease is neglected).
 
     dailyA *= ctx.time.inv_nbsteps_varday;
     return dailyA;
@@ -2057,7 +2057,7 @@ float Tree::CalcAGB()
     return (agb);
 }
 
-// Calculation of the increment of dbh from assimilated carbon/biomass (in m)
+// Calculation of the increment of dbh from assimilated carbon/biomass (in ctx.params.m)
 float Tree::CalcIncrementDBH(float delta_agb)
 {
     float ddbh = fmaxf((delta_agb / (0.559 * t_wsg * 1.0e6 * t_dbh * ctx.grid.LH * t_height * ctx.grid.LV * (3.0 - t_dbh / (t_dbh + t_ah)))), 0.0) * ctx.grid.NH;
@@ -2080,7 +2080,7 @@ float Tree::CalcCt()
 {
     float dbhrealmax = t_dbhmax * 1.5;
     float hrealmax = t_mult_height * CalcHeightBaseline(t_ah, t_hmax, dbhrealmax); // realized maximum height
-    float vC_intraspecific = vC / 1.5 - 1.0 / (2.3 * t_mult_height) + 1.0 / 2.3;   //! since v.2.5: adjusting vC to intraspecific height variation. If vC was not modified, tall trees would start falling at much larger heights than smaller trees of the same species and with the same dbh, despite a much worse height/dbh ratio. The default assumption is now that the minimum onset of treefalls should be around the same height threshold irrespective of the height multiplier, but stronger assumptions would be justified too (i.e. tall trees falling more easily). The formula is derived as follows: assuming that the onset of treefall can be described by the 99.5 percentile of the sqrt(-log(uniform)) distribution, which is 2.3, we calculate the corresponding Ct_min and impose the condition that it stays equal irrespective of t_mult_height. In this case, we can solve for vC_intraspecific. This is a conservative assumption, likely a stronger dependence on dbh/height ratio would be found, but probably superseded by E-Ping's module anyways
+    float vC_intraspecific = ctx.params.vC / 1.5 - 1.0 / (2.3 * t_mult_height) + 1.0 / 2.3;   //! since v.2.5: adjusting ctx.params.vC to intraspecific height variation. If ctx.params.vC was not modified, tall trees would start falling at much larger heights than smaller trees of the same species and with the same dbh, despite a much worse height/dbh ratio. The default assumption is now that the minimum onset of treefalls should be around the same height threshold irrespective of the height multiplier, but stronger assumptions would be justified too (i.e. tall trees falling more easily). The formula is derived as follows: assuming that the onset of treefall can be described by the 99.5 percentile of the sqrt(-log(uniform)) distribution, which is 2.3, we calculate the corresponding Ct_min and impose the condition that it stays equal irrespective of t_mult_height. In this case, we can solve for vC_intraspecific. This is a conservative assumption, likely a stronger dependence on dbh/height ratio would be found, but probably superseded by E-Ping's module anyways
     float Ct = fminf(float(ctx.grid.HEIGHT - 1), hrealmax * fmaxf(1.0 - vC_intraspecific * sqrt(-log(gsl_rng_uniform_pos(ctx.rng.gslrand))), 0.0));
     return (Ct);
 }
@@ -2160,7 +2160,7 @@ void Tree::UpdateHeight()
 void Tree::UpdateCR()
 {
     t_CR = CalcCRBaseline(t_dbh) * t_mult_CR;
-    t_CR = fmaxf(CR_min, t_CR);
+    t_CR = fmaxf(ctx.params.CR_min, t_CR);
 }
 
 // Updates t_CD based on t_height
@@ -2224,10 +2224,10 @@ void Tree::CalcLAImax()
         float GPP_LAI = Tree::dailyGPPleaf(PPFD_LAI, VPD_LAI, Tmp_LAI);
         float Rday_LAI = Tree::dailyRdayleaf(Tmp_LAI);
 #endif
-        float effLA = 0.66 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                // convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
+        float effLA = 0.66 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                // convert  from micromoles C/ctx.params.m^2/s into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
         float effLA_night = 0.83 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
-        // float effLA = 0.5 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep; //convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last ctx.diag.layer and fill it with old leaves at maximum.
+        // float effLA = 0.5 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep; //convert  from micromoles C/ctx.params.m^2/s into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. here we assume that the leaves that will determine the LAImax are the one at the bottom of the crown and taht these are all old leaves, with hald the assimilation of mature leaves. Note that this is not the case for phenological strategies that exchange all their leaves. So when moving to a variable t_LAImax, we should account for the leaf area of the last ctx.diag.layer and fill it with old leaves at maximum.
         // float effLA_night = 0.75 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep;  //same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
 
         GPP_LAI *= effLA;
@@ -2323,7 +2323,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
                 {
                     int site = col + ctx.grid.cols * row + ctx.grid.SBORD;
                     // first get voxel field densities
-                    float absorb_prev = LAI3D[height_abovetop][site + ctx.grid.SBORD];
+                    float absorb_prev = ctx.field.LAI3D[height_abovetop][site + ctx.grid.SBORD];
                     int intabsorb = CalcIntabsorb(absorb_prev);
 
                     // obtain PPFD for the voxel, and also record the circled area
@@ -2346,7 +2346,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
 
         // now calculate the effective LAI above the tree
         // importantly, we use the yearly average here, as the maximum tree LAI is also defined with respect to yearly averages
-        LAIexperienced_eff = -log(ppfd_experienced / ctx.climate.WDailyMean_year) / kpar;
+        LAIexperienced_eff = -log(ppfd_experienced / ctx.climate.WDailyMean_year) / ctx.params.kpar;
         if (LAIexperienced_eff < 0.0001)
             LAIexperienced_eff = 0.0;
     }
@@ -2432,10 +2432,10 @@ float Tree::predLeafLifespanKikuzawa()
 #ifdef WATER
     float GPP_effective = (GPP - Rtot_by_Rabove * Rtotleaf_by_Rdark * Rnight + (Rtotleaf_by_Rdark - 1) * Rnight);
 #else
-    float GPP_effective = (GPP - Rtot_by_Rabove * Rday - Rtot_by_Rabove * Rnight); // in gC m^-2 day-1  we assume that Rday/Rnight decreases linearly as well, so we will use a GPP_eff = GPP - Rday;
+    float GPP_effective = (GPP - Rtot_by_Rabove * Rday - Rtot_by_Rabove * Rnight); // in gC ctx.params.m^-2 day-1  we assume that Rday/Rnight decreases linearly as well, so we will use a GPP_eff = GPP - Rday;
 #endif
 
-    GPP_effective *= ctx.time.nbhours_covered * 3600.0 * 12.0 / 1000000.0; // we convert micromoles C/m^2/s into gC/m^2/day (factor 12.0 for conversion into gC, 3600 for second-hour conversion, and 10^6 to convert micromoles to moles; finally, we divide by the total leaf area that intercepted the light, since
+    GPP_effective *= ctx.time.nbhours_covered * 3600.0 * 12.0 / 1000000.0; // we convert micromoles C/ctx.params.m^2/s into gC/ctx.params.m^2/day (factor 12.0 for conversion into gC, 3600 for second-hour conversion, and 10^6 to convert micromoles to moles; finally, we divide by the total leaf area that intercepted the light, since
 
     int convT = int(ctx.lookup.iTaccuracy * 25.0); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
     float Vcmax_25_mass = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT] / t_LMA;
@@ -2700,7 +2700,7 @@ void Tree::CalcRespGPP()
 #endif
     }
 
-    float effLA = 0.5 * (t_LA + t_matureLA) * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                        // we convert  from micromoles C/m^2/s into gC per m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file.
+    float effLA = 0.5 * (t_LA + t_matureLA) * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                        // we convert  from micromoles C/ctx.params.m^2/s into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file.
     float effLA_night = (0.75 * t_LA + 0.25 * t_matureLA) * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), and assuming that respiration of young and old leaves are 75% the one of mature leaves:  Kitajima et al. 2002 found no or small reductions in respiration with leaf age, Reich et al. 2009 did (Rdark/Amax constant), but often respiration declines are less steep than photosynthetic capacity, cf. Villar et al. 1995.
 
     t_GPP *= effLA;
@@ -2752,7 +2752,7 @@ void Tree::UpdateLeafDynamics()
     float SLA = 1.0 / t_LMA; // newIM, but should be added as a tree variable to avoid multiple computation
 
     float ileafdem_resolution = 1.0 / float(ctx.grid.leafdem_resolution);
-    float flush = 2.0 * fmaxf(t_NPP, 0.0) * falloccanopy * 0.68 * SLA; // 0.68 is the fraction of NPP allocated to leaves (the other 32% being allocated to twigs and fruits), retrieved from Chave et al. 2008, 2010.
+    float flush = 2.0 * fmaxf(t_NPP, 0.0) * ctx.params.falloccanopy * 0.68 * SLA; // 0.68 is the fraction of NPP allocated to leaves (the other 32% being allocated to twigs and fruits), retrieved from Chave et al. 2008, 2010.
     // fine resolution of flush
     float flush_fine = ileafdem_resolution * flush;
     float lambda_young = ileafdem_resolution * t_lambda_young;
@@ -2781,7 +2781,7 @@ void Tree::UpdateLeafDynamics()
     else
     {
         // dynamic leaf area regulation (!!!: TODO, literature references)
-        // the main idea is that the fixed fractions with which allocation to leaves and stem are modelled ("falloccanopy", "fallocwood", as fractions of newly assimilated carbon) are only regulative, i.e. they apply if the tree grows in sunlight without much constraint and still has space for new leaves. If a deviation from these conditions occurs, then the allocation patterns will change. 1) Reaching maximum leaf area: If a tree has filled its whole crown with leaves and any additional tree leaf would only result in more self-shading and a net loss of carbon, then the tree will only allocate leaves for keeping up the maximum leaf area and a) allocate excess carbon to a non-structural carbon (NSC) storage b) or allocate it to growth in diameter, if the storage is full already 2) Small or no potential for photosynthesis (maximum leaf area is smaller than the tree's actual leaf area, down to 0). Then, the tree will not allocate any carbon to leaf construction and reserve carbon mostly for respiration, storage or stem growth, until a gap appears. The module as a whole prioritizes leaf upkeep over growth, which is a conversative strategy. In reality trees or species may have more aggressive strategies (i.e. growing faster when shaded), but this would be worth a research project on its own
+        // the main idea is that the fixed fractions with which allocation to leaves and stem are modelled ("ctx.params.falloccanopy", "ctx.params.fallocwood", as fractions of newly assimilated carbon) are only regulative, i.e. they apply if the tree grows in sunlight without much constraint and still has space for new leaves. If a deviation from these conditions occurs, then the allocation patterns will change. 1) Reaching maximum leaf area: If a tree has filled its whole crown with leaves and any additional tree leaf would only result in more self-shading and a net loss of carbon, then the tree will only allocate leaves for keeping up the maximum leaf area and a) allocate excess carbon to a non-structural carbon (NSC) storage b) or allocate it to growth in diameter, if the storage is full already 2) Small or no potential for photosynthesis (maximum leaf area is smaller than the tree's actual leaf area, down to 0). Then, the tree will not allocate any carbon to leaf construction and reserve carbon mostly for respiration, storage or stem growth, until a gap appears. The module as a whole prioritizes leaf upkeep over growth, which is a conversative strategy. In reality trees or species may have more aggressive strategies (i.e. growing faster when shaded), but this would be worth a research project on its own
         // first, get LAmax, i.e. the maximum of leafarea that the tree could allocate before creating too much self-shading
         float LAIexperienced_eff;
         CalcLAmax(LAIexperienced_eff, t_LAmax);
@@ -2801,7 +2801,7 @@ void Tree::UpdateLeafDynamics()
 
         /* version where the multiplier modifies lambda_old, ie residence time in old leaf pool, more similar to Chen et al. 2020, and could be supported by a less negative TLP of old leaves than younger leaves. */
         // but still using an approach similar to Xu et al. 2016, ie. counting number of "dry days" to trigger an increase of old leaf fall
-        float Thres = fminf(pheno_a0 * t_tlp, -0.01 * t_height - pheno_b0);
+        float Thres = fminf(ctx.params.pheno_a0 * t_tlp, -0.01 * t_height - ctx.params.pheno_b0);
         if (t_phi_root < Thres)
             t_Ndays_dry++;
         else
@@ -2811,9 +2811,9 @@ void Tree::UpdateLeafDynamics()
         else
             t_Ndays_wet = 0;
         if (t_Ndays_dry >= 1)
-            t_pheno_factor -= pheno_delta;
+            t_pheno_factor -= ctx.params.pheno_delta;
         if (t_Ndays_wet >= 1)
-            t_pheno_factor += pheno_delta;
+            t_pheno_factor += ctx.params.pheno_delta;
         t_pheno_factor = fmaxf(0.001, fminf(1.0, t_pheno_factor));
         lambda_old = fmin(1.0, fmaxf(0.0, lambda_old / t_pheno_factor));
         t_LAmax = fmaxf(0.0, t_LAmax);
@@ -2823,7 +2823,7 @@ void Tree::UpdateLeafDynamics()
 #endif
 
         // carbon intended for tree growth, mobilized as if it was used for flushing leaves (in case it is needed, if not it will be backconverted at the end of the procedure), in leaf area units
-        float flush_biometry = 2.0 * fmaxf(t_NPP, 0.0) * fallocwood * 0.6 * SLA; // new in v. 2.4.0: only 60% of woody npp is actually used for construction, the rest is for branch fall repair (cf. Malhi et al. 2011)
+        float flush_biometry = 2.0 * fmaxf(t_NPP, 0.0) * ctx.params.fallocwood * 0.6 * SLA; // new in v. 2.4.0: only 60% of woody npp is actually used for construction, the rest is for branch fall repair (cf. Malhi et al. 2011)
         float flush_biometry_fine = ileafdem_resolution * flush_biometry;
 
         // storage carbon, mobilized as if it was used for flushing leaves (in case it is needed, if not, backconversion at end of procedure), in leaf area units
@@ -2941,7 +2941,7 @@ void Tree::UpdateLeafDynamics()
             }
             else
             {
-                float seedcarbon = t_NPP * falloccanopy * 0.08 * 0.5;
+                float seedcarbon = t_NPP * ctx.params.falloccanopy * 0.08 * 0.5;
                 t_multiplier_seed = int((carbon_excess + seedcarbon) / seedcarbon);
             }
         }
@@ -2957,7 +2957,7 @@ void Tree::UpdateLeafDynamics()
 
 // Compute biometric relations, including allometry
 //! - New standalone function in v.2.3.0
-//! - volume in m^3: the first factor of 2 is to convert C into biomass. the 1/s_ wsg to convert biomass into volume (g/cm^3). the 1e-6 term converts cm^3 into m^3 (the sole metric unit in the model). fallocwood is the fraction of biomass allocated to aboveground wood (stem + branches) growth. For the time being, we shall assume that a fixed proportion of NPP is allocated into AGB production. Currently, 0.20=%biomasse allocated to stem increment could be a global variable, even though this % allocation could in fact vary with resouce variation/co-limitation
+//! - volume in ctx.params.m^3: the first factor of 2 is to convert C into biomass. the 1/s_ wsg to convert biomass into volume (g/cm^3). the 1e-6 term converts cm^3 into ctx.params.m^3 (the sole metric unit in the model). ctx.params.fallocwood is the fraction of biomass allocated to aboveground wood (stem + branches) growth. For the time being, we shall assume that a fixed proportion of NPP is allocated into AGB production. Currently, 0.20=%biomasse allocated to stem increment could be a global variable, even though this % allocation could in fact vary with resouce variation/co-limitation
 void Tree::UpdateTreeBiometry()
 {
 
@@ -2967,7 +2967,7 @@ void Tree::UpdateTreeBiometry()
     float delta_agb;
     if (ctx.opt._LA_regulation == 0)
     {
-        delta_agb = 2.0 * t_NPP * fallocwood * 0.6; // new in v. 2.4.0: only 60% of woody npp is actually used for construction, the rest is for branch fall repair (cf. Malhi et al. 2011)
+        delta_agb = 2.0 * t_NPP * ctx.params.fallocwood * 0.6; // new in v. 2.4.0: only 60% of woody npp is actually used for construction, the rest is for branch fall repair (cf. Malhi et al. 2011)
     }
     else
     {
@@ -2980,7 +2980,7 @@ void Tree::UpdateTreeBiometry()
     // Tree dbh increment
     float ddbh = CalcIncrementDBH(delta_agb); // moved to a separate empirical function CalcIncrementDBH
     // With V=pi*r^2*h, increment of volume = dV = 2*pi*r*h*dr + pi*r^2*dh
-    // With isometric growth assumption (ddbh/dbh=dh/h)and dbh=2*r: dV=3/4*pi*dbh*h*ddbh, ddbh in m, it follows: ddbh = 4/3 * V = 4/3 * 1/(pi*dbh*h)
+    // With isometric growth assumption (ddbh/dbh=dh/h)and dbh=2*r: dV=3/4*pi*dbh*h*ddbh, ddbh in ctx.params.m, it follows: ddbh = 4/3 * V = 4/3 * 1/(pi*dbh*h)
     if (t_dbh + ddbh > 0.1 && t_dbh < 0.1)
         S[t_sp_lab].s_nbind10++;
     if (t_dbh + ddbh > 0.3 && t_dbh < 0.3)
@@ -3101,10 +3101,10 @@ void Tree::DisperseSeed()
     {
         int nbs;
         if (ctx.opt._SEEDTRADEOFF)
-            nbs = int(t_NPP * 2.0 * falloccanopy * 0.08 * 0.5 * (S[t_sp_lab].s_iseedmass)); // some multiplications could be avoided in this line.
+            nbs = int(t_NPP * 2.0 * ctx.params.falloccanopy * 0.08 * 0.5 * (S[t_sp_lab].s_iseedmass)); // some multiplications could be avoided in this line.
         else
-            nbs = nbs0 * t_multiplier_seed;
-        // else nbs=int(t_NPP*2*falloccanopy*0.08*0.5); // test 17/01/2017: use a factor to translate NPP into seeds produced, but not species specific, not linked to mass of grains
+            nbs = ctx.params.nbs0 * t_multiplier_seed;
+        // else nbs=int(t_NPP*2*ctx.params.falloccanopy*0.08*0.5); // test 17/01/2017: use a factor to translate NPP into seeds produced, but not species specific, not linked to mass of grains
         for (int i = 0; i < nbs; i++)
         {
             // Loop over number of produced seeds
@@ -3113,7 +3113,7 @@ void Tree::DisperseSeed()
             // here we restore the previous formulation by using the Rayleigh implementation from the gsl library
             // for the moment, we do not use the crown radius as an additional dispersal kernel. This would lead to a loss of large tree species locally, because they will have much less seeds within the plot
             float rho = gsl_ran_rayleigh(ctx.rng.gslrand, S[t_sp_lab].s_ds);
-            float theta_angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // Dispersal angle theta
+            float theta_angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // Dispersal angle ctx.params.theta
             int col_tree = t_site % ctx.grid.cols;
             int row_tree = t_site / ctx.grid.cols;
             int dist_cols = int(rho * cos(theta_angle));
@@ -3208,8 +3208,8 @@ void Tree::Treefall(float angle)
     row0 = t_site / ctx.grid.cols;
     col0 = t_site % ctx.grid.cols;
 
-    // update of Thurt field at the site of the tree, for consistency
-    // Thurt[0][t_site+ctx.grid.sites] = max(int(t_height),Thurt[0][t_site+ctx.grid.sites]);
+    // update of ctx.field.Thurt field at the site of the tree, for consistency
+    // ctx.field.Thurt[0][t_site+ctx.grid.sites] = max(int(t_height),ctx.field.Thurt[0][t_site+ctx.grid.sites]);
     // fallen stem destructs other trees
     for (int h = 1; h < h_int; h++)
     {                                                // loop on the fallen stem (horizontally)
@@ -3217,8 +3217,8 @@ void Tree::Treefall(float angle)
         if (xx < ctx.grid.cols)
         {
             yy = int(row0 + h * sin(angle)); // get projection in row (= yy) direction, where yy is absolute location
-            Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols] = max(int(t_height), int(Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols]));
-            // Thurt[0] where the stem fell, calculation: xx+(yy+ctx.grid.rows)*ctx.grid.cols= xx + yy*ctx.grid.cols + ctx.grid.rows*ctx.grid.cols = xx + yy*ctx.grid.cols + ctx.grid.sites / NEW in v.2.4: addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
+            ctx.field.Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols] = max(int(t_height), int(ctx.field.Thurt[0][xx + (yy + ctx.grid.rows) * ctx.grid.cols]));
+            // ctx.field.Thurt[0] where the stem fell, calculation: xx+(yy+ctx.grid.rows)*ctx.grid.cols= xx + yy*ctx.grid.cols + ctx.grid.rows*ctx.grid.cols = xx + yy*ctx.grid.cols + ctx.grid.sites / NEW in v.2.4: addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
         }
     }
 
@@ -3231,7 +3231,7 @@ void Tree::Treefall(float angle)
         for (int row = max(0, yy - r_int); row < min(ctx.grid.rows, yy + r_int + 1); row++)
         {
             if ((col - xx) * (col - xx) + (row - yy) * (row - yy) < r_int * r_int)
-                Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols] = max(int((t_height - t_CR * ctx.grid.NV * ctx.grid.LH) * 0.5), int(Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols])); // less severe damage than stem / NEW in v.2.4: max() or addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
+                ctx.field.Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols] = max(int((t_height - t_CR * ctx.grid.NV * ctx.grid.LH) * 0.5), int(ctx.field.Thurt[0][col + (row + ctx.grid.rows) * ctx.grid.cols])); // less severe damage than stem / NEW in v.2.4: max() or addition of damage instead of setting equal in order to account for cumulative damage (several treefalls hitting the same site)
         }
     }
     // v.2.4.0: outputs have been moved to Death() function
@@ -3306,7 +3306,7 @@ void Tree::histdbh()
 // Standard outputs during the simulation -- written to file
 void Tree::OutputTreeStandard(fstream &output)
 {
-    output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
+    output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << ctx.field.LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << ctx.field.LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
         output << "\t" << t_root_biomass[l];
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
@@ -3316,7 +3316,7 @@ void Tree::OutputTreeStandard(fstream &output)
 // Standard outputs during the simulation -- written to screen in real time
 void Tree::OutputTreeStandard()
 {
-    cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
+    cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << ctx.field.LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << ctx.field.LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
         cout << "\t" << t_root_biomass[l];
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
@@ -3450,9 +3450,9 @@ float CalcVcmaxm(float LMA, float Nmass, float Pmass)
 }
 float CalcRdark(float LMA, float Nmass, float Pmass, float Vcmax)
 {
-    float Parea = Pmass * LMA;                                                                         // in g m-2
-    float Narea = Nmass * LMA;                                                                         // in g m-2
-    float Rdark = (1.3893 + (0.0728 * Narea) + (0.0015 * Parea) + (0.0095 * Vcmax) - (0.0358 * 26.2)); // in micromolC m-2 s-1 //since v.2.5: correction of Atkin et al. 2015 New phytologist formula. The original formula was based on mean-centered values (cf. Atkin et al. 2015, and the clarification/correction published afterwards), unfortunately only one formula (PFT-specific formula) with absolute values is provided and this is the one used here, cf. corrigendum TableS4): https://nph.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2Fnph.13253&file=nph13253-sup-0001-SupInfo.pdf Warning: Vcmax should be provided on an area basis.
+    float Parea = Pmass * LMA;                                                                         // in g ctx.params.m-2
+    float Narea = Nmass * LMA;                                                                         // in g ctx.params.m-2
+    float Rdark = (1.3893 + (0.0728 * Narea) + (0.0015 * Parea) + (0.0095 * Vcmax) - (0.0358 * 26.2)); // in micromolC ctx.params.m-2 s-1 //since v.2.5: correction of Atkin et al. 2015 New phytologist formula. The original formula was based on mean-centered values (cf. Atkin et al. 2015, and the clarification/correction published afterwards), unfortunately only one formula (PFT-specific formula) with absolute values is provided and this is the one used here, cf. corrigendum TableS4): https://nph.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2Fnph.13253&file=nph13253-sup-0001-SupInfo.pdf Warning: Vcmax should be provided on an area basis.
     return (Rdark);
 }
 
@@ -3466,7 +3466,7 @@ float CalcRdark(float LMA, float Nmass, float Pmass, float Vcmax)
 //!
 //! EXAMPLE 1: for adding volume to a voxel field, the input statistic would be +1, for removing volume, -1, the ModifyCrownStatistic function empty, and the update function would simply add the input value to the Voxel3D field
 //!
-//! EXAMPLE 2: for adding leaves to the LAI field, the input statistic would be the tree LAI, or for removing, -LAI, ModifyCrownStatistic would convert the LAI to density within a specific ctx.diag.layer, and the update function would simply add the resulting density values to the LAI3D field
+//! EXAMPLE 2: for adding leaves to the LAI field, the input statistic would be the tree LAI, or for removing, -LAI, ModifyCrownStatistic would convert the LAI to density within a specific ctx.diag.layer, and the update function would simply add the resulting density values to the ctx.field.LAI3D field
 //! - Input and output variables can be separate types (e.g. int and float) and of different length (e.g. input can be a single variable, output can be a vector. This is needed, for example, to compute PPFD, VPD, Tmp and leafarea in Fluxh)
 //! - In the current implementation, crowns below 3m in crown depth are simply treated as cylinders, this could be changed in future implementations
 template <typename I, typename O, typename M, typename F>
@@ -3593,37 +3593,37 @@ int GetCrownIntarea(float crown_radius)
 }
 
 // Global function: deduces within-crown densities from LAI with a gradient from 50% in top ctx.diag.layer to 25% in belowtop and 25% in all shells underneath (1 ctx.diag.layer for umbrella-like shape)
-void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens)
+void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens_layer) // RENAMED: ctx.params.dens → dens_layer (was shadowing global ctx.params.dens/ctx.params.ctx.params.dens)
 {
     if (CD < 2.0)
     {
-        dens_top = dens_belowtop = dens = LAI / CD;
+        dens_top = dens_belowtop = dens_layer = LAI / CD;
     }
     else if (CD < 3.0)
     {
         dens_top = 0.5 * LAI;
-        dens_belowtop = dens = 0.5 * LAI / (CD - 1.0);
+        dens_belowtop = dens_layer = 0.5 * LAI / (CD - 1.0);
     }
     else
     {
         dens_top = 0.5 * LAI;
         dens_belowtop = 0.25 * LAI;
 #ifdef CROWN_UMBRELLA
-        dens = 0.25 * LAI;
+        dens_layer = 0.25 * LAI;
 #else
-        dens = 0.25 * LAI / (CD - 2.0);
+        dens_layer = 0.25 * LAI / (CD - 2.0);
 #endif
     }
 }
 
 // Global function: deduces within-crown density from LAI, assuming uniform leaf distribution
-void GetDensityUniform(float LAI, float CD, float &dens)
+void GetDensityUniform(float LAI, float CD, float &dens_layer) // RENAMED: ctx.params.dens → dens_layer
 {
 #ifdef CROWN_UMBRELLA
     float crownshells_limit = fminf(CD, 3.0);
-    dens = LAI / crownshells_limit;
+    dens_layer = LAI / crownshells_limit;
 #else
-    dens = LAI / CD;
+    dens_layer = LAI / CD;
 #endif
 }
 
@@ -3645,12 +3645,12 @@ void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, in
 {
     int crown_top = int(height);
     int crown_base = int(height - CD);
-    float dens_top, dens_belowtop, dens;
+    float dens_top, dens_belowtop, dens_lowerlayer; // RENAMED: dens → dens_lowerlayer (base-layer crown density from GetDensitiesGradient; distinct from output param dens_layer)
 #ifdef LAI_gradient
-    GetDensitiesGradient(LAI, CD, dens_top, dens_belowtop, dens);
+    GetDensitiesGradient(LAI, CD, dens_top, dens_belowtop, dens_lowerlayer);
 #else
-    GetDensityUniform(LAI, CD, dens);
-    dens_top = dens_belowtop = dens;
+    GetDensityUniform(LAI, CD, dens_lowerlayer);
+    dens_top = dens_belowtop = dens_lowerlayer;
 #endif
 
     if (CD < 3.0 && crown_top == crown_base)
@@ -3669,7 +3669,7 @@ void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, in
         else if (layer_fromtop == 1)
             dens_layer = dens_top + dens_belowtop * fraction_layer;
         else if (layer_fromtop == 2)
-            dens_layer = dens_top + dens_belowtop + dens * fraction_layer;
+            dens_layer = dens_top + dens_belowtop + dens_lowerlayer * fraction_layer;
         else
             dens_layer = LAI;
     }
@@ -3683,12 +3683,12 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
 
     int crown_top = int(height);
     int crown_base = int(height - CD);
-    float dens_top, dens_belowtop, dens;
+    float dens_top, dens_belowtop, dens_lowerlayer; // RENAMED: dens → dens_lowerlayer (base-layer crown density from GetDensitiesGradient; distinct from output param dens_layer)
 #ifdef LAI_gradient
-    GetDensitiesGradient(LAI, CD, dens_top, dens_belowtop, dens);
+    GetDensitiesGradient(LAI, CD, dens_top, dens_belowtop, dens_lowerlayer);
 #else
-    GetDensityUniform(LAI, CD, dens);
-    dens_top = dens_belowtop = dens;
+    GetDensityUniform(LAI, CD, dens_lowerlayer);
+    dens_top = dens_belowtop = dens_lowerlayer;
 #endif
 
     if (CD < 3.0 && crown_top == crown_base)
@@ -3698,7 +3698,7 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
     else if (CD < 3.0 && (crown_top - layer_fromtop == crown_base))
     {
         float fraction_belowbase = float(crown_base + 1) - (height - CD);
-        dens_layer = dens * fraction_belowbase;
+        dens_layer = dens_lowerlayer * fraction_belowbase;
     }
     else
     {
@@ -3710,17 +3710,17 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
         else if (layer_fromtop == 1)
             dens_layer = dens_top * fraction_layer_fromabove + dens_belowtop * fraction_layer;
         else if (layer_fromtop == 2)
-            dens_layer = dens_belowtop * fraction_layer_fromabove + dens * fraction_layer;
+            dens_layer = dens_belowtop * fraction_layer_fromabove + dens_lowerlayer * fraction_layer;
         else
-            dens_layer = dens * fraction_layer_fromabove;
+            dens_layer = dens_lowerlayer * fraction_layer_fromabove;
     }
 }
 
-// Global function: update of LAI3D field, called by CalcLAI()
-void UpdateLAI3D(int height, int site, float dens, float &LA_cumulated)
+// Global function: update of ctx.field.LAI3D field, called by CalcLAI()
+void UpdateLAI3D(int height, int site, float dens_layer, float &LA_cumulated) // RENAMED: ctx.params.dens → dens_layer
 {
-    LAI3D[height][site + ctx.grid.SBORD] += dens;
-    LA_cumulated += dens;
+    ctx.field.LAI3D[height][site + ctx.grid.SBORD] += dens_layer;
+    LA_cumulated += dens_layer;
 }
 
 // Global function: remove outliers in canopy height model (CHM); vector option
@@ -3757,7 +3757,7 @@ void OutputCrownSliced(int height, int site, int row_slice, vector<float> &outpu
 void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
 {
     // First get voxel field densities
-    float absorb_prev = LAI3D[height + 1][site + ctx.grid.SBORD];
+    float absorb_prev = ctx.field.LAI3D[height + 1][site + ctx.grid.SBORD];
     int intabsorb = CalcIntabsorb(absorb_prev);
 
     // Obtain PPFD for the voxel, and also record the circled area
@@ -3769,15 +3769,15 @@ void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
 //! - this function adds to the environmental variables provided in canopy_environment_cumulated
 //! - the PPFD, VPD, Tmp and leafarea_layer retrieval function for Fluxh()
 #ifdef WATER
-void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_environment_cumulated)[6])
+void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]) // RENAMED: ctx.params.dens → dens_layer
 {
 #else
-void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_environment_cumulated)[4])
+void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]) // RENAMED: ctx.params.dens → dens_layer
 {
 #endif
     // first get voxel field densities
-    float absorb_prev = LAI3D[height + 1][site + ctx.grid.SBORD];
-    float absorb_curr = LAI3D[height][site + ctx.grid.SBORD];
+    float absorb_prev = ctx.field.LAI3D[height + 1][site + ctx.grid.SBORD];
+    float absorb_curr = ctx.field.LAI3D[height][site + ctx.grid.SBORD];
     float absorb_delta = absorb_curr - absorb_prev;
     if (absorb_delta < 0.0)
         absorb_delta = 0.0; // eliminate rounding errors
@@ -3809,17 +3809,17 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 #endif // FULL_CLIMATE
 
     // Add the three variables up, weighted by leaf density inside voxel
-    canopy_environment_cumulated[0] += dens;
-    canopy_environment_cumulated[1] += PPFD_voxel * dens;
-    canopy_environment_cumulated[2] += VPD_voxel * dens;
-    canopy_environment_cumulated[3] += T_voxel * dens;
+    canopy_environment_cumulated[0] += dens_layer;
+    canopy_environment_cumulated[1] += PPFD_voxel * dens_layer;
+    canopy_environment_cumulated[2] += VPD_voxel * dens_layer;
+    canopy_environment_cumulated[3] += T_voxel * dens_layer;
 #ifdef WATER
-    canopy_environment_cumulated[4] += PPFD_voxel_incident * dens;
-    canopy_environment_cumulated[5] += ExtinctLW_voxel * dens;
+    canopy_environment_cumulated[4] += PPFD_voxel_incident * dens_layer;
+    canopy_environment_cumulated[5] += ExtinctLW_voxel * dens_layer;
 #endif
 
-    // if (canopy_environment_cumulated[1]<=0 || dens < 0.05 || absorb_delta < 0.05) {
-    //  cout << "Warning in GetCanopyEnvironment, PPFD <=0; PPFD_voxel=" << PPFD_voxel << "; dens=" << dens << endl;
+    // if (canopy_environment_cumulated[1]<=0 || dens_layer < 0.05 || absorb_delta < 0.05) {
+    //  cout << "Warning in GetCanopyEnvironment, PPFD <=0; PPFD_voxel=" << PPFD_voxel << "; dens_layer=" << dens_layer << endl;
     //  cout << "ctx.climate.WDailyMean=" << ctx.climate.WDailyMean << "; ctx.lookup.LookUp_flux_absorption[intabsorb]=" << ctx.lookup.LookUp_flux_absorption[intabsorb] << "; intabsorb=" << intabsorb << "; absorb_prev=" << absorb_prev << "; absorb_delta=" << absorb_delta << endl;
     //  }
 }
@@ -4001,12 +4001,12 @@ int main(int argc, char *argv[])
         ReadInputInventory(); // Initial configuration of the forest, read from data
     }
 
-    cout << "klight is: " << klight << endl;
-    cout << "CO2 concentration is: " << Cair << endl;
+    cout << "klight is: " << ctx.params.klight << endl;
+    cout << "CO2 concentration is: " << ctx.params.Cair << endl;
     cout << "Number of species: " << ctx.grid.nbspp << endl
          << endl;
 #ifdef WATER
-    cout << "Atmospheric pressure is: " << PRESS << endl;
+    cout << "Atmospheric pressure is: " << ctx.params.PRESS << endl;
 #endif
 
     if (ctx.opt._GPPcrown == 1)
@@ -4091,7 +4091,7 @@ int main(int argc, char *argv[])
             float mean_beam = 12.0;        // avg number of beams that reach top of canopy
             float sd_beam = 5.0;           // standard deviation of those
 
-            UpdateTransmittanceCHM_ABC(mean_beam, sd_beam, klight, transmittance_nir);
+            UpdateTransmittanceCHM_ABC(mean_beam, sd_beam, ctx.params.klight, transmittance_nir);
             OutputABC();
             UpdateDBHtrackingABC();
         }
@@ -4291,13 +4291,13 @@ void ReadInputGeneral(Context &ctx)
         cout << "ctx.grid.rows: " << ctx.grid.rows << " ctx.grid.cols: " << ctx.grid.cols << " ctx.grid.HEIGHT: " << ctx.grid.HEIGHT << endl;
         cout << "Number of dcells: " << ctx.grid.nbdcells << endl;
         cout << "Lin number of dcells: " << ctx.grid.linear_nb_dcells << endl;
-        cout << ctx.opt._WATER_RETENTION_CURVE << " " << ctx.opt._SOIL_LAYER_WEIGHT << " " << Cair << endl;
+        cout << ctx.opt._WATER_RETENTION_CURVE << " " << ctx.opt._SOIL_LAYER_WEIGHT << " " << ctx.params.Cair << endl;
 
 #ifdef WATER
         ctx.grid.i_sites_per_dcell = 1.0 / float(ctx.grid.sites_per_dcell);
-        PPFDtoSW = 1 / SWtoPPFD;
+        ctx.params.PPFDtoSW = 1 / ctx.params.SWtoPPFD;
 #ifdef G0
-        g0 *= 0.001 * GSVGSC; // g0 is provided in mmolH20 m-2 s-1, but will be used in Photosyn function for stomatal conductance to CO2 in molCO2 m-2 s-1 (and then converted back to flux of H20 in FluxesLeaf)
+        ctx.params.g0 *= 0.001 * GSVGSC; // ctx.params.g0 is provided in mmolH20 ctx.params.m-2 s-1, but will be used in Photosyn function for stomatal conductance to CO2 in molCO2 ctx.params.m-2 s-1 (and then converted back to flux of H20 in FluxesLeaf)
 #endif
 #endif
         ctx.grid.LV = 1.0 / ctx.grid.NV;
@@ -4305,7 +4305,7 @@ void ReadInputGeneral(Context &ctx)
         if (ctx.time.nbout)
             ctx.time.freqout = ctx.time.nbiter / ctx.time.nbout;
 
-        kpar = klight * absorptance_leaves; // kpar is the klight factor times the absorptance of leaves
+        ctx.params.kpar = ctx.params.klight * ctx.params.absorptance_leaves; // ctx.params.kpar is the ctx.params.klight factor times the absorptance of leaves
         // convert correlations to covariances
         ctx.intra.cov_N_P = ctx.intra.corr_N_P * ctx.intra.sigma_N * ctx.intra.sigma_P;
         ctx.intra.cov_N_LMA = ctx.intra.corr_N_LMA * ctx.intra.sigma_N * ctx.intra.sigma_LMA;
@@ -4347,16 +4347,16 @@ void ReadInputGeneral(Context &ctx)
             ctx.rng.variation_N_P_LMA = gsl_vector_alloc(3);
         }
         ctx.crown.crown_gap_fraction = fmaxf(ctx.crown.crown_gap_fraction, 0.000001); // ctx.crown.crown_gap_fraction is prevented from becoming zero in order to avoid division by zero. Given that crown area is currently limited to 1963 (int(3.14 * 25.0 * 25.0), the lowest ctx.crown.crown_gap_fraction that could potentially have an effect would be 1/1963, which is ~ 0.0005
-        iCair = 1.0 / Cair;
-        DBH0 *= ctx.grid.NH;
-        H0 *= ctx.grid.NV;
-        CR_min *= ctx.grid.NH;
-        CD0 *= ctx.grid.NV;
+        ctx.params.iCair = 1.0 / ctx.params.Cair;
+        ctx.params.DBH0 *= ctx.grid.NH;
+        ctx.params.H0 *= ctx.grid.NV;
+        ctx.params.CR_min *= ctx.grid.NH;
+        ctx.params.CD0 *= ctx.grid.NV;
 #ifdef WATER
-        // alpha = absorptance_leaves*(1-LSQ)*0.5; // apparent quantum yield to electron transport. 0.5 because each photosystem absorbs half of the photons (von Caemmerer 2000, p 35). Note that, alpha was previously computed as 4*the apparent quantum yield for C fixation, phi in molC/mol photons, with phi=0.06 (in Marechaux & Chave 2017) or 0.075 (in FFischer's version), which provided alpha=0.3 and 0.24 respectively. This now gives alpha=0.37. Duursma et al. 2015 used alpha=0.24, while values reported or used by von Caemmerer 2000, Medlyn et al. 2002 are typically 0.3-0.37. Domingues et al. 2014 Plant Ecology & Diversity reported values for phi ranging from 0.041 to 0.098 (ie alpha ranging from 0.164 to 0.392, within a same tropical forest community (Tapajos, Brazil).
-        alpha = (1 - LSQ) * 0.5; // no need of absorptance_leaves since PPFD provided in argument to Photosyn is already the absorbed flux
+        // ctx.params.alpha = ctx.params.absorptance_leaves*(1-LSQ)*0.5; // apparent quantum yield to electron transport. 0.5 because each photosystem absorbs half of the photons (von Caemmerer 2000, p 35). Note that, ctx.params.alpha was previously computed as 4*the apparent quantum yield for C fixation, ctx.params.phi in molC/mol photons, with ctx.params.phi=0.06 (in Marechaux & Chave 2017) or 0.075 (in FFischer's version), which provided ctx.params.alpha=0.3 and 0.24 respectively. This now gives ctx.params.alpha=0.37. Duursma et al. 2015 used ctx.params.alpha=0.24, while values reported or used by von Caemmerer 2000, Medlyn et al. 2002 are typically 0.3-0.37. Domingues et al. 2014 Plant Ecology & Diversity reported values for ctx.params.phi ranging from 0.041 to 0.098 (ie ctx.params.alpha ranging from 0.164 to 0.392, within a same tropical forest community (Tapajos, Brazil).
+        ctx.params.alpha = (1 - LSQ) * 0.5; // no need of ctx.params.absorptance_leaves since PPFD provided in argument to Photosyn is already the absorbed flux
 #else
-        alpha = 4.0 * phi; // apparent quantum yield to electron transport in mol e-/mol photons see Mercado et al 2009 , the conversion of the apparent quantum yield in micromolCO2/micromol quantum into micromol e-/micxromol quantum is done by multipliyng by 4, since four electrons are needed to regenerate RuBP. alpha is fixed at 0.3 mol e-/mol photons in Medlyn et al 2002, but see equ8 and Appendix 1 in Farquahr et al 1980: it seems that alpha should vary with leaf thickness: there is a fraction of incident light which is lost by absorption by other leaf parts than the chloroplast lamellae, and this fraction f may increase with leaf thickness. With the values of the paper: alpha= 0.5*(1-f)=0.5*(1-0.23)=0.385, but this is a theoretical value and observations often report lower values (see ex discussion in medlyn et al 2005 Tree phsyiology, Lore Veeryckt values, Mercado et al 2009 Table 10, Domingues et al. 2014)
+        ctx.params.alpha = 4.0 * ctx.params.phi; // apparent quantum yield to electron transport in mol e-/mol photons see Mercado et al 2009 , the conversion of the apparent quantum yield in micromolCO2/micromol quantum into micromol e-/micxromol quantum is done by multipliyng by 4, since four electrons are needed to regenerate RuBP. ctx.params.alpha is fixed at 0.3 mol e-/mol photons in Medlyn et al 2002, but see equ8 and Appendix 1 in Farquahr et al 1980: it seems that ctx.params.alpha should vary with leaf thickness: there is a fraction of incident light which is lost by absorption by other leaf parts than the chloroplast lamellae, and this fraction f may increase with leaf thickness. With the values of the paper: ctx.params.alpha= 0.5*(1-f)=0.5*(1-0.23)=0.385, but this is a theoretical value and observations often report lower values (see ex discussion in medlyn et al 2005 Tree phsyiology, Lore Veeryckt values, Mercado et al 2009 Table 10, Domingues et al. 2014)
 #endif
 
         // new in v.3.1.2: visual extent
@@ -4618,12 +4618,12 @@ void ReadInputDailyvar()
         ctx.climate.windDailyMean_all[j] /= ctx.time.nbdays;
     }
 
-    ctx.climate.WDailyMean_year *= SWtoPPFD / ctx.time.nbdays;
+    ctx.climate.WDailyMean_year *= ctx.params.SWtoPPFD / ctx.time.nbdays;
 
     ctx.climate.tnight = ctx.climate.NightTemperature[0];
     ctx.climate.precip = ctx.climate.Rainfall[0];
     ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[0];
-    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[0] * SWtoPPFD;
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[0] * ctx.params.SWtoPPFD;
     ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[0];
     ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[0];
 }
@@ -4794,7 +4794,7 @@ void ReadInputClimate()
         {
             // ctx.climate.DailyMeanVapourPressureDeficit[i]*=1.33; test main_1.33VPD on MESO@LR - 13/05/22
 
-            ctx.climate.WDailyMean_year += ctx.climate.DailyMeanIrradiance[i] * SWtoPPFD;
+            ctx.climate.WDailyMean_year += ctx.climate.DailyMeanIrradiance[i] * ctx.params.SWtoPPFD;
             ctx.climate.tDailyMean_year += ctx.climate.DailyMeanTemperature[i];
             ctx.climate.VPDDailyMean_year += ctx.climate.DailyMeanVapourPressureDeficit[i];
 #ifdef WATER
@@ -4815,7 +4815,7 @@ void ReadInputClimate()
         ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.iterperyear];
         ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.iterperyear];
         ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
-        ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+        ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * ctx.params.SWtoPPFD;
         ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
         ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
@@ -4843,7 +4843,7 @@ void ReadInputSoil()
     if (InSoil)
     {
         InSoil.getline(ctx.fileio.buffer, 256, '\n');
-        vector<float> layer_thickness, proportion_Silt, proportion_Clay, proportion_Sand; // in m, %, %,%
+        vector<float> layer_thickness, proportion_Silt, proportion_Clay, proportion_Sand; // in ctx.params.m, %, %,%
         vector<float> SOC, DBD, pH, CEC;                                                  // soil organic content, provided in %; dry bulk density, in g cm-3; pH; cation exchange capacity, in cmol kg-1
         SOC.reserve(20);
         DBD.reserve(20);
@@ -4912,11 +4912,11 @@ void ReadInputSoil()
 
             if (ctx.opt._WATER_RETENTION_CURVE == 1)
             {
-                ctx.soil.Sat_SWC[l] = 0.01 * (81.799 + (0.099 * proportion_Clay[l]) - (31.42 * DBD[l]) + (0.018 * CEC[l]) + (0.451 * pH[l]) - (0.0005 * proportion_Sand[l] * proportion_Clay[l])); // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
+                ctx.soil.Sat_SWC[l] = 0.01 * (81.799 + (0.099 * proportion_Clay[l]) - (31.42 * DBD[l]) + (0.018 * CEC[l]) + (0.451 * pH[l]) - (0.0005 * proportion_Sand[l] * proportion_Clay[l])); // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.ctx.params.m-3
             }
             else if (ctx.opt._WATER_RETENTION_CURVE == 0)
             {
-                ctx.soil.Sat_SWC[l] = 0.01 * (40.61 + (0.165 * proportion_Silt[l]) + (0.162 * proportion_Clay[l]) + (0.00137 * proportion_Silt[l] * proportion_Silt[l]) + (0.000018 * proportion_Silt[l] * proportion_Silt[l] * proportion_Clay[l])); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
+                ctx.soil.Sat_SWC[l] = 0.01 * (40.61 + (0.165 * proportion_Silt[l]) + (0.162 * proportion_Clay[l]) + (0.00137 * proportion_Silt[l] * proportion_Silt[l]) + (0.000018 * proportion_Silt[l] * proportion_Silt[l] * proportion_Clay[l])); // this is the Tomasella & Hodnett 1998 tropical texture-based pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.ctx.params.m-3
             }
             ctx.soil.Max_SWC[l] = ctx.soil.Sat_SWC[l] * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // in m3
             cout << "ctx.diag.layer " << l << " Vol=" << ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l] << " m3; ctx.soil.Sat_SWC =" << ctx.soil.Sat_SWC[l] << " MAX_SWC =" << ctx.soil.Max_SWC[l] << " m3." << endl;
@@ -4940,7 +4940,7 @@ void ReadInputSoil()
 
             if (ctx.opt._WATER_RETENTION_CURVE == 1)
             {
-                ctx.soil.Res_SWC[l] = 0.01 * (22.733 - (0.164 * proportion_Sand[l]) + (0.235 * CEC[l]) - (0.831 * pH[l]) + (0.0018 * proportion_Clay[l] * proportion_Clay[l]) + (0.0026 * proportion_Sand[l] * proportion_Clay[l])); // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.m-3
+                ctx.soil.Res_SWC[l] = 0.01 * (22.733 - (0.164 * proportion_Sand[l]) + (0.235 * CEC[l]) - (0.831 * pH[l]) + (0.0018 * proportion_Clay[l] * proportion_Clay[l]) + (0.0026 * proportion_Sand[l] * proportion_Clay[l])); // this is the Hodnett & Tomasella 2002 tropical pedotransfer function, as reported in Table 2 of Marthews et al. 2014. in m3.ctx.params.m-3
             }
             if (ctx.opt._WATER_RETENTION_CURVE == 0)
             {
@@ -4965,16 +4965,16 @@ void ReadInputSoil()
             for (int l = 0; l < ctx.soil.nblayers_soil; l++)
             {
 
-                float alpha = 1000 * exp((-2.294 - (3.526 * proportion_Silt[l]) + (2.440 * (0.1 * SOC[l])) - (0.076 * CEC[l]) - (11.331 * pH[l]) + (0.019 * proportion_Silt[l] * proportion_Silt[l])) * 0.01); // this is the alpha parameter of the van Genuchten-Mualem model, in MPa-1 (ie after already dividing by rho*g, following Hodnett & Tomasella 2002, see Table 2 in Marthews et al. 2014
-                ctx.soil.a_vgm[l] = -1.0 / alpha;
+                float alpha_vgm = 1000 * exp((-2.294 - (3.526 * proportion_Silt[l]) + (2.440 * (0.1 * SOC[l])) - (0.076 * CEC[l]) - (11.331 * pH[l]) + (0.019 * proportion_Silt[l] * proportion_Silt[l])) * 0.01); // RENAMED: ctx.params.alpha → alpha_vgm (van Genuchten-Mualem soil parameter; distinct from global ctx.params.alpha = apparent quantum yield), in MPa-1 (ie after already dividing by rho*g, following Hodnett & Tomasella 2002, see Table 2 in Marthews et al. 2014
+                ctx.soil.a_vgm[l] = -1.0 / alpha_vgm;
                 float n_vgm = exp((62.986 - (0.833 * proportion_Clay[l]) - (0.529 * (SOC[l] * 0.1)) + (0.593 * pH[l]) + (0.007 * proportion_Clay[l] * proportion_Clay[l]) - (0.014 * proportion_Sand[l] * proportion_Silt[l])) * 0.01); // this is the n parameter of the van Genuchten-Mualem model, dimensionless, following Hodnett & Tomasella 2002, see Table 2 in Marthews et al. 2014
                 ctx.soil.m_vgm[l] = 1.0 - 1.0 / n_vgm;
                 ctx.soil.b_vgm[l] = 1.0 / ctx.soil.m_vgm[l];
                 ctx.soil.c_vgm[l] = 1.0 - ctx.soil.m_vgm[l];
 
-                ctx.soil.FC_SWC[l] = (ctx.soil.Res_SWC[l] + (ctx.soil.Sat_SWC[l] - ctx.soil.Res_SWC[l]) * pow((pow(0.01 * alpha, 1 / ctx.soil.c_vgm[l]) + 1), -(1 / ctx.soil.b_vgm[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the ctx.diag.layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
+                ctx.soil.FC_SWC[l] = (ctx.soil.Res_SWC[l] + (ctx.soil.Sat_SWC[l] - ctx.soil.Res_SWC[l]) * pow((pow(0.01 * alpha_vgm, 1 / ctx.soil.c_vgm[l]) + 1), -(1 / ctx.soil.b_vgm[l]))) * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * layer_thickness[l]; // this is the ctx.diag.layer water content at field capacity, in m3. As in Marthews et al. 2014 (cf. note in Table 2), we used Phi at FC=-10kPa and not -33kPa, following Marshall et al., 1996; Townend et al., 2001; Tomasella and Hodnett, 2004)
 
-                cout << "ctx.diag.layer " << l << " alpha=" << alpha << "\t" << "n_vgm=" << n_vgm << " ctx.soil.FC_SWC=" << ctx.soil.FC_SWC[l] << endl;
+                cout << "ctx.diag.layer " << l << " alpha_vgm=" << alpha_vgm << "\t" << "n_vgm=" << n_vgm << " ctx.soil.FC_SWC=" << ctx.soil.FC_SWC[l] << endl;
             }
         }
         else if (ctx.opt._WATER_RETENTION_CURVE == 0)
@@ -5241,8 +5241,8 @@ void InitialiseLookUpTables()
         ctx.lookup.LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4);                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
 #else
         ctx.lookup.LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
-                        (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)) * iCair; // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-        ctx.lookup.LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4) * iCair;                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
+                        (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)) * ctx.params.iCair; // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
+        ctx.lookup.LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4) * ctx.params.iCair;                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
 #endif
         ctx.lookup.LookUp_VcmaxT[i] = exp(26.35 - 65.33 / (0.00831 * (temper + 273.15))); // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
         ctx.lookup.LookUp_JmaxT[i] = exp(17.57 - 43.54 / (0.00831 * (temper + 273.15)));  // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
@@ -5326,23 +5326,23 @@ void InitialiseLookUpTables()
                 ctx.lookup.LookUp_flux_absorption[i + 400 * j] = 0.0; // in this case
 
                 // if the voxel does not contain any plant matter, values are constant across the voxel, e.g. just the top value calculated from absorb_prev
-                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev);
+                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-ctx.params.kpar * absorb_prev);
                 ctx.lookup.LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
                 ctx.lookup.LookUp_VPD[i + 400 * j] = 0.25 + sqrt(fmaxf(0.0, 0.08035714 * (7.0 - absorb_prev)));
                 ctx.lookup.LookUp_T[i + 400 * j] = 0.4285714 * (fminf(7.0, absorb_prev));
             }
             else
             {
-                // Flux is now computed simply as absorption on a per m2 plant matter basis, and not incident flux, since the FvCB model requires a transformation of incident into absorbed flux (cf. original Farquhar 1980 paper, or Medlyn et al. 2002, Plant, Cell & Environment). For example, Medlyn et al. use 0.093 quantum yield, 4 mol electron/mol photon and an absorptance of leaves of 0.8 to arrive at a factor of 0.3 to be multiplied with incident PPFD. Now, in a dense forest, kpar modifies the absorbed PPFD per leaf area. For simplicity, we separate the 0.093 and 4 mol electrion/mol photon from the absorptance and calculate the latter directly from an effective kpar which includes a general k (i.e. leaf angle distribution) and a leaf absorptance factor, e.g. 0.9. The main effect of this scheme is that lowering k (reflecting, for example, steeper leaf angles) may result in more incident light per m2 ground, but absorption also gets lower, since leaves are not perfectly illuminated
-                // To calculate absorbed PPFD, a formula can either be derived through integration or be motivated as follows: 1) incoming flux is exp(-kpar * absorb_prev), equivalent to what was previously computed as flux, 2) the absorbed fraction of the incoming flux in a ctx.diag.layer of "absorb_delta" is (1.0 - exp(-kpar * absorb_delta), and 3) the amount of leaf area per ground area is absorb_delta, which is needed as divisor to convert to absorption per m2 leaf area
-                // Since PPFD is a density (i.e. given relative to m2 leaf area), a lower absorb_delta results in slightly higher PPFD. A lower absorb_delta implies that leaves are less densely distributed in space, so there is a slight increase in absorbed photons per leaf area, even though overall absorbed photon numbers decrease. While an absorb_delta = 0 implies zero absorption, in the limit of very low absorb_delta (-> 0), the absorption approaches kpar (Taylor expansion: exp(x) ~ 1 + x, so (1 - exp(-kpar*x))/x ~ kpar*x/x ~ kpar). This is not realistic, since leaves cannot get infinitesimally small and the assumptions of Beer-Lambert breaks down beforehand. But since the linear approximation should be justified in low density layers, maybe this could be used to accelerate the computation?
-                ctx.lookup.LookUp_flux_absorption[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / absorb_delta;
+                // Flux is now computed simply as absorption on a per m2 plant matter basis, and not incident flux, since the FvCB model requires a transformation of incident into absorbed flux (cf. original Farquhar 1980 paper, or Medlyn et al. 2002, Plant, Cell & Environment). For example, Medlyn et al. use 0.093 quantum yield, 4 mol electron/mol photon and an absorptance of leaves of 0.8 to arrive at a factor of 0.3 to be multiplied with incident PPFD. Now, in a dense forest, ctx.params.kpar modifies the absorbed PPFD per leaf area. For simplicity, we separate the 0.093 and 4 mol electrion/mol photon from the absorptance and calculate the latter directly from an effective ctx.params.kpar which includes a general k (i.e. leaf angle distribution) and a leaf absorptance factor, e.g. 0.9. The main effect of this scheme is that lowering k (reflecting, for example, steeper leaf angles) may result in more incident light per m2 ground, but absorption also gets lower, since leaves are not perfectly illuminated
+                // To calculate absorbed PPFD, a formula can either be derived through integration or be motivated as follows: 1) incoming flux is exp(-ctx.params.kpar * absorb_prev), equivalent to what was previously computed as flux, 2) the absorbed fraction of the incoming flux in a ctx.diag.layer of "absorb_delta" is (1.0 - exp(-ctx.params.kpar * absorb_delta), and 3) the amount of leaf area per ground area is absorb_delta, which is needed as divisor to convert to absorption per m2 leaf area
+                // Since PPFD is a density (i.e. given relative to m2 leaf area), a lower absorb_delta results in slightly higher PPFD. A lower absorb_delta implies that leaves are less densely distributed in space, so there is a slight increase in absorbed photons per leaf area, even though overall absorbed photon numbers decrease. While an absorb_delta = 0 implies zero absorption, in the limit of very low absorb_delta (-> 0), the absorption approaches ctx.params.kpar (Taylor expansion: exp(x) ~ 1 + x, so (1 - exp(-ctx.params.kpar*x))/x ~ ctx.params.kpar*x/x ~ ctx.params.kpar). This is not realistic, since leaves cannot get infinitesimally small and the assumptions of Beer-Lambert breaks down beforehand. But since the linear approximation should be justified in low density layers, maybe this could be used to accelerate the computation?
+                ctx.lookup.LookUp_flux_absorption[i + 400 * j] = exp(-ctx.params.kpar * absorb_prev) * (1.0 - exp(-ctx.params.kpar * absorb_delta)) / absorb_delta;
 
                 // an alternative to calculating the absorbed flux density, is to calculate the average flux density
                 // for voxels of 1 unit length depth, this corresponds just to the integral over LAI, which can be decomposed into a constant absorb_prev and a linearly increasing absorb_delta
                 // once LAI reaches the critical value of 7.0, VPD And T do not decrease anymore, hence the distinction between two cases
 
-                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / (kpar * absorb_delta);
+                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-ctx.params.kpar * absorb_prev) * (1.0 - exp(-ctx.params.kpar * absorb_delta)) / (ctx.params.kpar * absorb_delta);
                 ctx.lookup.LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
 
                 if (absorb_prev + absorb_delta >= 7)
@@ -6220,7 +6220,7 @@ void ReadInputInventory()
             {
                 ctx.soil.soil_phi3D[l][d] = ctx.soil.phi_e[l] * pow(theta_w, -ctx.soil.b[l]);                                                      // this is the soil water characteristic of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                 ctx.soil.Ks[l][d] = ctx.soil.Ksat[l] * pow(theta_w, 2.5 + 2 * ctx.soil.b[l]);                                                      // this is the hydraulic conductivity curve of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
-                ctx.soil.KsPhi[l][d] = ctx.soil.Ksat[l] * ctx.soil.phi_e[l] * pow(theta_w, 2.5 + ctx.soil.b[l]);                                            // ctx.soil.Ks times ctx.soil.soil_phi3D, computed directly as the exact power of theta.
+                ctx.soil.KsPhi[l][d] = ctx.soil.Ksat[l] * ctx.soil.phi_e[l] * pow(theta_w, 2.5 + ctx.soil.b[l]);                                            // ctx.soil.Ks times ctx.soil.soil_phi3D, computed directly as the exact power of ctx.params.theta.
                 if (isnan(ctx.soil.soil_phi3D[l][d]) || isnan(ctx.soil.Ks[l][d]) || isnan(ctx.soil.KsPhi[l][d]) || (ctx.soil.SWC3D[l][d] - ctx.soil.Min_SWC[l]) < 0) //|| ctx.soil.KsPhi[l][d]==0.0 || ctx.soil.Ks[l][d]==0.0 || ctx.soil.soil_phi3D[l][d]==0.0)
                     cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " ctx.soil.SWC3D[l][d]-ctx.soil.Min_SWC[l]=" << (ctx.soil.SWC3D[l][d] - ctx.soil.Min_SWC[l]) << " ctx.soil.soil_phi3D[l][d]=" << ctx.soil.soil_phi3D[l][d] << " ctx.soil.Ksat=" << ctx.soil.Ksat[l] << " ctx.soil.phi_e=" << ctx.soil.phi_e[l] << " ctx.soil.b[l]=" << ctx.soil.b[l] << " ctx.soil.KsPhi[l][d]=" << ctx.soil.KsPhi[l][d] << " ctx.soil.Ks[l][d]=" << ctx.soil.Ks[l][d] << endl;
             }
@@ -6230,15 +6230,15 @@ void ReadInputInventory()
     // compute LAID for RecruitTree function
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
-            LAI3D[h][sbsite] = 0.0;
+            ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(); // Each tree contribues to LAI3D
+        T[site].CalcLAI(); // Each tree contribues to ctx.field.LAI3D
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
         for (int site = 0; site < ctx.grid.sites; site++)
         {
             int sbsite = site + ctx.grid.SBORD;
-            LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
+            ctx.field.LAI3D[h - 1][sbsite] += ctx.field.LAI3D[h][sbsite];
         }
     }
 
@@ -6276,7 +6276,7 @@ void ReadInputInventory()
     //     // clear voxel field
     //     for(int h=0;h<(ctx.grid.HEIGHT+1);h++)
     //         for(int sbsite=0;sbsite<ctx.grid.sites+2*ctx.grid.SBORD;sbsite++)
-    //             LAI3D[h][sbsite] = 0.0;
+    //             ctx.field.LAI3D[h][sbsite] = 0.0;
     //
     //     // allocate and compute leaf area
     //     for(int index_site = 0; index_site < sites_trees.size(); index_site++){
@@ -6299,7 +6299,7 @@ void AllocMem(Context &ctx)
     }
     float r = 25.0; // simply set to maximum crown radius possible in simulations
 
-    ctx.grid.RMAX = int(r + p_nonvert * ctx.grid.NH * ctx.grid.LV * ctx.grid.HEIGHT);
+    ctx.grid.RMAX = int(r + ctx.params.p_nonvert * ctx.grid.NH * ctx.grid.LV * ctx.grid.HEIGHT);
     //  ctx.grid.RMAX = int(r);
     ctx.grid.SBORD = ctx.grid.cols * ctx.grid.RMAX;
     ctx.grid.dbhmaxincm = int(100. * d);
@@ -6391,18 +6391,18 @@ void AllocMem(Context &ctx)
     //  if (NULL==(persist=new long int[ctx.time.nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
     //  if (NULL==(distr=new int[ctx.grid.cols])) cerr<<"!!! Mem_Alloc\n";
 
-    if (NULL == (LAI3D = new float *[ctx.grid.HEIGHT + 1]))             // Field 3D
+    if (NULL == (ctx.field.LAI3D = new float *[ctx.grid.HEIGHT + 1]))             // Field 3D
         cerr << "!!! Mem_Alloc\n";                             // Trees at the border of the simulated forest need to know the canopy occupancy by trees in the neighboring processor.
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)                     // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is ctx.grid.SBORD in width.
-        if (NULL == (LAI3D[h] = new float[ctx.grid.sites + 2 * ctx.grid.SBORD])) // ALL the ctx.grid.sites need to be updated.
+        if (NULL == (ctx.field.LAI3D[h] = new float[ctx.grid.sites + 2 * ctx.grid.SBORD])) // ALL the ctx.grid.sites need to be updated.
             cerr << "!!! Mem_Alloc\n";
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         for (int site = 0; site < ctx.grid.sites + 2 * ctx.grid.SBORD; site++)
-            LAI3D[h][site] = 0.0;
-    if (NULL == (Thurt[0] = new unsigned short[3 * ctx.grid.sites])) // Field for treefall impacts
+            ctx.field.LAI3D[h][site] = 0.0;
+    if (NULL == (ctx.field.Thurt[0] = new unsigned short[3 * ctx.grid.sites])) // Field for treefall impacts
         cerr << "!!! Mem_Alloc\n";
     for (int i = 1; i < 3; i++)
-        if (NULL == (Thurt[i] = new unsigned short[ctx.grid.sites]))
+        if (NULL == (ctx.field.Thurt[i] = new unsigned short[ctx.grid.sites]))
             cerr << "!!! Mem_Alloc\n";
 
 #ifdef WATER
@@ -6584,8 +6584,8 @@ void UpdateSeeds()
     {
         // acceleration, using the multinomial distribution
         int ha = ctx.grid.sites / 10000;
-        gsl_ran_multinomial(ctx.rng.gslrand, ctx.grid.sites, Cseedrain * ha, ctx.species.p_seed, ctx.species.n_seed);
-        cout << ctx.grid.sites << " Seedrain: " << Cseedrain * ha << endl;
+        gsl_ran_multinomial(ctx.rng.gslrand, ctx.grid.sites, ctx.params.Cseedrain * ha, ctx.species.p_seed, ctx.species.n_seed);
+        cout << ctx.grid.sites << " Seedrain: " << ctx.params.Cseedrain * ha << endl;
         int seedsadded = 0;
         for (int s = 0; s < ctx.grid.sites; s++)
         {
@@ -6651,7 +6651,7 @@ void UpdateField()
     ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.nbdays];
     ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.nbdays];
     ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.nbdays];
-    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.nbdays] * SWtoPPFD;
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.nbdays] * ctx.params.SWtoPPFD;
     ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.nbdays];
     ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.nbdays];
 
@@ -6659,7 +6659,7 @@ void UpdateField()
     ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.iterperyear];
     ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.iterperyear];
     ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
-    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * ctx.params.SWtoPPFD;
     ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
     ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
@@ -6704,9 +6704,9 @@ void UpdateField()
 
     RecruitTree();
 
-    //  Compute Field LAI3D
+    //  Compute Field ctx.field.LAI3D
 #ifdef MPI
-    // Reinitialize field LAI3D
+    // Reinitialize field ctx.field.LAI3D
     for (int i = 0; i < 2; i++)
         for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             for (int site = 0; site < 2 * ctx.grid.SBORD; site++)
@@ -6715,16 +6715,16 @@ void UpdateField()
 
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
-            LAI3D[h][sbsite] = 0.0;
+            ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(); // Each tree contribues to LAI3D
+        T[site].CalcLAI(); // Each tree contribues to ctx.field.LAI3D
 
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
         for (int site = 0; site < ctx.grid.sites; site++)
         {
             int sbsite = site + ctx.grid.SBORD;
-            LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
+            ctx.field.LAI3D[h - 1][sbsite] += ctx.field.LAI3D[h][sbsite];
         }
     }
 
@@ -6754,14 +6754,14 @@ void UpdateField()
 
         for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
-            ctx.soil.LAI_DCELL[h][ctx.grid.site_DCELL[site]] += LAI3D[h][site + ctx.grid.SBORD];
+            ctx.soil.LAI_DCELL[h][ctx.grid.site_DCELL[site]] += ctx.field.LAI3D[h][site + ctx.grid.SBORD];
         }
 
         float Htop = 0.0;
         int H = ctx.grid.HEIGHT;
         while (Htop == 0.0 && H > 0)
         {
-            if (LAI3D[H][site + ctx.grid.SBORD] > 0.0)
+            if (ctx.field.LAI3D[H][site + ctx.grid.SBORD] > 0.0)
             {
                 Htop = H;
             }
@@ -6817,19 +6817,19 @@ void UpdateField()
 
 #ifdef MPI
     // Communicate border of field
-    // MPI_ShareField(LAI3D,LAIc,2*ctx.grid.SBORD);
+    // MPI_ShareField(ctx.field.LAI3D,LAIc,2*ctx.grid.SBORD);
     This MPI command no longer exists in openMPI
             Action 20 /
-        01 / 2016 TODO : FIX THIS MPI_ShareField(LAI3D, LAIc, 2 * ctx.grid.SBORD);
+        01 / 2016 TODO : FIX THIS MPI_ShareField(ctx.field.LAI3D, LAIc, 2 * ctx.grid.SBORD);
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
     {
         //! Add border effects in local fields
         if (mpi_rank)
             for (site = 0; site < 2 * ctx.grid.SBORD; site++)
-                LAI3D[h][site] += LAIc[0][h][site];
+                ctx.field.LAI3D[h][site] += LAIc[0][h][site];
         if (mpi_rank < mpi_size - 1)
             for (int site = 0; site < 2 * ctx.grid.SBORD; site++)
-                LAI3D[h][site + ctx.grid.sites] += LAIc[1][h][site];
+                ctx.field.LAI3D[h][site + ctx.grid.sites] += LAIc[1][h][site];
     }
 #endif
 
@@ -6870,15 +6870,15 @@ void UpdateField()
 
         // here, we use a phenomenological approach, following Granier et al. 1999 Ecological Modelling and Wagner et al. 2011 AFM, which assumed that evaporation is proportional to the energy reaching the soil.[this is an approximation as as the soil gets drier, more energy would be needed to remove the same amount of water from the soil as water molecules should be more tighly bound to soil particules and cavitation also occur in the soil...] ==> see if a model under which evaporation also depends on the soil water potential would not be better -- I guess so.
         // parameter values are not so clear, so TO BE CHECKED.
-        // float e_factor=PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
-        // float e_Granier = e_factor* ctx.climate.WDailyMean * exp(-klight*ctx.soil.LAI_DCELL[0][d]);
+        // float e_factor=ctx.params.PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
+        // float e_Granier = e_factor* ctx.climate.WDailyMean * exp(-ctx.params.klight*ctx.soil.LAI_DCELL[0][d]);
         // 3600*0.000001*ctx.time.nbhours_covered to convert Wmax in micromol of PAR /s /m2 into  Joule, and 10^-6 to MJoule as in Wagner et al. 2011 (however the value provided by Wagner et al. 2011 seems really weird -too high-, and the values we obtained here are in agreement with the ones reported in Marthews et al. 2014.
         // the value 0.1 is drawn from Wagner et al. 2011, but not really explained... to be checked!
         // ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
 
         // in this newer version, we used the framework provided by Sellers et al. 1992, which is better mechanistically grounded: depends on the soil ctx.diag.layer resistance, which varies with its water potential, and the aerodynamic resistance in series and the differences of vapour pressure between the top soil ctx.diag.layer and air just above
         float absorb_prev = ctx.soil.LAI_DCELL[1][d];
-        float absorb_current = LAI3D[0][d];
+        float absorb_current = ctx.field.LAI3D[0][d];
         float absorb_delta = absorb_current - absorb_prev;
         if (absorb_delta < 0.0)
             absorb_delta = 0.0; //! eliminate rounding errors
@@ -6888,15 +6888,15 @@ void UpdateField()
         float esat_ground = 611.21 * exp((18.678 - (Tsoil / 234.5)) * (Tsoil / (257.14 + Tsoil))); // Buck equation; in Pa (see Jones p. 348)
         float esoil = esat_ground * exp(2.17 * ctx.soil.soil_phi3D[0][d] / (Tsoil - ABSZERO));              // esoil variation with the top soil ctx.diag.layer water potential, following Duursma & Medlyn 2012 equ. 17, Cochard et al. 2021 equ. 36., see equ. 5.14 in Jones (p. 102), in Pa
         float eair = esat_ground - VPDground;                                                      // in Pa
-        // float r_soil = exp(8.206 - 4.255*ctx.soil.SWC3D[0][d]/ctx.soil.Max_SWC[0]) ; // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
-        float r_soil = exp(8.206 - 4.255 * ctx.soil.SWC3D[0][d] / ctx.soil.FC_SWC[0]); // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
+        // float r_soil = exp(8.206 - 4.255*ctx.soil.SWC3D[0][d]/ctx.soil.Max_SWC[0]) ; // soil surface resistance in s ctx.params.m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
+        float r_soil = exp(8.206 - 4.255 * ctx.soil.SWC3D[0][d] / ctx.soil.FC_SWC[0]); // soil surface resistance in s ctx.params.m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
 #ifdef FULL_CLIMATE
-        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / ctx.soil.Canopy_height_DCELL[d])) / (ctx.climate.WSDailyMean * ctx.soil.TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
+        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / ctx.soil.Canopy_height_DCELL[d])) / (ctx.climate.WSDailyMean * ctx.soil.TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s ctx.params.m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in ctx.params.m, 0.001=the momentum soil roughness in ctx.params.m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #else
-        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / ctx.soil.Canopy_height_DCELL[d])) / ctx.soil.TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
+        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / ctx.soil.Canopy_height_DCELL[d])) / ctx.soil.TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s ctx.params.m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in ctx.params.m, 0.001=the momentum soil roughness in ctx.params.m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #endif
-        float Rtot = r_soil + r_aero;                                                                                 // in s m-1
-        float e = ctx.time.nbhours_covered * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH is used to convert evaporation in kg m-2 s-1 to m3 per day per dcell.
+        float Rtot = r_soil + r_aero;                                                                                 // in s ctx.params.m-1
+        float e = ctx.time.nbhours_covered * ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.0078 * (esoil - eair) / ((Tsoil - ABSZERO) * Rtot); // 0.0078 = 0.001*3600*18e-3/8.31 with 18e-3 = the molar mass of water vapor in kg/mol and 8.31 the ideal gas constant in J/mol/K; 0.001*3600*ctx.time.nbhours_covered*ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH is used to convert evaporation in kg ctx.params.m-2 s-1 to m3 per day per dcell.
 
         // if (ctx.soil.soil_phi3D[0][d] < -1) {
         //  cout << "r_soil=" << r_soil << " r_soil_sellers=" << r_soil_sellers <<" r_aero=" <<r_aero << " VPDground=" << VPDground << " esat_ground=" << esat_ground << " esoil=" << esoil << " eair=" << eair << " ctx.soil.soil_phi3D[0][d]=" << ctx.soil.soil_phi3D[0][d] << " Tsoil=" << Tsoil << " ctx.soil.TopWindSpeed_DCELL[d]=" << ctx.soil.TopWindSpeed_DCELL[d] << " Wind ground level=" << exp(-alphaInoue*(1-1/ctx.soil.Canopy_height_DCELL[d]))*ctx.soil.TopWindSpeed_DCELL[d] << " evaporation S92=" << e  << " evaporation S92_sellers=" << e_sellers << " e_granier=" << e_Granier << " ctx.soil.SWC3D[0][d]-ctx.soil.Min_SWC[0]=" << ctx.soil.SWC3D[0][d]-ctx.soil.Min_SWC[0] << endl;
@@ -7010,7 +7010,7 @@ void UpdateField()
             {
                 ctx.soil.soil_phi3D[l][d] = ctx.soil.phi_e[l] * pow(theta_w, -ctx.soil.b[l]);           // this is the soil water characteristic of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
                 ctx.soil.Ks[l][d] = ctx.soil.Ksat[l] * pow(theta_w, 2.5 + 2 * ctx.soil.b[l]);           // this is the hydraulic conductivity curve of Brooks & Corey-Mualem (as in Table 1 in Marthews et al. 2014)
-                ctx.soil.KsPhi[l][d] = ctx.soil.Ksat[l] * ctx.soil.phi_e[l] * pow(theta_w, 2.5 + ctx.soil.b[l]); // ctx.soil.Ks times ctx.soil.soil_phi3D, computed directly as the exact power of theta.
+                ctx.soil.KsPhi[l][d] = ctx.soil.Ksat[l] * ctx.soil.phi_e[l] * pow(theta_w, 2.5 + ctx.soil.b[l]); // ctx.soil.Ks times ctx.soil.soil_phi3D, computed directly as the exact power of ctx.params.theta.
 
                 if (isnan(ctx.soil.soil_phi3D[l][d]) || isnan(ctx.soil.Ks[l][d]) || isnan(ctx.soil.KsPhi[l][d]) || (ctx.soil.SWC3D[l][d] - ctx.soil.Min_SWC[l]) < 0) //|| ctx.soil.KsPhi[l][d]==0.0 || ctx.soil.Ks[l][d]==0.0 || ctx.soil.soil_phi3D[l][d]==0.0)
                     cout << "In bucket model, ctx.diag.layer " << l << " dcell " << d << " theta_w=" << theta_w << " ctx.soil.SWC3D[l][d]-ctx.soil.Min_SWC[l]=" << (ctx.soil.SWC3D[l][d] - ctx.soil.Min_SWC[l]) << " ctx.soil.soil_phi3D[l][d]=" << ctx.soil.soil_phi3D[l][d] << " ctx.soil.Ksat=" << ctx.soil.Ksat[l] << " ctx.soil.phi_e=" << ctx.soil.phi_e[l] << " ctx.soil.b[l]=" << ctx.soil.b[l] << " ctx.soil.KsPhi[l][d]=" << ctx.soil.KsPhi[l][d] << " ctx.soil.Ks[l][d]=" << ctx.soil.Ks[l][d] << endl;
@@ -7085,7 +7085,7 @@ void RecruitTree()
 
 #else // LCP_alternative
 
-                float flux = ctx.climate.WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
+                float flux = ctx.climate.WDailyMean * exp(-fmaxf(ctx.field.LAI3D[0][site + ctx.grid.SBORD], 0.0) * ctx.params.kpar);
 #ifdef WATER
                 if (flux > (S[spp].s_LCP) && ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
@@ -7111,7 +7111,7 @@ void RecruitTree()
 // #############################
 //  Global function: Treefall gap formation
 // #############################
-//! change in v.2.4: resetting Thurt[0] field is done in TriggerSecondaryTreefall() at the beginning of each iteration. Further changes: rewriting of Tree::FallTree() which is now Tree::Treefall(angle). t_hurt can now persist longer, so new treefall events are added to older damages (that, in turn are decaying)
+//! change in v.2.4: resetting ctx.field.Thurt[0] field is done in TriggerSecondaryTreefall() at the beginning of each iteration. Further changes: rewriting of Tree::FallTree() which is now Tree::Treefall(angle). t_hurt can now persist longer, so new treefall events are added to older damages (that, in turn are decaying)
 void TriggerTreefall()
 {
     for (int site = 0; site < ctx.grid.sites; site++)
@@ -7133,19 +7133,19 @@ void TriggerTreefall()
         }
 #ifdef MPI
     // Treefall field passed to the n.n. procs
-    MPI_ShareTreefall(Thurt, ctx.grid.sites);
+    MPI_ShareTreefall(ctx.field.Thurt, ctx.grid.sites);
 #endif
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         // Update of Field hurt
         if (T[site].t_age)
         {
-            T[site].t_hurt = max(Thurt[0][site + ctx.grid.sites], T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
+            T[site].t_hurt = max(ctx.field.Thurt[0][site + ctx.grid.sites], T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
 #ifdef MPI
             if (mpi_rank)
-                T[site].t_hurt = max(T[site].t_hurt, Thurt[1][site]); // ? v.2.4: Update needed, Thurt[1], why max?
+                T[site].t_hurt = max(T[site].t_hurt, ctx.field.Thurt[1][site]); // ? v.2.4: Update needed, ctx.field.Thurt[1], why max?
             if (mpi_rank < mpi_size - 1)
-                T[site].t_hurt = max(T[site].t_hurt, Thurt[2][site]);
+                T[site].t_hurt = max(T[site].t_hurt, ctx.field.Thurt[2][site]);
 #endif
         }
     }
@@ -7156,7 +7156,7 @@ void TriggerTreefall()
 // #############################
 //! - NEW in v.2.4: TriggerSecondaryTreefall(), called at the beginning of each iteration
 //! - translates damages from previous round into tree deaths, partly treefalls, partly removing them only (e.g. splintering)
-//! - in the limit of p_tfsecondary = 0.0, this is equivalent to the previous computation
+//! - in the limit of ctx.params.p_tfsecondary = 0.0, this is equivalent to the previous computation
 void TriggerTreefallSecondary()
 {
     ctx.diag.nbTreefall1 = 0;
@@ -7167,8 +7167,8 @@ void TriggerTreefallSecondary()
 #endif
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        Thurt[0][site] = Thurt[0][site + 2 * ctx.grid.sites] = 0;
-        Thurt[0][site + ctx.grid.sites] = 0;
+        ctx.field.Thurt[0][site] = ctx.field.Thurt[0][site + 2 * ctx.grid.sites] = 0;
+        ctx.field.Thurt[0][site + ctx.grid.sites] = 0;
     }
     for (int site = 0; site < ctx.grid.sites; site++)
     {
@@ -7177,7 +7177,7 @@ void TriggerTreefallSecondary()
             float height_threshold = T[site].t_height / T[site].t_mult_height; // since 2.5: a tree's stability is defined by its species' average height, i.e. we divide by the intraspecific height multiplier to account for lower stability in quickly growing trees; otherwise slender, faster growing trees would be treated preferentially and experience less secondary treefall than more heavily built trees
             if (2.0 * T[site].t_hurt * (1 - (1 - gsl_rng_uniform(ctx.rng.gslrand)) / (12 * ctx.time.timestep)) > height_threshold)
             { // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when ctx.time.timestep=1/12, ctx.rng.gslrand <= 1.0 - 0.5 * t_height/t_hurt, or ctx.rng.gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
-                if (p_tfsecondary > gsl_rng_uniform(ctx.rng.gslrand))
+                if (ctx.params.p_tfsecondary > gsl_rng_uniform(ctx.rng.gslrand))
                 {                                                          // check whether tree falls or dies otherwise
                     float angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // random angle
                     T[site].Treefall(angle);
@@ -7189,14 +7189,14 @@ void TriggerTreefallSecondary()
             }
             else
             {
-                T[site].t_hurt = short(hurt_decay * float(T[site].t_hurt)); // reduction of t_hurt according to hurt_decay, could be moved to Tree::Growth() function and made dependent on the tree's carbon gain
+                T[site].t_hurt = short(ctx.params.hurt_decay * float(T[site].t_hurt)); // reduction of t_hurt according to ctx.params.hurt_decay, could be moved to Tree::Growth() function and made dependent on the tree's carbon gain
             }
         }
     }
 
 #ifdef MPI
     //! Treefall field passed to the n.n. procs
-    MPI_ShareTreefall(Thurt, ctx.grid.sites);
+    MPI_ShareTreefall(ctx.field.Thurt, ctx.grid.sites);
 #endif
 }
 
@@ -7224,10 +7224,10 @@ float CalcCRBaseline(float &dbh)
     float CR;
     if (!ctx.opt._CROWN_MM)
     {
-        CR = exp(CR_a + CR_b * log(dbh)); // power law, the default
+        CR = exp(ctx.params.CR_a + ctx.params.CR_b * log(dbh)); // power law, the default
     }
     else
-        CR = CR_b * dbh / (dbh + CR_a); // Michaelis Menten type allometry !!!: requires CR_b to be the CR_max parameter and CR_a the initial increase */
+        CR = ctx.params.CR_b * dbh / (dbh + ctx.params.CR_a); // Michaelis Menten type allometry !!!: requires ctx.params.CR_b to be the CR_max parameter and ctx.params.CR_a the initial increase */
     // for reference, two crown allometries that are reasonable in French Guiana
     // t_CR = t_mult_CR * exp(1.9472 + 0.5925*log(t_dbh)); // crown allometry deduced from Piste Saint-Elie */
     // t_CR = t_mult_CR * exp(1.8814 + 0.5869*log(t_dbh)); // this is crown allometry derived from data set compiled by Jucker et al. 2016 (Global Change Biology)
@@ -7238,7 +7238,7 @@ float CalcCDBaseline(float &height)
 {
     // crown depth allometry
     // since v.2.5, simplification of the computation of the crown depth, in accordance with the Canopy Constructor algorithm
-    float CD = (CD_a + CD_b * height);
+    float CD = (ctx.params.CD_a + ctx.params.CD_b * height);
     return (CD);
 }
 
@@ -7355,7 +7355,7 @@ void Average(void)
             float tototest = 0.0, tototest2 = 0.0, flux;
             for (int site = 0; site < ctx.grid.sites; site++)
             {
-                flux = ctx.climate.WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
+                flux = ctx.climate.WDailyMean * exp(-fmaxf(ctx.field.LAI3D[0][site + ctx.grid.SBORD], 0.0) * ctx.params.kpar);
                 tototest += flux;
                 tototest2 += flux * flux;
             }
@@ -7451,11 +7451,11 @@ void Average(void)
 
     float isites = 1.0 / float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH);
     float icells = 1.0 / float(ctx.grid.nbdcells);
-    evapo *= isites;                // in m
-    runoff *= isites;               // in m
-    leak *= isites;                 // in m
-    throughfall *= isites;          // in m
-    interception *= isites * 0.001; // in m
+    evapo *= isites;                // in ctx.params.m
+    runoff *= isites;               // in ctx.params.m
+    leak *= isites;                 // in ctx.params.m
+    throughfall *= isites;          // in ctx.params.m
+    interception *= isites * 0.001; // in ctx.params.m
     lai *= icells;
     ctx.soil.transpiration_1016 *= isites;
 
@@ -7473,7 +7473,7 @@ void Average(void)
         {
             transpi += ctx.soil.Transpiration[l][d]; // in m3
         }
-        transpi *= isites; // in m
+        transpi *= isites; // in ctx.params.m
         output[11] << transpi << "\t";
         cout << transpi * 1000 << " | "; // in mm
 
@@ -7605,7 +7605,7 @@ void Average(void)
         output[o_wfluxes] << "Evaporation" << "\t";
         for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
-            output[o_wfluxes] << ctx.soil.Evaporation[d] * ctx.grid.i_sites_per_dcell << "\t"; // in m
+            output[o_wfluxes] << ctx.soil.Evaporation[d] * ctx.grid.i_sites_per_dcell << "\t"; // in ctx.params.m
         }
         output[o_wfluxes] << endl;
 
@@ -7692,7 +7692,7 @@ void OutputField()
         {
             ctx.diag.layer[h] = 0;
             for (site = 0; site < ctx.grid.sites; site++)
-                ctx.diag.layer[h] += LAI3D[h][site + ctx.grid.SBORD];
+                ctx.diag.layer[h] += ctx.field.LAI3D[h][site + ctx.grid.SBORD];
         }
 
 #ifdef MPI
@@ -7755,10 +7755,10 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
     // reset the canopy to make sure that it is well-constructed
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
-            LAI3D[h][sbsite] = 0.0;
+            ctx.field.LAI3D[h][sbsite] = 0.0;
 
     for (int site = 0; site < ctx.grid.sites; site++)
-    { // Each tree contribues to LAI3D
+    { // Each tree contribues to ctx.field.LAI3D
         T[site].CalcLAI();
     }
 
@@ -7767,7 +7767,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
         for (int site = 0; site < ctx.grid.sites; site++)
         {
             int sbsite = site + ctx.grid.SBORD;
-            LAI3D[h - 1][sbsite] += LAI3D[h][sbsite];
+            ctx.field.LAI3D[h - 1][sbsite] += ctx.field.LAI3D[h][sbsite];
         }
     }
 
@@ -7902,10 +7902,10 @@ void OutputVisual()
             int height_canopy = 0;
             for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][site + ctx.grid.SBORD] > 0.0)
+                if (ctx.field.LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << LAI3D[0][site + ctx.grid.SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #else
@@ -7917,10 +7917,10 @@ void OutputVisual()
             int height_canopy = 0;
             for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][site + ctx.grid.SBORD] > 0.0)
+                if (ctx.field.LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << LAI3D[0][site + ctx.grid.SBORD] << endl;
+            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #endif
@@ -8008,10 +8008,10 @@ void OutputCHM(fstream &output_CHM)
         int height_canopy = 0;
         for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
-            if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
+            if (ctx.field.LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                 height_canopy = max(h, height_canopy);
         }
-        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << chm_spikefree[s] << "\t" << LAI3D[0][s + ctx.grid.SBORD] << endl;
+        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << chm_spikefree[s] << "\t" << ctx.field.LAI3D[0][s + ctx.grid.SBORD] << endl;
     }
 
 #else
@@ -8020,9 +8020,9 @@ void OutputCHM(fstream &output_CHM)
     {
         int height_canopy = 0;
         for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
-            if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
+            if (ctx.field.LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                 height_canopy = max(h, height_canopy);
-        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << LAI3D[0][s + ctx.grid.SBORD] << endl;
+        output_CHM << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << height_canopy + 1 << "\t" << ctx.field.LAI3D[0][s + ctx.grid.SBORD] << endl;
     }
 #endif
 }
@@ -8035,18 +8035,18 @@ void OutputLAI(fstream &output_transmLAI3D)
     output_transmLAI3D << "s\trow\tcol\th\tLAI3D" << endl;
     for (int s = 0; s < ctx.grid.sites; s++)
         for (int h = 0; h < ctx.grid.HEIGHT; h++)
-            output_transmLAI3D << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << h << "\t" << LAI3D[h][s + ctx.grid.SBORD] << endl;
+            output_transmLAI3D << s << "\t" << int(s / ctx.grid.cols) << "\t" << int(s % ctx.grid.cols) << "\t" << h << "\t" << ctx.field.LAI3D[h][s + ctx.grid.SBORD] << endl;
 }
 
 // ##############################################
-//  Global function: transforming TROLL LAI3D field into point cloud and export as .las file
+//  Global function: transforming TROLL ctx.field.LAI3D field into point cloud and export as .las file
 // ##############################################
 //! - Basic ALS simulation, same as for calculating the TROLL transmittance field, added in v.3.1.6; !!!: TODO: merge with UpdateTransmittanceCHM_ABC
 //! - First draws from a distribution to calculate the sampling density, i.e. the number of beams per voxel column
 //! - Then loops over beams per voxel column from top to bottom and calculates the number of hits given the leaf area density (LAD) of the respective voxel
 //! - If beams hit ground, all produce guaranteed returns
-//! - The parameters used is the k assumed for the laser, which is only based on leaf geometry and should thus be taken equal to klight
-//! - The difference to kpar is accounted for by parameterizing a probability of a further return after a hit, i.e. a transmittance of the leaves that are hit that is larger than for visible light and corresponds roughly to empirical fractions of second returns (~0.3-0.4). If taken together, a klight = 0.5 and a transmittance probability after a hit of 0.4 would yield an effective knir = 0.2, which is reasonable for most laser scanners.
+//! - The parameters used is the k assumed for the laser, which is only based on leaf geometry and should thus be taken equal to ctx.params.klight
+//! - The difference to ctx.params.kpar is accounted for by parameterizing a probability of a further return after a hit, i.e. a transmittance of the leaves that are hit that is larger than for visible light and corresponds roughly to empirical fractions of second returns (~0.3-0.4). If taken together, a ctx.params.klight = 0.5 and a transmittance probability after a hit of 0.4 would yield an effective knir = 0.2, which is reasonable for most laser scanners.
 //! - This approach makes lots of simplifying assumptions, among which are: no flightline, no angles, no beam diameter/divergence, Lambert-Beer extinction, including assumptions about the conversion between transmittance probability and energy extinction. Importantly, a TROLL forest contains no woody material and does not represent topography at the moment, all of which may influence sampling densities as well.
 //! - One further question concerns the probability of obtaining a ground return: there is a long discussion in the literature about backscatter ratios between vegetation and ground. However, this seems to be neither a constant ratio nor seems there to be agreement on how it varies, likely due to dependence on footprint size and composition of reflecting surfaces. Cf., for example, Ni-Meister et al. 2001, IEEE Transactions: they use a ratio of mostly 1.0 (the implicit assumption in this simulation as well), but state that it should vary from site to site. Knapp et al. 2021, Remote Sensing, on the other hand: "The reflectance of the forest ground voxels was down-weighted by dividing by 2.5 in order to account for the lower reflectivity of the ground vs. vegetation." This specifically concerns GEDI waveform simulations, so large-footprint lasers, but the source publication does not seem to give a direct reference for the value. Furthermore, it would imply that the ratio of ground to vegetation reflectance is 0.4 for large-footprint full-waveform lidar, which seems to be in stark contrast to Chen et al. 2014, Remote Sensing of Environment, who looked at footprints of up to 8m and found a constant ratio ground/vegetation of 1.7 (they measured vegetation/ground ratio as ~0.57, so 1.7 = 1.0/0.57). However, their Figure 11 seems to indicate an inverse relationship for small footprints (~0.4m) with a ground to vegetation backscatter ratio of ca. 0.8. In the future, it would be worth running TROLL voxel output through an explicit raytracing simulator, with a much more detailed parameterization of surfaces (e.g. DART or Helios++, https://github.com/3dgeo-heidelberg/helios) and compare our simplified simulations to its outcomes/adjust accordingly.
 
@@ -8084,8 +8084,8 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
                     if (h >= 0)
                     {
                         // returns due to vegetation
-                        float LAI_above = LAI3D[h + 1][site + ctx.grid.SBORD];
-                        float LAI_current = LAI3D[h][site + ctx.grid.SBORD];
+                        float LAI_above = ctx.field.LAI3D[h + 1][site + ctx.grid.SBORD];
+                        float LAI_current = ctx.field.LAI3D[h][site + ctx.grid.SBORD];
 
                         float LAD = LAI_current - LAI_above;
 
@@ -8564,12 +8564,12 @@ void UpdateDBHtrackingABC()
 //! - First draws from a distribution to calculate the sampling density, i.e. the number of beams per voxel column
 //! - Then loop over voxel column from top to bottom and calculate the number of hits given the density of the respective voxel
 //! - If beams are all extinct, NAs are returned (-1), if beams hit ground, all produce guaranteed returns
-//! - The parameters used is the k assumed for the laser, which is only based on leaf geometry and should thus be taken equal to klight
-//! - The difference to kpar is accounted for by parameterizing the transmittance of leaves, which, in the NIR spectrum, is much larger than for visible light (0.4 vs. 0.1)
+//! - The parameters used is the k assumed for the laser, which is only based on leaf geometry and should thus be taken equal to ctx.params.klight
+//! - The difference to ctx.params.kpar is accounted for by parameterizing the transmittance of leaves, which, in the NIR spectrum, is much larger than for visible light (0.4 vs. 0.1)
 //! - Results are saved in transmittance_simulatedALS_sampling for the number of beams, transmittance_simulatedALS for the transmittance
 void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, float ctx.pc.transmittance_laser)
 {
-    // loop over the LAI3D field
+    // loop over the ctx.field.LAI3D field
     for (int r = row_start; r < row_end; r++)
     {
         for (int c = col_start; c < col_end; c++)
@@ -8596,8 +8596,8 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                     if (h >= 0)
                     {
                         // returns due to vegetation
-                        float LAI_above = LAI3D[h + 1][site + ctx.grid.SBORD];
-                        float LAI_current = LAI3D[h][site + ctx.grid.SBORD];
+                        float LAI_above = ctx.field.LAI3D[h + 1][site + ctx.grid.SBORD];
+                        float LAI_current = ctx.field.LAI3D[h][site + ctx.grid.SBORD];
 
                         float prob_hit;
                         if (LAI_above == 100.0 & LAI_current == 100.0)
@@ -8655,8 +8655,8 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                 int s = c + r * ctx.grid.cols;
                 float LAD = 0.0;
                 if (h < ctx.grid.HEIGHT)
-                    LAD = LAI3D[h][s + ctx.grid.SBORD] - LAI3D[h + 1][s + ctx.grid.SBORD];
-                transmittance_direct[h][s] = exp(-klight * LAD);
+                    LAD = ctx.field.LAI3D[h][s + ctx.grid.SBORD] - ctx.field.LAI3D[h + 1][s + ctx.grid.SBORD];
+                transmittance_direct[h][s] = exp(-ctx.params.klight * LAD);
             }
         }
     }
@@ -8730,7 +8730,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
             int height_canopy = 0;
             for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
             {
-                if (LAI3D[h][s + ctx.grid.SBORD] > 0.0)
+                if (ctx.field.LAI3D[h][s + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
             chm_field_current[s] = height_canopy;
@@ -10132,7 +10132,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
 
     // Finally we create PAI distributions, similar to efforts to estimate PAI from lidar simulations (cf. Greg's work)
     //  interpretation outside of an ABC context is a bit problematic, since we have many NA values that need to be imputated (otherwise PAI estimate is biased downwards), and since mean(log(x)) != log(mean(x))
-    //  we fill up voxels within canopy with mean canopy ctx.diag.layer value, this decreases variance, but it does so for both empirical and simulated distributions, and the effect can be investigated given that we also have the direct measurements form LAI3D field
+    //  we fill up voxels within canopy with mean canopy ctx.diag.layer value, this decreases variance, but it does so for both empirical and simulated distributions, and the effect can be investigated given that we also have the direct measurements form ctx.field.LAI3D field
     //  furthermore, the canopy height will probably have a stronger effect on the distribution of PAI values than local variation within one ctx.diag.layer
     //  as above, we will calculate the actual distribution and the ALS-inferred one
     int stepsize = 10;
@@ -10181,13 +10181,13 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
                     if (transmittance_avg >= 0.0)
                     {
                         transmittance_avg *= 1.0 / float(nbvoxels);
-                        float PAI = -log(transmittance_avg) / klight;
+                        float PAI = -log(transmittance_avg) / ctx.params.klight;
                         PAIcolumn += PAI;
                     }
                     if (transmittance_avgALS >= 0.0)
                     {
                         transmittance_avgALS *= 1.0 / float(nbvoxels);
-                        float PAI_ALS = -log(transmittance_avgALS) / klight;
+                        float PAI_ALS = -log(transmittance_avgALS) / ctx.params.klight;
                         PAIcolumn_ALS += PAI_ALS;
                     }
                 }
@@ -10471,11 +10471,11 @@ void FreeMem()
     if (ctx.opt._SEEDTRADEOFF || ctx.opt._NDD)
         delete[] ctx.species.PROB_S;
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
-        delete[] LAI3D[h];
-    delete[] LAI3D;
+        delete[] ctx.field.LAI3D[h];
+    delete[] ctx.field.LAI3D;
 
     for (int i = 0; i < 3; i++)
-        delete[] Thurt[i];
+        delete[] ctx.field.Thurt[i];
 
 #ifdef Output_ABC
     delete[] chm_field_previous;

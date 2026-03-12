@@ -64,31 +64,15 @@
 //
 // For now, these declarations prevent circular include dependencies.
 
-// cols, rows, HEIGHT, length_dcell migrated to ctx.grid
-// NV, NH migrated to ctx.grid
-extern float p_nonvert, SWtoPPFD, klight;
-extern float absorptance_leaves, theta, phi, g1;
-extern float vC, DBH0, H0, CR_min, CR_a, CR_b, CD_a, CD_b, CD0;
-extern float dens, fallocwood, falloccanopy, Cseedrain;
-// shape_crown migrated to ctx.crown
-extern float nbs0;
-// sigma/corr/cov intraspecific variation parameters migrated to ctx.intra
-// leafdem_resolution migrated to ctx.grid
-extern float p_tfsecondary, hurt_decay;
-// crown_gap_fraction migrated to ctx.crown
-extern float m, m1, Cair;
-// extent_visual migrated to ctx.crown
-// ModelOptions migrated to ctx.opt
-
-#ifdef G0
-extern float g0;
-#endif
-#ifdef PHENO_DROUGHT
-extern float pheno_a0, pheno_b0, pheno_delta;
-#endif
-#ifdef WATER
-extern float PRESS;
-#endif
+// All globals formerly declared here have been migrated to Context sub-structs:
+//   cols, rows, HEIGHT, length_dcell, NV, NH, leafdem_resolution → ctx.grid
+//   p_nonvert, SWtoPPFD, klight, absorptance_leaves, theta, phi, g1, g0,
+//   pheno_a0, pheno_b0, pheno_delta, vC, DBH0, H0, CR_min, CR_a, CR_b,
+//   CD_a, CD_b, CD0, dens, fallocwood, falloccanopy, Cseedrain, nbs0,
+//   p_tfsecondary, hurt_decay, m, m1, Cair, PRESS → ctx.params
+//   shape_crown, crown_gap_fraction, extent_visual → ctx.crown
+//   sigma/corr/cov intraspecific variation → ctx.intra
+//   ModelOptions → ctx.opt
 
 // ============================================================================
 //   SetParameter numeric template
@@ -252,41 +236,41 @@ void RegisterParameters(Context &ctx)
     add_float("NH", ctx.grid.NH, 0.0f, float(INT_MAX), 1.0f);
 
     add_int("nbout", ctx.time.nbout, 0, INT_MAX, 4);
-    add_float("p_nonvert", p_nonvert, 0.0f, 1.0f, 0.05f);
-    add_float("SWtoPPFD", SWtoPPFD, 0.0f, 5.0f, 2.29f);
-    add_float("klight", klight, 0.0f, 1.0f, 0.5f);
+    add_float("p_nonvert", ctx.params.p_nonvert, 0.0f, 1.0f, 0.05f);
+    add_float("SWtoPPFD", ctx.params.SWtoPPFD, 0.0f, 5.0f, 2.29f);
+    add_float("klight", ctx.params.klight, 0.0f, 1.0f, 0.5f);
 
-    add_float("absorptance_leaves", absorptance_leaves, 0.0f, 1.0f, 0.9f);
-    add_float("theta", theta, 0.0f, 10.0f, 0.7f);
-    add_float("phi", phi, 0.0f, 1.0f, 0.06f);
-    add_float("g1", g1, 0.0f, 1000.0f, 3.77f);
+    add_float("absorptance_leaves", ctx.params.absorptance_leaves, 0.0f, 1.0f, 0.9f);
+    add_float("theta", ctx.params.theta, 0.0f, 10.0f, 0.7f);
+    add_float("phi", ctx.params.phi, 0.0f, 1.0f, 0.06f);
+    add_float("g1", ctx.params.g1, 0.0f, 1000.0f, 3.77f);
 
 #ifdef G0
-    add_float("g0", g0, 0.0f, 30.0f, 5.0f);
+    add_float("g0", ctx.params.g0, 0.0f, 30.0f, 5.0f);
 #endif
 
 #ifdef PHENO_DROUGHT
-    add_float("pheno_a0", pheno_a0, 0.0f, 1.0f, 0.5f);
-    add_float("pheno_b0", pheno_b0, 0.0f, 1.0f, 0.5f);
-    add_float("pheno_delta", pheno_delta, 0.0f, 1.0f, 0.1f);
+    add_float("pheno_a0", ctx.params.pheno_a0, 0.0f, 1.0f, 0.5f);
+    add_float("pheno_b0", ctx.params.pheno_b0, 0.0f, 1.0f, 0.5f);
+    add_float("pheno_delta", ctx.params.pheno_delta, 0.0f, 1.0f, 0.1f);
 #endif
 
-    add_float("vC", vC, 0.0f, 1.0f, 0.05f);
-    add_float("DBH0", DBH0, 0.0f, 2.5f, 0.005f);
-    add_float("H0", H0, 0.0f, 100.0f, 0.95f);
-    add_float("CR_min", CR_min, 0.0f, 50.0f, 0.2f);
-    add_float("CR_a", CR_a, 0.0f, 5.0f, 2.13f);
-    add_float("CR_b", CR_b, 0.0f, 50.0f, 0.63f);
-    add_float("CD_a", CD_a, 0.0f, 0.5f, 0.0f);
-    add_float("CD_b", CD_b, 0.0f, 1.0f, 0.2f);
-    add_float("CD0", CD0, 0.0f, 50.0f, 0.1f);
+    add_float("vC", ctx.params.vC, 0.0f, 1.0f, 0.05f);
+    add_float("DBH0", ctx.params.DBH0, 0.0f, 2.5f, 0.005f);
+    add_float("H0", ctx.params.H0, 0.0f, 100.0f, 0.95f);
+    add_float("CR_min", ctx.params.CR_min, 0.0f, 50.0f, 0.2f);
+    add_float("CR_a", ctx.params.CR_a, 0.0f, 5.0f, 2.13f);
+    add_float("CR_b", ctx.params.CR_b, 0.0f, 50.0f, 0.63f);
+    add_float("CD_a", ctx.params.CD_a, 0.0f, 0.5f, 0.0f);
+    add_float("CD_b", ctx.params.CD_b, 0.0f, 1.0f, 0.2f);
+    add_float("CD0", ctx.params.CD0, 0.0f, 50.0f, 0.1f);
     add_float("shape_crown", ctx.crown.shape_crown, 0.0f, 1.0f, 1.0f);
-    add_float("dens", dens, 0.0f, 10.0f, 1.0f);
-    add_float("fallocwood", fallocwood, 0.0f, 1.0f, 0.35f);
-    add_float("falloccanopy", falloccanopy, 0.0f, 1.0f, 0.25f);
-    add_float("Cseedrain", Cseedrain, 0.0f, 1000000.0f, 50000.0f);
+    add_float("dens", ctx.params.dens, 0.0f, 10.0f, 1.0f);
+    add_float("fallocwood", ctx.params.fallocwood, 0.0f, 1.0f, 0.35f);
+    add_float("falloccanopy", ctx.params.falloccanopy, 0.0f, 1.0f, 0.25f);
+    add_float("Cseedrain", ctx.params.Cseedrain, 0.0f, 1000000.0f, 50000.0f);
 
-    add_float("nbs0", nbs0, 0.0f, 10000.0f, 10.0f);
+    add_float("nbs0", ctx.params.nbs0, 0.0f, 10000.0f, 10.0f);
 
     add_float("sigma_height", ctx.intra.sigma_height, 0.0f, 1.0f, 0.19f);
     add_float("sigma_CR", ctx.intra.sigma_CR, 0.0f, 1.0f, 0.29f);
@@ -307,16 +291,16 @@ void RegisterParameters(Context &ctx)
 
     add_int("leafdem_resolution", ctx.grid.leafdem_resolution, 0, INT_MAX, 30);
 
-    add_float("p_tfsecondary", p_tfsecondary, 0.0f, 1.0f, 1.0f);
-    add_float("hurt_decay", hurt_decay, 0.0f, 1.0f, 0.0f);
+    add_float("p_tfsecondary", ctx.params.p_tfsecondary, 0.0f, 1.0f, 1.0f);
+    add_float("hurt_decay", ctx.params.hurt_decay, 0.0f, 1.0f, 0.0f);
     add_float("crown_gap_fraction", ctx.crown.crown_gap_fraction, 0.0f, 1.0f, 0.0f);
-    add_float("m", m, 0.0f, 1.0f, 0.013f);
-    add_float("m1", m1, 0.0f, 1.0f, 0.013f);
+    add_float("m", ctx.params.m, 0.0f, 1.0f, 0.013f);
+    add_float("m1", ctx.params.m1, 0.0f, 1.0f, 0.013f);
 
-    add_float("Cair", Cair, 0.0f, 1000000.0f, 400.0f);
+    add_float("Cair", ctx.params.Cair, 0.0f, 1000000.0f, 400.0f);
 
 #ifdef WATER
-    add_float("PRESS", PRESS, 10.0f, 110.0f, 101.0f);
+    add_float("PRESS", ctx.params.PRESS, 10.0f, 110.0f, 101.0f);
 #endif
 
     add_bool("_LL_parameterization", ctx.opt._LL_parameterization, false, true, true);

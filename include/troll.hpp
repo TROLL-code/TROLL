@@ -118,14 +118,7 @@ fstream output_track[3]; //!< Global variable: output streams for tracking of tr
 // site_DCELL, i_sites_per_dcell, HEIGHT, dbhmaxincm, RMAX, SBORD,
 // leafdem_resolution, NV, NH, LV, LH
 
-float p_nonvert; //!< Global variable: ratio of non-vertical incident light
-float Cseedrain; //!< Global variable: constant used to scale total seed rain per hectare across species
-float nbs0;      //!< Global variable: number of seeds produced and dispersed by each mature tree when SEEDTRADEOFF is not defined
-float Cair;      //!< Global variable: atmospheric CO_2 concentration (in ppm). If in the future CO_2 is allowed to vary, Cair should have the same status as other climatic variables
-#ifdef WATER
-float PRESS; //!< Global variable: atmospheric CO_2 pressure (in kPa). If in the future PRESS should vary, it should have the same status as other climatic variables
-#endif
-float iCair; //!< Global variable: inverse of Cair
+// p_nonvert, Cseedrain, nbs0, Cair, iCair, PRESS migrated to ctx.params
 
 // CrownGeometry migrated to ctx.crown:
 // crown_gap_fraction, shape_crown, Rndd, deltaR, deltaD, BAtot,
@@ -152,42 +145,11 @@ float iCair; //!< Global variable: inverse of Cair
 // windDailyMean_year, Tnight_year,
 // WDailyMean_all, VPDDailyMean_all, tDailyMean_all, windDailyMean_all
 
-// GLOBAL VARIABLES ACROSS SPECIES
-float SWtoPPFD; //!< Global variable: conversion factor for shortwave irradiance measured in W/m2 to PPFD in micromol of PAR (micromol/s/m^2, as used in the Farquhar model). Around 2.0-2.5 in the tropics. Data at Nouragues (comparing photon count and irradiance) give a value: 2.27. Depends on cloudiness (in non-cloudy areas, the fraction of PAR in irradiance arriving on the ground may be much lower). This is typically equals to ca 0.5*4.57, where 0.5 stands for the fact that ca 50% of the total solar energy reaching the Earth’s surface corresponds to PAR, and 4.57 umol J-1 is basically equal to 10^6/(Emean*Avogadro number) where Emean is the average energy of a photon across PAR wavelength range: Ephoton=h*c/wavelength).
-#ifdef WATER
-float PPFDtoSW; //!< Global variable: conversion factor from PPFD in micromol of PAR to shortwave irradiance measured in J/ Inverse of SWtoPPFD.
-#endif
-float klight;             //!< Global variable: light absorption rate or extinction coefficient used in Beer-Lambert law to compute light within the canopy
-float kpar;               //!< Global variable: new in v.2.5: effective light absorption rate or extinction coefficient used in Beer-Lambert law to compute light within the canopy; kpar = klight * absorptance_leaves
-float phi;                //!< Global variable: true quantum yield; previously was apparent quantum yield (in micromol C/micromol photon): quantum yield multiplied by leaf absorptance. Quantum yield is often provided per absorbed light flux, so one should multiply incident PPFD by leaf absorptance (Poorter et al American Journal of Botany). For some authors, it should be species-dependent or environment dependent, but these options are not implemented here (see eg Domingues et al 2014 Plant Ecology & Diversity). As of v2.5: phi is the quantum yield, without multiplication with absorptance (see absorptance_leaves)
-float theta;              //!< Global variable: parameter of the Farquhar model set to 0.7 in this version. For some authors, it should be species-dependent or environment dependent, but these options are not implemented here
-float absorptance_leaves; //!< Global variable: absorptance of leaves (close to 0.91 for tropical tree species)
-float g1;                 //!< Global variable: g1 parameter of Medlyn et al's model of stomatal conductance. v230: defined as a global parameter shared by species, instead of a Species class variable. !!!UPDATE A species-specific value of g1 (cf Lin et al. 2015 NCC or Wu et al. 2019 GCB) is needed to simulate functional shift through a regeneration. Different values of g1 across PFT are also used by Xu et al. 2016 New Phytologist using ED2+SPA applied on tropical dry forests
-#ifdef G0
-float g0; //!< Global variable: minimum leaf conductance, in mmolH20 m-2 s-1, parameter of stomatal conductance model. Defined as a global parameter shared by species, in absence of a clear variation with other traits (see Duursma et al. 2018 New Phytologist, Slot et al. 2021 New Phytologist, METRADICA data)
-#endif
-#ifdef PHENO_DROUGHT
-float pheno_a0;    //!< Global variable: threshold beyond which a change in t_pheno_factor (that controls old leaves shedding) is triggered, in proportion of leaf TLP
-float pheno_b0;    //!< Global variable: threshold beyond which a change in t_pheno_factor (that controls old leaves shedding) is triggered, in proportion of tree height
-float pheno_delta; //!< Global variable: amplitude of change in t_pheno_factor per timestep
-#endif
-float alpha;         //!< Global variable: apparent quantum yield to electron transport in mol e-/mol photons, equal to the true quantum yield multiplied by leaf absorbance
-float vC;            //!< Global variable: variance of treefall threshold
-float H0;            //!< Global variable: initial tree height (m)
-float DBH0;          //!< Global variable: initial tree DBH (m)
-float CD0;           //!< Global variable: initial tree crown depth (m)
-float fallocwood;    //!< Global variable: fraction of biomass allocated to above ground wood (branch turnover+stem)
-float falloccanopy;  //!< Global variable: fraction of biomass allocated to canopy (leaves + reproductive organs + twigs)
-float dens;          //!< Global variable: initial crown leaf density (in m^2/m^3)
-float CD_a;          //!< Global variable: allometric parameter crown depth intercept
-float CD_b;          //!< Global variable: allometric parameter crown depth slope
-float CR_a;          //!< Global variable: allometric parameter crown radius log scale intercept (translates into factor on regular scale)
-float CR_b;          //!< Global variable: allometric parameter crown radius log scale slope (translates into exponent on regular scale)
-float CR_min;        //!< Global variable: allometric parameter minimum crown radius (in m)
-float p_tfsecondary; //!< Global variable: probability that a death due to a treefall is a treefall itself (v.2.4.0)
-float hurt_decay;    //!< Global variable: "healing factor" rate at which t_hurt, the tree-level negative impact of a treefall on a tree, declines each timestep (v.2.4.0)
-float m;             //!< Global variable: basal death rate
-float m1;            //!< Global variable: slope of the dependence between death rate and wood density (wsg); usually a negative constant (v.2.2)
+// Simulation parameters migrated to ctx.params:
+// SWtoPPFD, PPFDtoSW, klight, kpar, phi, theta, absorptance_leaves, g1, g0,
+// pheno_a0, pheno_b0, pheno_delta, alpha, vC, H0, DBH0, CD0,
+// fallocwood, falloccanopy, dens, CD_a, CD_b, CR_a, CR_b, CR_min,
+// p_tfsecondary, hurt_decay, m, m1
 
 // Intraspecific variation parameters migrated to ctx.intra:
 // sigma_height/CR/CD/P/N/LMA/wsg/dbhmax/leafarea/tlp,
@@ -198,10 +160,8 @@ float m1;            //!< Global variable: slope of the dependence between death
 
 // LookUpLAImax migrated to ctx.lookup
 
-// THREE DIMENSIONAL LAI FIELD
-float **LAI3D(0); //!< Global 3D field: leaf density (per volume unit)
-// TREEFALL IMPACT ON TREE HEALTH
-unsigned short *Thurt[3]; //!<  Global vector:Treefall field
+// Simulation fields migrated to ctx.field:
+// LAI3D, Thurt[3]
 
 // Soil globals migrated to ctx.soil:
 // nblayers_soil, layer_depth, Sat_SWC, Max_SWC, FC_SWC, Res_SWC, Min_SWC,
@@ -279,12 +239,12 @@ void MPI_ShareTreefall(unsigned short **, int);                  //!< Global MPI
 // See function description for more details
 void GetPPFDabove(int height, int site, float noinput, float (&PPFD)[2]); //!< Global function: PPFD retrieval for function leafarea_max()
 #ifdef WATER
-void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_environment_cumulated)[6]); //!< Global function: calculates the canopy environment
+void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
 #else
-void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_environment_cumulated)[4]); //!< Global function: calculates the canopy environment
+void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
 #endif
 void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR, float CD, int crownvolume[70]); //!< Global function: calculates packing densities
-void UpdateLAI3D(int height, int site, float dens, float &LA_cumulated);                                         //!< Global function: update of LAI3D field, called by CalcLAI()
+void UpdateLAI3D(int height, int site, float dens_layer, float &LA_cumulated);                                    //!< Global function: update of LAI3D field, called by CalcLAI() // RENAMED: dens → dens_layer
 #ifdef CHM_SPIKEFREE
 void UpdateCHMvector(int height, int site, float noinput, vector<int> &chm); //!< Global function: remove outliers in canopy height model (CHM); vector option
 void UpdateCHM(int height, int site, float noinput, int *chm);               //!< Global function: remove outliers in canopy height model (CHM)
@@ -294,8 +254,8 @@ void KeepFloatAsIs(float input, float &output, float CD, float height, int layer
 void KeepIntAsIs(int input, int &output, float CD, float height, int layer_fromtop);                //!< Global function: dummy function when no modification is needed
 void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fromtop);             //!< Global function: a modifying function that converts LAI to the density of a specific layer, using the GetDensity functions
 void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, int layer_fromtop);   //!< Global function: a modifying function that converts LAI to percentage LAI in and above the current layer, using the GetDensity functions; can be used to directly allocate LAI without looping over LAI3D field; new in v.3.1
-void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens); //!< Global function: deduces within-crown densities from LAI with a gradient from 50% in top layer to 25% in belowtop and 25% in all shells underneath (1 layer for umbrella-like shape)
-void GetDensityUniform(float LAI, float CD, float &dens);                                           //!< Global function: deduces within-crown density from LAI, assuming uniform leaf distribution
+void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens_layer); //!< Global function: deduces within-crown densities from LAI // RENAMED: dens → dens_layer
+void GetDensityUniform(float LAI, float CD, float &dens_layer);                                           //!< Global function: deduces within-crown density from LAI // RENAMED: dens → dens_layer
 int GetCrownIntarea(float radius);                                                                  //!< Global function: converts floating point crown area into integer value, imposing lower and upper limits
 float GetRadiusSlope(float CR, float crown_extent, float crown_position);                           //!< Global function: linear decrease of crown radius
 float GetRadiusCylinder(float CR, float crown_extent, float crown_position);                        //!< Global function: not currently used, but returns the input radius

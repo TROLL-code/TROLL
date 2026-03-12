@@ -308,6 +308,62 @@ struct CrownGeometry
     int minrow_visual_slice, maxrow_visual_slice;
 };
 
+struct SimParams
+{
+    // Light and photosynthesis
+    float p_nonvert;
+    float SWtoPPFD;
+    float PPFDtoSW;
+    float klight;
+    float kpar;
+    float phi;
+    float theta;
+    float absorptance_leaves;
+    float alpha;
+    float g1;
+    float g0;
+
+    // CO2 / atmosphere
+    float Cair;
+    float iCair;
+    float PRESS;
+
+    // Phenology drought response
+    float pheno_a0;
+    float pheno_b0;
+    float pheno_delta;
+
+    // Tree allometry
+    float H0;
+    float DBH0;
+    float CD0;
+    float CD_a;
+    float CD_b;
+    float CR_a;
+    float CR_b;
+    float CR_min;
+    float dens;
+    float fallocwood;
+    float falloccanopy;
+    float vC;
+
+    // Mortality
+    float m;
+    float m1;
+    float p_tfsecondary;
+    float hurt_decay;
+
+    // Seed dispersal
+    float Cseedrain;
+    float nbs0;
+};
+
+struct SimFields
+{
+    float **LAI3D = nullptr;
+    unsigned short *Thurt[3];
+};
+
 struct Context
 {
     FileIO fileio;
@@ -325,6 +381,8 @@ struct Context
     SpeciesState species;
     Intraspecific intra;
     CrownGeometry crown;
+    SimParams params;
+    SimFields field;
 };
 
 #endif
