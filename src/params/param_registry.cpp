@@ -69,16 +69,18 @@
 extern float p_nonvert, SWtoPPFD, klight;
 extern float absorptance_leaves, theta, phi, g1;
 extern float vC, DBH0, H0, CR_min, CR_a, CR_b, CD_a, CD_b, CD0;
-extern float shape_crown, dens, fallocwood, falloccanopy, Cseedrain;
+extern float dens, fallocwood, falloccanopy, Cseedrain;
+// shape_crown migrated to ctx.crown
 extern float nbs0;
 extern float sigma_height, sigma_CR, sigma_CD, sigma_P, sigma_N, sigma_LMA;
 extern float sigma_wsg, sigma_dbhmax;
 extern float sigma_leafarea, sigma_tlp;
 extern float corr_CR_height, corr_N_P, corr_N_LMA, corr_P_LMA;
 // leafdem_resolution migrated to ctx.grid
-extern float p_tfsecondary, hurt_decay, crown_gap_fraction;
+extern float p_tfsecondary, hurt_decay;
+// crown_gap_fraction migrated to ctx.crown
 extern float m, m1, Cair;
-extern int extent_visual;
+// extent_visual migrated to ctx.crown
 // ModelOptions migrated to ctx.opt
 
 #ifdef G0
@@ -281,7 +283,7 @@ void RegisterParameters(Context &ctx)
     add_float("CD_a", CD_a, 0.0f, 0.5f, 0.0f);
     add_float("CD_b", CD_b, 0.0f, 1.0f, 0.2f);
     add_float("CD0", CD0, 0.0f, 50.0f, 0.1f);
-    add_float("shape_crown", shape_crown, 0.0f, 1.0f, 1.0f);
+    add_float("shape_crown", ctx.crown.shape_crown, 0.0f, 1.0f, 1.0f);
     add_float("dens", dens, 0.0f, 10.0f, 1.0f);
     add_float("fallocwood", fallocwood, 0.0f, 1.0f, 0.35f);
     add_float("falloccanopy", falloccanopy, 0.0f, 1.0f, 0.25f);
@@ -310,7 +312,7 @@ void RegisterParameters(Context &ctx)
 
     add_float("p_tfsecondary", p_tfsecondary, 0.0f, 1.0f, 1.0f);
     add_float("hurt_decay", hurt_decay, 0.0f, 1.0f, 0.0f);
-    add_float("crown_gap_fraction", crown_gap_fraction, 0.0f, 1.0f, 0.0f);
+    add_float("crown_gap_fraction", ctx.crown.crown_gap_fraction, 0.0f, 1.0f, 0.0f);
     add_float("m", m, 0.0f, 1.0f, 0.013f);
     add_float("m1", m1, 0.0f, 1.0f, 0.013f);
 
@@ -338,7 +340,7 @@ void RegisterParameters(Context &ctx)
     add_bool("_OUTPUT_extended", ctx.opt._OUTPUT_extended, false, true, false);
     add_bool("_OUTPUT_inventory", ctx.opt._OUTPUT_inventory, false, true, false);
 
-    add_int("extent_visual", extent_visual, 0, INT_MAX, 0);
+    add_int("extent_visual", ctx.crown.extent_visual, 0, INT_MAX, 0);
 }
 
 // ============================================================================

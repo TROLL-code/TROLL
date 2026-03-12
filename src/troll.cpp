@@ -218,7 +218,7 @@ void Tree::Birth(int nume, int site0)
                                // t_WSF and t_WSF_A are then updated later in Tree::Birth to account for the real water conditions at birth.
 #endif
         float crown_area = PI * t_CR * t_CR;
-        float fraction_filled_general = 1.0 - crown_gap_fraction;
+        float fraction_filled_general = 1.0 - ctx.crown.crown_gap_fraction;
         t_fraction_filled = fminf(fraction_filled_general / (t_mult_CR * t_mult_CR), 1.0);
         float crown_area_nogaps = GetCrownAreaFilled(crown_area);
 
@@ -635,7 +635,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
                 t_Ct = CalcCt();
         }
 
-        // float fraction_filled_general = 1.0 - crown_gap_fraction;
+        // float fraction_filled_general = 1.0 - ctx.crown.crown_gap_fraction;
         // t_fraction_filled = fminf(fraction_filled_general/(t_mult_CR * t_mult_CR),1.0);
         parameter_name = "fraction_filled";
         parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
@@ -1396,7 +1396,7 @@ float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
 {
     float dr = 0;
     float basal = m * (1 - t_wsg);
-    float dd = deltaD * ndd * (1 - 2 * dbh / t_dbhmax);
+    float dd = ctx.crown.deltaD * ndd * (1 - 2 * dbh / t_dbhmax);
 
     dr = basal;
     if (ctx.opt._LA_regulation == 0)
@@ -3570,7 +3570,7 @@ void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int
 // Global function: linear decrease of crown radius
 float GetRadiusSlope(float CR, float crown_extent, float crown_position)
 {
-    float crown_slope = CR * (1.0 - shape_crown) / crown_extent;
+    float crown_slope = CR * (1.0 - ctx.crown.shape_crown) / crown_extent;
     float radius = CR - crown_slope * float(crown_position);
     return (radius);
 }
@@ -3742,7 +3742,7 @@ void OutputCrownSliced(int height, int site, int row_slice, vector<float> &outpu
 {
     int row_current = site / ctx.grid.cols;
     int col_current = site % ctx.grid.cols;
-    if (row_current == row_slice && col_current >= mincol_visual && col_current < maxcol_visual)
+    if (row_current == row_slice && col_current >= ctx.crown.mincol_visual && col_current < ctx.crown.maxcol_visual)
     {
         output_visual[1] << ctx.time.iter << "\t" << row_current << "\t" << col_current << "\t" << height;
         for (int i = 0; i < output_statistics.size(); i++)
@@ -4023,7 +4023,7 @@ int main(int argc, char *argv[])
         cout << "Activated Module: OUTPUT_extended" << endl;
     if (ctx.opt._OUTPUT_inventory == 1)
         cout << "Activated Module: OUTPUT_inventory" << endl;
-    if (ctx.opt._OUTPUT_extended == 1 && extent_visual > 0)
+    if (ctx.opt._OUTPUT_extended == 1 && ctx.crown.extent_visual > 0)
         cout << "Activated visualization output." << endl;
     if (ctx.opt._OUTPUT_pointcloud == 1)
         cout << "Activated Module: Point cloud output (simplified ALS simulation)" << endl; // v.3.1.6
@@ -4068,7 +4068,7 @@ int main(int argc, char *argv[])
         stop_time = clock();
         duration += fmaxf(stop_time - start_time, 0.0);
 
-        if (ctx.opt._OUTPUT_extended == 1 && extent_visual > 0)
+        if (ctx.opt._OUTPUT_extended == 1 && ctx.crown.extent_visual > 0)
         {
             int timeofyear = GetTimeofyear();
             if (timeofyear == 0)
@@ -4342,7 +4342,7 @@ void ReadInputGeneral(Context &ctx)
                 gsl_vector_set(mu_N_P_LMA, j, 0.0); // zero means
             variation_N_P_LMA = gsl_vector_alloc(3);
         }
-        crown_gap_fraction = fmaxf(crown_gap_fraction, 0.000001); // crown_gap_fraction is prevented from becoming zero in order to avoid division by zero. Given that crown area is currently limited to 1963 (int(3.14 * 25.0 * 25.0), the lowest crown_gap_fraction that could potentially have an effect would be 1/1963, which is ~ 0.0005
+        ctx.crown.crown_gap_fraction = fmaxf(ctx.crown.crown_gap_fraction, 0.000001); // ctx.crown.crown_gap_fraction is prevented from becoming zero in order to avoid division by zero. Given that crown area is currently limited to 1963 (int(3.14 * 25.0 * 25.0), the lowest ctx.crown.crown_gap_fraction that could potentially have an effect would be 1/1963, which is ~ 0.0005
         iCair = 1.0 / Cair;
         DBH0 *= ctx.grid.NH;
         H0 *= ctx.grid.NV;
@@ -4357,18 +4357,18 @@ void ReadInputGeneral(Context &ctx)
 
         // new in v.3.1.2: visual extent
         int maxextent_visual = min(ctx.grid.rows, ctx.grid.cols);
-        if (extent_visual > maxextent_visual)
-            extent_visual = maxextent_visual; // make sure visualization does not exceed boundaries of simulation
-        if (extent_visual > 0)
+        if (ctx.crown.extent_visual > maxextent_visual)
+            ctx.crown.extent_visual = maxextent_visual; // make sure visualization does not exceed boundaries of simulation
+        if (ctx.crown.extent_visual > 0)
         {
             // define boundaries
             int rowextent_slice = 10;
-            mincol_visual = ctx.grid.cols / 2 - extent_visual / 2;
-            maxcol_visual = ctx.grid.cols / 2 + extent_visual / 2;
-            minrow_visual = ctx.grid.rows / 2 - extent_visual / 2;
-            maxrow_visual = ctx.grid.rows / 2 + extent_visual / 2;
-            minrow_visual_slice = max(ctx.grid.rows / 2 - rowextent_slice / 2, minrow_visual);
-            maxrow_visual_slice = min(ctx.grid.rows / 2 + rowextent_slice / 2, maxrow_visual);
+            ctx.crown.mincol_visual = ctx.grid.cols / 2 - ctx.crown.extent_visual / 2;
+            ctx.crown.maxcol_visual = ctx.grid.cols / 2 + ctx.crown.extent_visual / 2;
+            ctx.crown.minrow_visual = ctx.grid.rows / 2 - ctx.crown.extent_visual / 2;
+            ctx.crown.maxrow_visual = ctx.grid.rows / 2 + ctx.crown.extent_visual / 2;
+            ctx.crown.minrow_visual_slice = max(ctx.grid.rows / 2 - rowextent_slice / 2, ctx.crown.minrow_visual);
+            ctx.crown.maxrow_visual_slice = min(ctx.grid.rows / 2 + rowextent_slice / 2, ctx.crown.maxrow_visual);
         }
     }
     else
@@ -5478,7 +5478,7 @@ void InitialiseOutputStreams()
             output_extended[5] << "iter\td\tfreq" << endl;
             output_extended[6] << "iter\th\tfreq" << endl;
 
-            if (extent_visual > 0)
+            if (ctx.crown.extent_visual > 0)
             {
                 sprintf(nnn, "%s_%i_visual_field.txt", ctx.buffers.buf, easympi_rank);
                 output_visual[0].open(nnn, ios::out);
@@ -6667,7 +6667,7 @@ void UpdateField()
     {
         // Evolution of the field NDDfield
 
-        float normBA = 10000.0 / (0.001 + PI * Rndd * Rndd * BAtot);
+        float normBA = 10000.0 / (0.001 + PI * ctx.crown.Rndd * ctx.crown.Rndd * ctx.crown.BAtot);
         for (int site = 0; site < ctx.grid.sites; site++)
         {
 
@@ -6680,14 +6680,14 @@ void UpdateField()
 
             int row0 = T[site].t_site / ctx.grid.cols;
             int col0 = T[site].t_site % ctx.grid.cols;
-            for (int col = max(0, int(col0 - Rndd)); col <= min(ctx.grid.cols - 1, int(col0 + Rndd)); col++)
+            for (int col = max(0, int(col0 - ctx.crown.Rndd)); col <= min(ctx.grid.cols - 1, int(col0 + ctx.crown.Rndd)); col++)
             {
-                for (int row = max(0, int(row0 - Rndd)); row <= min(ctx.grid.rows - 1, int(row0 + Rndd)); row++)
+                for (int row = max(0, int(row0 - ctx.crown.Rndd)); row <= min(ctx.grid.rows - 1, int(row0 + ctx.crown.Rndd)); row++)
                 { // loop over the neighbourhood
                     int xx = col0 - col;
                     int yy = row0 - row;
                     float d = sqrt(xx * xx + yy * yy);
-                    if ((d <= Rndd) && (d > 0))
+                    if ((d <= ctx.crown.Rndd) && (d > 0))
                     { // is the voxel within the neighbourhood?
                         int j = ctx.grid.cols * row + col;
                         if (T[j].t_age)
@@ -7368,7 +7368,7 @@ void Average(void)
     }
 
     if (ctx.opt._NDD)
-        BAtot = ba;
+        ctx.crown.BAtot = ba;
 
     for (int site = 0; site < ctx.grid.sites; site++)
     {
@@ -7890,9 +7890,9 @@ void OutputVisual()
     vector<int> chm_spikefree;
     MakeCHMspikefree(chm_spikefree);
 
-    for (int col = mincol_visual; col < maxcol_visual; col++)
+    for (int col = ctx.crown.mincol_visual; col < ctx.crown.maxcol_visual; col++)
     {
-        for (int row = minrow_visual; row < maxrow_visual; row++)
+        for (int row = ctx.crown.minrow_visual; row < ctx.crown.maxrow_visual; row++)
         {
             int site = col + row * ctx.grid.cols;
             int height_canopy = 0;
@@ -7905,9 +7905,9 @@ void OutputVisual()
         }
     }
 #else
-    for (int col = mincol_visual; col < maxcol_visual; col++)
+    for (int col = ctx.crown.mincol_visual; col < ctx.crown.maxcol_visual; col++)
     {
-        for (int row = minrow_visual; row < maxrow_visual; row++)
+        for (int row = ctx.crown.minrow_visual; row < ctx.crown.maxrow_visual; row++)
         {
             int site = col + row * ctx.grid.cols;
             int height_canopy = 0;
@@ -7922,7 +7922,7 @@ void OutputVisual()
 #endif
 
     // now the sliced output
-    for (int row = minrow_visual_slice; row < maxrow_visual_slice; row++)
+    for (int row = ctx.crown.minrow_visual_slice; row < ctx.crown.maxrow_visual_slice; row++)
     {
         for (int col = 0; col < ctx.grid.cols; col++)
         {
@@ -10412,7 +10412,7 @@ void CloseOutputs()
             output_extended[i].close();
             output_extended[i].clear();
         }
-        if (extent_visual > 0)
+        if (ctx.crown.extent_visual > 0)
         {
             for (int i = 0; i < 2; i++)
             {
