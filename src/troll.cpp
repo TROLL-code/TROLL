@@ -4,10 +4,30 @@
 #include "context.hpp"
 #include "params/param_registry.hpp"
 
-// File-scope Context instance. Temporary during the globals → Context migration.
-// All sub-struct fields are populated incrementally as globals are removed.
-// Will be converted to an explicit parameter once globals are gone (Phase 3).
+// File-scope globals — declared extern in troll.hpp, defined here once.
 Context ctx;
+vector<Species> S;
+vector<Tree> T;
+
+// Output file streams
+fstream output_info;
+fstream output_basic[4];
+fstream output_extended[9];
+fstream output_visual[2];
+fstream output_pointcloud;
+#ifdef MIP_Lichstein
+fstream output_MIP_eco;
+fstream output_MIP_ind;
+#endif
+#ifdef Output_ABC
+fstream output_abc[11];
+#endif
+#ifdef WATER
+fstream output[40];
+#endif
+#ifdef TRACK_INDIVIDUALS
+fstream output_track[3];
+#endif
 
 // #############################################
 //  Species constructor

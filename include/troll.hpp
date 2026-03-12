@@ -75,30 +75,32 @@ using namespace std;
 // FORWARD DECLARATIONS
 struct Context;
 
+// Global Context instance — defined in troll.cpp
+extern Context ctx;
+
 // FileIO and InputBuffers migrated to ctx.fileio / ctx.buffers
 
 // FILE OUTPUT STREAMS. Updated in v.3.1 to reduce number of streams and increase clarity
-fstream output_info;        //!< Global variable:  basic simulation information
-fstream output_basic[4];    //!< Global variable:  default output streams, always used
-fstream output_extended[9]; //!< Global variable:  extended TROLL outputs, preserved from previous versions, might need further clean-up
-fstream output_visual[2];   //!< Global variable: outputs for visualization/gif creation, new in v.3.1.2
-fstream output_pointcloud;  //!< Global variable: optional las file output, new in v.3.1.6
+extern fstream output_info;        //!< Global variable:  basic simulation information
+extern fstream output_basic[4];    //!< Global variable:  default output streams, always used
+extern fstream output_extended[9]; //!< Global variable:  extended TROLL outputs, preserved from previous versions, might need further clean-up
+extern fstream output_visual[2];   //!< Global variable: outputs for visualization/gif creation, new in v.3.1.2
+extern fstream output_pointcloud;  //!< Global variable: optional las file output, new in v.3.1.6
 #ifdef MIP_Lichstein
-fstream output_MIP_eco;
-fstream output_MIP_ind;
+extern fstream output_MIP_eco;
+extern fstream output_MIP_ind;
 #endif
 
 #ifdef Output_ABC
-fstream output_abc[11]; //!< Global variable: output streams for Approximate Bayesian Computation
+extern fstream output_abc[11]; //!< Global variable: output streams for Approximate Bayesian Computation
 #endif
 
 #ifdef WATER
-fstream output[40]; //!< Global variable: output files
-// fstream output_water[10];           //!< Global variable: output streams for water module (in development), to be modified
+extern fstream output[40]; //!< Global variable: output files
 #endif
 
 #ifdef TRACK_INDIVIDUALS
-fstream output_track[3]; //!< Global variable: output streams for tracking of trees
+extern fstream output_track[3]; //!< Global variable: output streams for tracking of trees
 #endif
 
 // USER CONTROLS migrated to ctx.opt:
@@ -397,7 +399,7 @@ public:
     void Init();
 };
 
-vector<Species> S; //!< Definition of a vector of the Species class
+extern vector<Species> S; //!< Global vector of species — defined in troll.cpp
 
 // ###########################################
 //! Tree class
@@ -631,7 +633,7 @@ public:
 #endif
 };
 
-vector<Tree> T; //!< Definition of a vector of the Tree class
+extern vector<Tree> T; //!< Global vector of trees — defined in troll.cpp
 
 //// UTIL Templates
 
@@ -641,7 +643,7 @@ bool AreEqual(N value1, N value2, int precision)
     return abs(value1 - value2) < pow(10, -precision); // make sure that namespace std is activated, otherwise abs is only defined for integers
 }
 
-string GetParameter(string &parameter_name, vector<string> &parameter_names, vector<string> &parameter_values)
+inline string GetParameter(string &parameter_name, vector<string> &parameter_names, vector<string> &parameter_values)
 {
     unsigned int parameter_index = 0;
     while (parameter_index < parameter_names.size() && parameter_names[parameter_index] != parameter_name)
