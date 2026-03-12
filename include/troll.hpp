@@ -304,15 +304,9 @@ float abund10_phi_root; //!< summary statistic output: abundance-weighted phi-ro
 float agb_phi_root;     //!< summary statistic output: agb-weighted phi-root
 #endif
 
-// SEED DENSITIES
-int **SPECIES_SEEDS(0);     //!< Global 3D field: seed density per site
-double *p_seed(0);          //!< Global vector: probability to draw at a particular site (1/sites)
-unsigned int *n_seed(0);    //!< Global vector: number of seeds distributed on each site
-double *p_species(0);       //!< Global vector: relative frequency of species (not normalised, as it is normalised by the gsl multinomial function)
-unsigned int *n_species(0); //!< Global vector: number of seeds assigned to each species
-
-int *SPECIES_GERM(0); //!< Global vector: !!!TO_DOCUMENT
-float *PROB_S(0);     //!< Global vector: !!!TO_DOCUMENT _SEEDTRADEOFF
+// SEED DENSITIES migrated to ctx.species:
+// SPECIES_SEEDS, p_seed, n_seed, p_species, n_species,
+// SPECIES_GERM, PROB_S
 
 // point cloud output, v.3.1.6
 float mean_beam_pc;             // the mean number of shots per m2 for the point cloud sampling

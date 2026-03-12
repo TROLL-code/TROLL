@@ -290,7 +290,7 @@ void Tree::Birth(int nume, int site0)
 #endif
 
 #ifdef LCP_alternative
-        SPECIES_SEEDS[site0][nume] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
+        ctx.species.SPECIES_SEEDS[site0][nume] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
     }
 #endif
 }
@@ -6342,47 +6342,47 @@ void AllocMem(Context &ctx)
         if (NULL == (traits_species10[spp] = new float[10]))
             cerr << "!!! Mem_Alloc\n";
 #endif
-    if (NULL == (SPECIES_GERM = new int[ctx.grid.nbspp + 1]))
+    if (NULL == (ctx.species.SPECIES_GERM = new int[ctx.grid.nbspp + 1]))
         cerr << "!!! Mem_Alloc\n"; // Field for democratic seed germination
-    if (NULL == (SPECIES_SEEDS = new int *[ctx.grid.sites]))
+    if (NULL == (ctx.species.SPECIES_SEEDS = new int *[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";                              // Field of seeds
     for (int site = 0; site < ctx.grid.sites; site++)                    // For each processor, we define a stripe above (labelled 0) and a stripe below (1). Each stripe is ctx.grid.SBORD in width.
-        if (NULL == (SPECIES_SEEDS[site] = new int[ctx.grid.nbspp + 1])) // ALL the ctx.grid.sites need to be updated.
+        if (NULL == (ctx.species.SPECIES_SEEDS[site] = new int[ctx.grid.nbspp + 1])) // ALL the ctx.grid.sites need to be updated.
             cerr << "!!! Mem_Alloc\n";
     for (int site = 0; site < ctx.grid.sites; site++)
         for (int spp = 0; spp <= ctx.grid.nbspp; spp++)
-            SPECIES_SEEDS[site][spp] = 0;
-    if (NULL == (p_seed = new double[ctx.grid.sites]))
+            ctx.species.SPECIES_SEEDS[site][spp] = 0;
+    if (NULL == (ctx.species.p_seed = new double[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (n_seed = new unsigned int[ctx.grid.sites]))
+    if (NULL == (ctx.species.n_seed = new unsigned int[ctx.grid.sites]))
         cerr << "!!! Mem_Alloc\n";
 
     double prob_seed = 1.0 / double(ctx.grid.sites);
     for (int i = 0; i < ctx.grid.sites; i++)
-        p_seed[i] = prob_seed;
+        ctx.species.p_seed[i] = prob_seed;
     for (int i = 0; i < ctx.grid.sites; i++)
-        n_seed[i] = 0;
+        ctx.species.n_seed[i] = 0;
 
-    if (NULL == (p_species = new double[ctx.grid.nbspp]))
+    if (NULL == (ctx.species.p_species = new double[ctx.grid.nbspp]))
         cerr << "!!! Mem_Alloc\n";
-    if (NULL == (n_species = new unsigned int[ctx.grid.nbspp]))
+    if (NULL == (ctx.species.n_species = new unsigned int[ctx.grid.nbspp]))
         cerr << "!!! Mem_Alloc\n";
 
     for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
     {
         double prob_species = double(S[spp].s_nbext);
         // cout << "prob_species: " << prob_species << endl;
-        p_species[spp - 1] = prob_species;
+        ctx.species.p_species[spp - 1] = prob_species;
     }
 
     for (int i = 0; i < ctx.grid.nbspp; i++)
-        n_species[i] = 0;
+        ctx.species.n_species[i] = 0;
 
     if (ctx.opt._SEEDTRADEOFF)
-        if (NULL == (PROB_S = new float[ctx.grid.nbspp + 1]))
+        if (NULL == (ctx.species.PROB_S = new float[ctx.grid.nbspp + 1]))
             cerr << "!!! Mem_Alloc\n";
     if (ctx.opt._NDD)
-        if (NULL == (PROB_S = new float[ctx.grid.nbspp + 1]))
+        if (NULL == (ctx.species.PROB_S = new float[ctx.grid.nbspp + 1]))
             cerr << "!!! Mem_Alloc\n";
     //  if (NULL==(persist=new long int[ctx.time.nbiter])) cerr<<"!!! Mem_Alloc\n";                  // Field for persistence
     //  if (NULL==(distr=new int[ctx.grid.cols])) cerr<<"!!! Mem_Alloc\n";
@@ -6580,26 +6580,26 @@ void UpdateSeeds()
     {
         // acceleration, using the multinomial distribution
         int ha = ctx.grid.sites / 10000;
-        gsl_ran_multinomial(gslrand, ctx.grid.sites, Cseedrain * ha, p_seed, n_seed);
+        gsl_ran_multinomial(gslrand, ctx.grid.sites, Cseedrain * ha, ctx.species.p_seed, ctx.species.n_seed);
         cout << ctx.grid.sites << " Seedrain: " << Cseedrain * ha << endl;
         int seedsadded = 0;
         for (int s = 0; s < ctx.grid.sites; s++)
         {
             // if(T[s].t_age == 0){
-            int nbseeds = n_seed[s];
+            int nbseeds = ctx.species.n_seed[s];
             // cout << "Site: " << s << " nbseeds: " << nbseeds << " ctx.grid.nbspp: " << ctx.grid.nbspp << endl;
-            gsl_ran_multinomial(gslrand, ctx.grid.nbspp, nbseeds, p_species, n_species);
+            gsl_ran_multinomial(gslrand, ctx.grid.nbspp, nbseeds, ctx.species.p_species, ctx.species.n_species);
             for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             {
-                int nbseeds_species = n_species[spp - 1];
+                int nbseeds_species = ctx.species.n_species[spp - 1];
                 // cout << "Site: " << s << " Species: " << spp << " nbseeds: " << nbseeds_species << endl;
                 if (nbseeds_species > 0)
                 {
-                    SPECIES_SEEDS[s][spp] = 1;
+                    ctx.species.SPECIES_SEEDS[s][spp] = 1;
                     seedsadded++;
                 }
                 else
-                    SPECIES_SEEDS[s][spp] = 0;
+                    ctx.species.SPECIES_SEEDS[s][spp] = 0;
             }
             //}
         }
@@ -6624,7 +6624,7 @@ void UpdateSeeds()
             int seedsadded_species = 0;
             for (int s = 0; s < ctx.grid.sites; s++)
             {
-                seedsadded_species += SPECIES_SEEDS[s][spp];
+                seedsadded_species += ctx.species.SPECIES_SEEDS[s][spp];
             }
             if (seedsadded_species > 0)
                 nbspecies_affected++;
@@ -7019,7 +7019,7 @@ void UpdateField()
 }
 
 // #############################
-//  Global function: update SPECIES_SEEDS field
+//  Global function: update ctx.species.SPECIES_SEEDS field
 // #############################
 void FillSeed(int col, int row, int spp)
 {
@@ -7030,9 +7030,9 @@ void FillSeed(int col, int row, int spp)
             int site = col + ctx.grid.cols * row;
             // if(T[site].t_age == 0){
             if (ctx.opt._SEEDTRADEOFF)
-                SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
+                ctx.species.SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, ctx.species.SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
             else
-                SPECIES_SEEDS[site][spp] = 1; // If s_Seed[site] = 0, site is not occupied, if s_Seed[site] > 1, s_Seed[site] is the presence of a seed
+                ctx.species.SPECIES_SEEDS[site][spp] = 1; // If s_Seed[site] = 0, site is not occupied, if s_Seed[site] > 1, s_Seed[site] is the presence of a seed
             // cout << "site: " << site << " spp: " << spp << " Seed added!!! " << endl;
             // }
         }
@@ -7051,10 +7051,10 @@ void RecruitTree()
             int spp_withseeds = 0;
             for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             { // lists all the species with a seed present at given site...
-                if (SPECIES_SEEDS[site][spp] > 0)
+                if (ctx.species.SPECIES_SEEDS[site][spp] > 0)
                 {
                     // write species that are present to an extra array
-                    SPECIES_GERM[spp_withseeds] = spp;
+                    ctx.species.SPECIES_GERM[spp_withseeds] = spp;
                     spp_withseeds++;
                 }
             }
@@ -7063,7 +7063,7 @@ void RecruitTree()
 
                 // new in v.2.4.1: for consistency use genrand2() instead of rand(), since v.2.5: use gsl RNG
                 int spp_index = int(gsl_rng_uniform_int(gslrand, spp_withseeds));
-                int spp = SPECIES_GERM[spp_index];
+                int spp = ctx.species.SPECIES_GERM[spp_index];
                 // otherwise all species with seeds present are equiprobable
 
 #ifdef LCP_alternative
@@ -7086,7 +7086,7 @@ void RecruitTree()
                 if (flux > (S[spp].s_LCP) && soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
                     T[site].Birth(spp, site);
-                    SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
+                    ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
                 // in addition to a condition of light availability- hence light demanding species may not be able to grow in deep sahde conditions in understorey -, a condition on water availability is added - hence drought-intolerant species may not be recruited in water-stressd conditions
 #else
@@ -7095,7 +7095,7 @@ void RecruitTree()
                 if (flux > (S[spp].s_LCP))
                 {
                     T[site].Birth(spp, site);
-                    SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
+                    ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
 #endif // WATER
 #endif // LCP_alternative
@@ -10452,20 +10452,20 @@ void FreeMem()
 {
     delete[] ctx.diag.nbdbh;
     delete[] ctx.diag.layer;
-    delete[] SPECIES_GERM;
+    delete[] ctx.species.SPECIES_GERM;
 #ifdef WATER
     delete[] ctx.grid.site_DCELL;
 #endif
     for (int site = 0; site < ctx.grid.sites; site++)
-        delete[] SPECIES_SEEDS[site];
-    delete[] SPECIES_SEEDS;
-    delete[] p_seed;
-    delete[] n_seed;
-    delete[] p_species;
-    delete[] n_species;
+        delete[] ctx.species.SPECIES_SEEDS[site];
+    delete[] ctx.species.SPECIES_SEEDS;
+    delete[] ctx.species.p_seed;
+    delete[] ctx.species.n_seed;
+    delete[] ctx.species.p_species;
+    delete[] ctx.species.n_species;
 
     if (ctx.opt._SEEDTRADEOFF || ctx.opt._NDD)
-        delete[] PROB_S;
+        delete[] ctx.species.PROB_S;
     for (int h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         delete[] LAI3D[h];
     delete[] LAI3D;
