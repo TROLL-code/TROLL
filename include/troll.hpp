@@ -137,20 +137,11 @@ float iCair; //!< Global variable: inverse of Cair
 
 //! ENVIRONMENTAL VARIABLES
 
-// Daily variation of environmental variables. Defined since version 2.2, updated 2.5 and 3.0: now parameterised as variation around daily mean value, with arbitrary length of step. Users should ensure that climate file provides the correct average (i.e. if they provide only daytime variation, then the climate file needs to provide daytime averages, if they provide a 24h cycle, then the climate file needs to provide 24h averages)
-vector<float> varday_light; //!< Global vector: light irradiance variation during an average day, since v.2.5: standardized with respect to the mean and summing to 0 (adimensional)
-vector<float> varday_vpd;   //!< Global vector: Vapour pressure deficit (VPD) variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
-vector<float> varday_T;     //!< Global vector: Temperature variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
-vector<float> varday_WS;    //!< Global vector: Wind speed variation during an average day, since v.2.5:  standardized with respect to the mean and summing to 0 (adimensional)
-
-// Climate input data; as provided in the input file. File structure depends on the timestep and scenario used for the simulation
-// new version 2.2, updated in 2.5: use mean temperatures instead of maxima as reference point. This corrects an overestimation of all environmental variables (daily cycle in input file has been adjusted accordingly)
-vector<float> DailyMeanTemperature;           //!< Global vector: daily mean temperature in degree Celsius
-vector<float> DailyMeanIrradiance;            //!< Global vector: daily mean irradiance (W/m^2)
-vector<float> DailyMeanVapourPressureDeficit; //!< Global vector: daily mean vapour pressure deficit (kPa)
-vector<float> NightTemperature;               //!< Global vector: night temperature in degree Celsius
-vector<float> Rainfall;                       //!< Global vector: rainfall (mm)
-vector<float> DailyMeanWindSpeed;             //!< Global vector: wind speed (m/s)
+// Climate vectors migrated to ctx.climate:
+// varday_light, varday_vpd, varday_T, varday_WS,
+// DailyMeanTemperature, DailyMeanIrradiance,
+// DailyMeanVapourPressureDeficit, NightTemperature,
+// Rainfall, DailyMeanWindSpeed
 
 // LOOKUP TABLES
 // Complex temperature-dependent functions used in the Farquhar model are computed once at 'Taccuracy' resolution. Leaf temperature must be comprised between 0°C and 60°C, Values are stored every 0.5°C step in Tleaf, so 120 values in total
@@ -181,26 +172,11 @@ float iHaccuracy;
 float *LookUp_Wind(0);
 #endif
 
-// ENVIRONMENTAL VARIABLES
-float tnight;            //!< Global variable: Night mean temperature (degree C)
-float precip;            //!< Global variable: Rainfall  (mm)
-float WSDailyMean;       //!< Global variable: WindSpeed (m/s)
-float WDailyMean;        //!< Global variable: Daily mean irradiance (average for timestep) (micromol PAR photon/m^2/s), used in the photosynthesis part. !!! W/m2 is the common unit of meteorological stations ==> need to be converted using SWtoPPFD
-float tDailyMean;        //!< Global variable: Daily mean temperature (degree C)
-float VPDDailyMean;      //!< Global variable: Daily mean VapourPressureDeficit (kPa)
-float WDailyMean_year;   //!< Global variable: average WDailyMean per year
-float tDailyMean_year;   //!< Global variable: average tDailyMean per year
-float VPDDailyMean_year; //!< Global variable: average VPDDailyMean per year
-#ifdef WATER
-float windDailyMean_year; //!< Global variable: average WindSpeed per year
-#endif
-float Tnight_year; //!< Global variable: average tnight per year
-#ifdef FULL_CLIMATE
-float *WDailyMean_all(0);    //!< Global variable: average daily irradiance across the whole periode
-float *VPDDailyMean_all(0);  //!< Global variable: average daily VPD across the whole periode
-float *tDailyMean_all(0);    //!< Global variable: average daily temperature across the whole periode
-float *windDailyMean_all(0); //!< Global variable: average daily wind across the whole periode
-#endif
+// ENVIRONMENTAL VARIABLES migrated to ctx.climate:
+// tnight, precip, WSDailyMean, WDailyMean, tDailyMean, VPDDailyMean,
+// WDailyMean_year, tDailyMean_year, VPDDailyMean_year,
+// windDailyMean_year, Tnight_year,
+// WDailyMean_all, VPDDailyMean_all, tDailyMean_all, windDailyMean_all
 
 // GLOBAL VARIABLES ACROSS SPECIES
 float SWtoPPFD; //!< Global variable: conversion factor for shortwave irradiance measured in W/m2 to PPFD in micromol of PAR (micromol/s/m^2, as used in the Farquhar model). Around 2.0-2.5 in the tropics. Data at Nouragues (comparing photon count and irradiance) give a value: 2.27. Depends on cloudiness (in non-cloudy areas, the fraction of PAR in irradiance arriving on the ground may be much lower). This is typically equals to ca 0.5*4.57, where 0.5 stands for the fact that ca 50% of the total solar energy reaching the Earth’s surface corresponds to PAR, and 4.57 umol J-1 is basically equal to 10^6/(Emean*Avogadro number) where Emean is the average energy of a photon across PAR wavelength range: Ephoton=h*c/wavelength).

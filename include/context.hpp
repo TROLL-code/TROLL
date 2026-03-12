@@ -105,17 +105,17 @@ struct TimeState
 
 struct Climate
 {
-    int DailyMeanTemperature;
-    int DailyMeanIrradiance;
-    int DailyMeanVapourPressureDeficit;
-    int NightTemperature;
-    int Rainfall;
-    int DailyMeanWindSpeed;
+    std::vector<float> DailyMeanTemperature;
+    std::vector<float> DailyMeanIrradiance;
+    std::vector<float> DailyMeanVapourPressureDeficit;
+    std::vector<float> NightTemperature;
+    std::vector<float> Rainfall;
+    std::vector<float> DailyMeanWindSpeed;
 
-    int varday_light;
-    int varday_vpd;
-    int varday_T;
-    int varday_WS;
+    std::vector<float> varday_light;
+    std::vector<float> varday_vpd;
+    std::vector<float> varday_T;
+    std::vector<float> varday_WS;
 
     float tnight;
     float precip;
@@ -127,6 +127,7 @@ struct Climate
     float tDailyMean_year;
     float VPDDailyMean_year;
     float windDailyMean_year;
+    float Tnight_year;
 
     float *WDailyMean_all = nullptr;
     float *VPDDailyMean_all = nullptr;

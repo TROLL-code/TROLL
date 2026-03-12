@@ -1336,9 +1336,9 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
                 if (absorb_delta < 0.0)
                     absorb_delta = 0.0; //! eliminate rounding errors
                 int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
-                PPFD += WDailyMean * LookUp_flux_absorption[intabsorb];
-                VPD += VPDDailyMean * LookUp_VPD[intabsorb];
-                Tmp += tDailyMean - LookUp_T[intabsorb];
+                PPFD += ctx.climate.WDailyMean * LookUp_flux_absorption[intabsorb];
+                VPD += ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb];
+                Tmp += ctx.climate.tDailyMean - LookUp_T[intabsorb];
                 crown_intarea_allocated_nogaps++;
             }
         }
@@ -1818,26 +1818,26 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
         if (ctx.time.iter == -1)
         {
-            ppfd_vardaytimestep = PPFD * WDailyMean_all[i] * SWtoPPFD;
-            ppfd_top_vardaytimestep = WDailyMean_all[i] * SWtoPPFD;
-            t_top_vardaytimestep = tDailyMean_all[i];
-            vpd_top_vardaytimestep = VPDDailyMean_all[i];
-            ppfd_inc_vardaytimestep = WDailyMean_all[i] * SWtoPPFD;
-            vpd_vardaytimestep = VPD * VPDDailyMean_all[i];
-            t_vardaytimestep = tDailyMean_all[i] - T;
-            ws_vardaytimestep = W * windDailyMean_all[i];
+            ppfd_vardaytimestep = PPFD * ctx.climate.WDailyMean_all[i] * SWtoPPFD;
+            ppfd_top_vardaytimestep = ctx.climate.WDailyMean_all[i] * SWtoPPFD;
+            t_top_vardaytimestep = ctx.climate.tDailyMean_all[i];
+            vpd_top_vardaytimestep = ctx.climate.VPDDailyMean_all[i];
+            ppfd_inc_vardaytimestep = ctx.climate.WDailyMean_all[i] * SWtoPPFD;
+            vpd_vardaytimestep = VPD * ctx.climate.VPDDailyMean_all[i];
+            t_vardaytimestep = ctx.climate.tDailyMean_all[i] - T;
+            ws_vardaytimestep = W * ctx.climate.windDailyMean_all[i];
         }
         else
         {
             int c = (ctx.time.iter % ctx.time.nbdays) * ctx.time.nbsteps_varday + i;
-            ppfd_vardaytimestep = PPFD * varday_light[c] * SWtoPPFD;
-            ppfd_top_vardaytimestep = varday_light[c] * SWtoPPFD;
-            t_top_vardaytimestep = varday_T[c];
-            vpd_top_vardaytimestep = varday_vpd[c];
-            ppfd_inc_vardaytimestep = PPFDinc * varday_light[c] * SWtoPPFD;
-            vpd_vardaytimestep = VPD * varday_vpd[c];
-            t_vardaytimestep = varday_T[c] - T;
-            ws_vardaytimestep = W * varday_WS[c];
+            ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[c] * SWtoPPFD;
+            ppfd_top_vardaytimestep = ctx.climate.varday_light[c] * SWtoPPFD;
+            t_top_vardaytimestep = ctx.climate.varday_T[c];
+            vpd_top_vardaytimestep = ctx.climate.varday_vpd[c];
+            ppfd_inc_vardaytimestep = PPFDinc * ctx.climate.varday_light[c] * SWtoPPFD;
+            vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[c];
+            t_vardaytimestep = ctx.climate.varday_T[c] - T;
+            ws_vardaytimestep = W * ctx.climate.varday_WS[c];
         }
 
         if (vpd_vardaytimestep <= 0)
@@ -1853,34 +1853,34 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
         if (ctx.time.iter == -1)
         {
-            float ppfd_vardaytimestep = PPFD * varday_light[i];
-            float ppfd_top_vardaytimestep = WDailyMean_year * varday_light[i];
-            float t_top_vardaytimestep = tDailyMean_year * varday_T[i];
-            float vpd_top_vardaytimestep = VPDDailyMean_year * varday_vpd[i];
-            float ppfd_inc_vardaytimestep = PPFDinc * varday_light[i];
-            float vpd_vardaytimestep = VPD * varday_vpd[i];
-            float t_vardaytimestep = T * varday_T[i];
-            float ws_vardaytimestep = W * varday_WS[i];
+            float ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[i];
+            float ppfd_top_vardaytimestep = ctx.climate.WDailyMean_year * ctx.climate.varday_light[i];
+            float t_top_vardaytimestep = ctx.climate.tDailyMean_year * ctx.climate.varday_T[i];
+            float vpd_top_vardaytimestep = ctx.climate.VPDDailyMean_year * ctx.climate.varday_vpd[i];
+            float ppfd_inc_vardaytimestep = PPFDinc * ctx.climate.varday_light[i];
+            float vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[i];
+            float t_vardaytimestep = T * ctx.climate.varday_T[i];
+            float ws_vardaytimestep = W * ctx.climate.varday_WS[i];
         }
         else
         {
-            float ppfd_vardaytimestep = PPFD * varday_light[i];
-            float ppfd_top_vardaytimestep = WDailyMean * varday_light[i];
-            float t_top_vardaytimestep = tDailyMean * varday_T[i];
-            float vpd_top_vardaytimestep = VPDDailyMean * varday_vpd[i];
-            float ppfd_inc_vardaytimestep = PPFDinc * varday_light[i];
-            float vpd_vardaytimestep = VPD * varday_vpd[i];
-            float t_vardaytimestep = T * varday_T[i];
-            float ws_vardaytimestep = W * varday_WS[i];
+            float ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[i];
+            float ppfd_top_vardaytimestep = ctx.climate.WDailyMean * ctx.climate.varday_light[i];
+            float t_top_vardaytimestep = ctx.climate.tDailyMean * ctx.climate.varday_T[i];
+            float vpd_top_vardaytimestep = ctx.climate.VPDDailyMean * ctx.climate.varday_vpd[i];
+            float ppfd_inc_vardaytimestep = PPFDinc * ctx.climate.varday_light[i];
+            float vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[i];
+            float t_vardaytimestep = T * ctx.climate.varday_T[i];
+            float ws_vardaytimestep = W * ctx.climate.varday_WS[i];
         }
 
         if (vpd_vardaytimestep <= 0)
         {
-            cout << "Warning in dailyFluxesLeaf !!! i=" << i << "; vpd_vardaytimestep=" << vpd_vardaytimestep << "; VPD=" << VPD << "; varday_vpd[i]=" << varday_vpd[i] << "; ppfd_vardaytimestep=" << ppfd_vardaytimestep << "; PPFD=" << PPFD << "; varday_light[i]=" << varday_light[i] << endl;
+            cout << "Warning in dailyFluxesLeaf !!! i=" << i << "; vpd_vardaytimestep=" << vpd_vardaytimestep << "; VPD=" << VPD << "; ctx.climate.varday_vpd[i]=" << ctx.climate.varday_vpd[i] << "; ppfd_vardaytimestep=" << ppfd_vardaytimestep << "; PPFD=" << PPFD << "; ctx.climate.varday_light[i]=" << ctx.climate.varday_light[i] << endl;
         }
         if (ppfd_vardaytimestep <= 0)
         {
-            cout << "Warning ppfd_vardaytimestep  <=0 in dailyFluxesLeaf !!! ppfd_vardaytimestep=" << ppfd_vardaytimestep << "; PPFD=" << PPFD << "; varday_light[i]=" << varday_light[i] << endl;
+            cout << "Warning ppfd_vardaytimestep  <=0 in dailyFluxesLeaf !!! ppfd_vardaytimestep=" << ppfd_vardaytimestep << "; PPFD=" << PPFD << "; ctx.climate.varday_light[i]=" << ctx.climate.varday_light[i] << endl;
         }
 
 #endif
@@ -1967,9 +1967,9 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
     for (int i = 0; i < ctx.time.nbsteps_varday; i++)
     {
         // cout << t_site << " i: " << i << " tempRday: " << tempRday << endl;
-        float ppfd_vardaytimestep = PPFD * varday_light[i];
-        float vpd_vardaytimestep = VPD * varday_vpd[i];
-        float t_vardaytimestep = T * varday_T[i];
+        float ppfd_vardaytimestep = PPFD * ctx.climate.varday_light[i];
+        float vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[i];
+        float t_vardaytimestep = T * ctx.climate.varday_T[i];
         if (ppfd_vardaytimestep > 0.1)
             dailyA += Tree::GPPleaf(ppfd_vardaytimestep, vpd_vardaytimestep, t_vardaytimestep);
         // else { cout << endl << t_site << " species: " << t_s->s_name << " t_age: " << t_age << " PPFD: " << ppfd_vardaytimestep << " vpd_vardaytimestep " << vpd_vardaytimestep << " t_vardaytimestep: " << t_vardaytimestep << " GPPleaf: " << Tree::GPPleaf(ppfd_vardaytimestep,vpd_vardaytimestep,t_vardaytimestep) << endl;}
@@ -1996,11 +1996,11 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
 
     for (int i = 0; i < ctx.time.nbsteps_varday; i++)
     {
-        ppfde = PPFD * varday_light[i];
+        ppfde = PPFD * ctx.climate.varday_light[i];
         if (ppfde > 0.1)
             // new v.2.3.0: compute GPP only if enough light is available threshold is arbitrary, but set to be low: in full sunlight ppfd is aroung 700 W/m2, and even at dawn, it is ca 3% of the max value, or 20 W/m2. The minimum threshold is set to 0.1 W/m2
             // Future update: compute slightly more efficiently, using 3-hourly values? This will have to be aligned with climate forcing layers (e.g. NCAR)
-            dailyA += Tree::GPPleaf(ppfde, VPD * varday_vpd[i], T * varday_T[i]);
+            dailyA += Tree::GPPleaf(ppfde, VPD * ctx.climate.varday_vpd[i], T * ctx.climate.varday_T[i]);
         // the 6 lines in comment below corresponds to a finer version in which the multiplier is computed and used every 48 half hour, ie. with the corresponding environment instead of assuming a constant multiplier correponding the one at maximum incoming irradiance
         // float hhA=0;
         // hhA=GPPleaf(PPFD*vardaytime_light[i], VPD*vardaytime_vpd[i], T*vardaytime_T[i]);
@@ -2042,7 +2042,7 @@ float Tree::dailyRdayleaf(float T)
 {
     float Rdayleaf_daily = 0.0;
     for (int i = 0; i < ctx.time.nbsteps_varday; i++)
-        Rdayleaf_daily += Tree::Rdayleaf(T * varday_T[i]);
+        Rdayleaf_daily += Tree::Rdayleaf(T * ctx.climate.varday_T[i]);
     Rdayleaf_daily *= 0.0417;
     return Rdayleaf_daily;
 }
@@ -2204,14 +2204,14 @@ void Tree::CalcLAImax()
 #else // FULL_CLIMATE
 
         // get PPFD, VPD, and temperature at each discretisation step
-        float PPFD_LAI = WDailyMean_year * LookUp_flux_absorption[intabsorb];
-        float VPD_LAI = VPDDailyMean_year * LookUp_VPD[intabsorb];
-        float Tmp_LAI = tDailyMean_year - LookUp_T[intabsorb];
+        float PPFD_LAI = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intabsorb];
+        float VPD_LAI = ctx.climate.VPDDailyMean_year * LookUp_VPD[intabsorb];
+        float Tmp_LAI = ctx.climate.tDailyMean_year - LookUp_T[intabsorb];
 #ifdef WATER
         int intincident = CalcIntabsorb(absorb_prev);
-        float Wind_LAI = windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly checked and computed using a look up table as well.
+        float Wind_LAI = ctx.climate.windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly checked and computed using a look up table as well.
         float ExtinctLW_LAI = LookUp_ExtinctLW[intincident];
-        float PPFD_LAI_inc = WDailyMean_year * LookUp_flux[intincident];
+        float PPFD_LAI_inc = ctx.climate.WDailyMean_year * LookUp_flux[intincident];
 #endif // WATER
 
 #endif // FULL_CLIMATE
@@ -2234,9 +2234,9 @@ void Tree::CalcLAImax()
 
         // get the night respiration
 #ifdef FULL_CLIMATE
-        int convTnight = int(iTaccuracy * tnight);
+        int convTnight = int(iTaccuracy * ctx.climate.tnight);
 #else
-        int convTnight = int(iTaccuracy * Tnight_year);
+        int convTnight = int(iTaccuracy * ctx.climate.Tnight_year);
 #endif
         float Rnight_LAI = t_Rdark * effLA_night * LookUp_Rleaf[convTnight];
 
@@ -2327,7 +2327,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
                     int intabsorb = CalcIntabsorb(absorb_prev);
 
                     // obtain PPFD for the voxel, and also record the circled area
-                    ppfd_experienced += WDailyMean * LookUp_flux[intabsorb];
+                    ppfd_experienced += ctx.climate.WDailyMean * LookUp_flux[intabsorb];
                     crown_area_looped++;
                 }
             }
@@ -2341,12 +2341,12 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
         else
         {
             // this should not happen, potentially introduce a break or assert() here
-            ppfd_experienced = WDailyMean;
+            ppfd_experienced = ctx.climate.WDailyMean;
         }
 
         // now calculate the effective LAI above the tree
         // importantly, we use the yearly average here, as the maximum tree LAI is also defined with respect to yearly averages
-        LAIexperienced_eff = -log(ppfd_experienced / WDailyMean_year) / kpar;
+        LAIexperienced_eff = -log(ppfd_experienced / ctx.climate.WDailyMean_year) / kpar;
         if (LAIexperienced_eff < 0.0001)
             LAIexperienced_eff = 0.0;
     }
@@ -2406,17 +2406,17 @@ float Tree::predLeafLifespanKikuzawa()
     float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
-    int convTnight = int(iTaccuracy * tnight);
+    int convTnight = int(iTaccuracy * ctx.climate.tnight);
 
 #else // FULL_CLIMATE
 
-    float PPFD = WDailyMean_year * LookUp_flux_absorption[intabsorb];
-    float VPD = VPDDailyMean_year * LookUp_VPD[intabsorb];
-    float T = tDailyMean_year - LookUp_T[intabsorb];
+    float PPFD = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intabsorb];
+    float VPD = ctx.climate.VPDDailyMean_year * LookUp_VPD[intabsorb];
+    float T = ctx.climate.tDailyMean_year - LookUp_T[intabsorb];
 #ifdef WATER
-    float W = windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly re-thought, and computed using a look-up table as well -- IM June 2021
+    float W = ctx.climate.windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly re-thought, and computed using a look-up table as well -- IM June 2021
     int intincident = CalcIntabsorb(absorb_prev);
-    float PPFDinc = WDailyMean_year * LookUp_flux_absorption[intincident];
+    float PPFDinc = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intincident];
     float ExtinctLW = LookUp_ExtinctLW[intincident];
     float GPP = Tree::dailyFluxesLeaf(PPFD, VPD, T, W, ExtinctLW, PPFDinc).carbon_flux;
 #else
@@ -2424,7 +2424,7 @@ float Tree::predLeafLifespanKikuzawa()
     float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
-    int convTnight = int(iTaccuracy * Tnight_year);
+    int convTnight = int(iTaccuracy * ctx.climate.Tnight_year);
 
 #endif // FULL_CLIMATE
     float Rnight = t_Rdark * LookUp_Rleaf[convTnight];
@@ -2712,8 +2712,8 @@ void Tree::CalcRespGPP()
     transpiration_1016 += tree_transpiration_1016;
 #endif
 
-    int convT = int(iTaccuracy * tDailyMean);  // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
-    int convTnight = int(iTaccuracy * tnight); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    int convT = int(iTaccuracy * ctx.climate.tDailyMean);  // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    int convTnight = int(iTaccuracy * ctx.climate.tnight); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
 
     t_Rstem = t_sapwood_area * (t_height - t_CD) * 0.5 * (LookUp_Rstem[convT] + LookUp_Rstem[convTnight]);
 
@@ -3761,7 +3761,7 @@ void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
     int intabsorb = CalcIntabsorb(absorb_prev);
 
     // Obtain PPFD for the voxel, and also record the circled area
-    ppfd_CA[0] += WDailyMean * LookUp_flux[intabsorb];
+    ppfd_CA[0] += ctx.climate.WDailyMean * LookUp_flux[intabsorb];
     ppfd_CA[1] += 1.0; // add area
 }
 
@@ -3798,11 +3798,11 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 
 #else // FULL_CLIMATE
       // Obtain PPFD, VPD and T for the voxel
-    float PPFD_voxel = WDailyMean * LookUp_flux_absorption[intabsorb];
-    float VPD_voxel = VPDDailyMean * LookUp_VPD[intabsorb];
-    float T_voxel = tDailyMean - LookUp_T[intabsorb];
+    float PPFD_voxel = ctx.climate.WDailyMean * LookUp_flux_absorption[intabsorb];
+    float VPD_voxel = ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb];
+    float T_voxel = ctx.climate.tDailyMean - LookUp_T[intabsorb];
 #ifdef WATER
-    float PPFD_voxel_incident = WDailyMean * LookUp_flux[intincident];
+    float PPFD_voxel_incident = ctx.climate.WDailyMean * LookUp_flux[intincident];
     float ExtinctLW_voxel = LookUp_ExtinctLW[intincident];
 #endif // WATER
 
@@ -3820,7 +3820,7 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 
     // if (canopy_environment_cumulated[1]<=0 || dens < 0.05 || absorb_delta < 0.05) {
     //  cout << "Warning in GetCanopyEnvironment, PPFD <=0; PPFD_voxel=" << PPFD_voxel << "; dens=" << dens << endl;
-    //  cout << "WDailyMean=" << WDailyMean << "; LookUp_flux_absorption[intabsorb]=" << LookUp_flux_absorption[intabsorb] << "; intabsorb=" << intabsorb << "; absorb_prev=" << absorb_prev << "; absorb_delta=" << absorb_delta << endl;
+    //  cout << "ctx.climate.WDailyMean=" << ctx.climate.WDailyMean << "; LookUp_flux_absorption[intabsorb]=" << LookUp_flux_absorption[intabsorb] << "; intabsorb=" << intabsorb << "; absorb_prev=" << absorb_prev << "; absorb_delta=" << absorb_delta << endl;
     //  }
 }
 
@@ -4540,11 +4540,11 @@ void ReadInputDailyvar()
             }
 
             // ctx.time.nbhours_covered += nbhours_current;
-            varday_light.push_back(varday_light_current);
-            varday_vpd.push_back(varday_vpd_current);
-            varday_T.push_back(varday_T_current);
-            varday_WS.push_back(varday_WS_current);
-            // cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: "<< varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: "<< varday_WS[ctx.time.nbsteps_varday] << endl;
+            ctx.climate.varday_light.push_back(varday_light_current);
+            ctx.climate.varday_vpd.push_back(varday_vpd_current);
+            ctx.climate.varday_T.push_back(varday_T_current);
+            ctx.climate.varday_WS.push_back(varday_WS_current);
+            // cout << "at: " << starttime_current << " vardaytime_light: " << ctx.climate.varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << ctx.climate.varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: "<< ctx.climate.varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: "<< ctx.climate.varday_WS[ctx.time.nbsteps_varday] << endl;
             ctx.time.nbsteps_varday++;
         }
 
@@ -4559,21 +4559,21 @@ void ReadInputDailyvar()
         cout << "ERROR with the daily variation file" << endl;
     }
 
-    if (NULL == (WDailyMean_all = new float[ctx.time.nbsteps_varday]))
-        cerr << "!!! WDailyMean_all" << endl;
-    if (NULL == (tDailyMean_all = new float[ctx.time.nbsteps_varday]))
-        cerr << "!!! tDailyMean_all" << endl;
-    if (NULL == (VPDDailyMean_all = new float[ctx.time.nbsteps_varday]))
-        cerr << "!!! VPDDailyMean_all" << endl;
-    if (NULL == (windDailyMean_all = new float[ctx.time.nbsteps_varday]))
-        cerr << "!!! windDailyMean_all" << endl;
+    if (NULL == (ctx.climate.WDailyMean_all = new float[ctx.time.nbsteps_varday]))
+        cerr << "!!! ctx.climate.WDailyMean_all" << endl;
+    if (NULL == (ctx.climate.tDailyMean_all = new float[ctx.time.nbsteps_varday]))
+        cerr << "!!! ctx.climate.tDailyMean_all" << endl;
+    if (NULL == (ctx.climate.VPDDailyMean_all = new float[ctx.time.nbsteps_varday]))
+        cerr << "!!! ctx.climate.VPDDailyMean_all" << endl;
+    if (NULL == (ctx.climate.windDailyMean_all = new float[ctx.time.nbsteps_varday]))
+        cerr << "!!! ctx.climate.windDailyMean_all" << endl;
 
     for (int j = 0; j < ctx.time.nbsteps_varday; j++)
     {
-        WDailyMean_all[j] = tDailyMean_all[j] = VPDDailyMean_all[j] = windDailyMean_all[j] = 0.0;
+        ctx.climate.WDailyMean_all[j] = ctx.climate.tDailyMean_all[j] = ctx.climate.VPDDailyMean_all[j] = ctx.climate.windDailyMean_all[j] = 0.0;
     }
 
-    WDailyMean_year = 0.0;
+    ctx.climate.WDailyMean_year = 0.0;
 
     for (int i = 0; i < ctx.time.nbdays; i++)
     {
@@ -4582,15 +4582,15 @@ void ReadInputDailyvar()
 
         for (int j = 0; j < ctx.time.nbsteps_varday; j++)
         {
-            DailyMeanTemperature_current += varday_T[i * ctx.time.nbsteps_varday + j];
-            DailyMeanWindSpeed_current += varday_WS[i * ctx.time.nbsteps_varday + j];
-            DailyMeanIrradiance_current += varday_light[i * ctx.time.nbsteps_varday + j];
-            DailyMeanVapourPressureDeficit_current += varday_vpd[i * ctx.time.nbsteps_varday + j];
+            DailyMeanTemperature_current += ctx.climate.varday_T[i * ctx.time.nbsteps_varday + j];
+            DailyMeanWindSpeed_current += ctx.climate.varday_WS[i * ctx.time.nbsteps_varday + j];
+            DailyMeanIrradiance_current += ctx.climate.varday_light[i * ctx.time.nbsteps_varday + j];
+            DailyMeanVapourPressureDeficit_current += ctx.climate.varday_vpd[i * ctx.time.nbsteps_varday + j];
 
-            WDailyMean_all[j] += varday_light[i * ctx.time.nbsteps_varday + j];
-            VPDDailyMean_all[j] += varday_vpd[i * ctx.time.nbsteps_varday + j];
-            tDailyMean_all[j] += varday_T[i * ctx.time.nbsteps_varday + j];
-            windDailyMean_all[j] += varday_WS[i * ctx.time.nbsteps_varday + j];
+            ctx.climate.WDailyMean_all[j] += ctx.climate.varday_light[i * ctx.time.nbsteps_varday + j];
+            ctx.climate.VPDDailyMean_all[j] += ctx.climate.varday_vpd[i * ctx.time.nbsteps_varday + j];
+            ctx.climate.tDailyMean_all[j] += ctx.climate.varday_T[i * ctx.time.nbsteps_varday + j];
+            ctx.climate.windDailyMean_all[j] += ctx.climate.varday_WS[i * ctx.time.nbsteps_varday + j];
         }
 
         DailyMeanTemperature_current *= ctx.time.inv_nbsteps_varday;
@@ -4598,30 +4598,30 @@ void ReadInputDailyvar()
         DailyMeanIrradiance_current *= ctx.time.inv_nbsteps_varday;
         DailyMeanVapourPressureDeficit_current *= ctx.time.inv_nbsteps_varday;
 
-        WDailyMean_year += DailyMeanIrradiance_current;
+        ctx.climate.WDailyMean_year += DailyMeanIrradiance_current;
 
-        DailyMeanTemperature.push_back(DailyMeanTemperature_current);
-        DailyMeanWindSpeed.push_back(DailyMeanWindSpeed_current);
-        DailyMeanIrradiance.push_back(DailyMeanIrradiance_current);
-        DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
+        ctx.climate.DailyMeanTemperature.push_back(DailyMeanTemperature_current);
+        ctx.climate.DailyMeanWindSpeed.push_back(DailyMeanWindSpeed_current);
+        ctx.climate.DailyMeanIrradiance.push_back(DailyMeanIrradiance_current);
+        ctx.climate.DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
     }
 
     for (int j = 0; j < ctx.time.nbsteps_varday; j++)
     {
-        WDailyMean_all[j] /= ctx.time.nbdays;
-        VPDDailyMean_all[j] /= ctx.time.nbdays;
-        tDailyMean_all[j] /= ctx.time.nbdays;
-        windDailyMean_all[j] /= ctx.time.nbdays;
+        ctx.climate.WDailyMean_all[j] /= ctx.time.nbdays;
+        ctx.climate.VPDDailyMean_all[j] /= ctx.time.nbdays;
+        ctx.climate.tDailyMean_all[j] /= ctx.time.nbdays;
+        ctx.climate.windDailyMean_all[j] /= ctx.time.nbdays;
     }
 
-    WDailyMean_year *= SWtoPPFD / ctx.time.nbdays;
+    ctx.climate.WDailyMean_year *= SWtoPPFD / ctx.time.nbdays;
 
-    tnight = NightTemperature[0];
-    precip = Rainfall[0];
-    WSDailyMean = DailyMeanWindSpeed[0];
-    WDailyMean = DailyMeanIrradiance[0] * SWtoPPFD;
-    tDailyMean = DailyMeanTemperature[0];
-    VPDDailyMean = DailyMeanVapourPressureDeficit[0];
+    ctx.climate.tnight = ctx.climate.NightTemperature[0];
+    ctx.climate.precip = ctx.climate.Rainfall[0];
+    ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[0];
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[0] * SWtoPPFD;
+    ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[0];
+    ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[0];
 }
 
 //! Global function: This function reads inputs from the environmental variation input file
@@ -4648,8 +4648,8 @@ void ReadInputClimate()
             float NightTemperature_current, Rainfall_current;
             linestream >> NightTemperature_current >> Rainfall_current;
 
-            NightTemperature.push_back(NightTemperature_current);
-            Rainfall.push_back(Rainfall_current);
+            ctx.climate.NightTemperature.push_back(NightTemperature_current);
+            ctx.climate.Rainfall.push_back(Rainfall_current);
             ctx.time.nbdays++;
         }
 
@@ -4664,14 +4664,14 @@ void ReadInputClimate()
         cout << "Read in climate data for " << ctx.time.nbdays << " days, with" << ctx.time.iterperyear << " iterations per year." << endl;
         // choose average conditions
 
-        Tnight_year = 0.0;
+        ctx.climate.Tnight_year = 0.0;
 
         for (int i = 0; i < ctx.time.nbdays; i++)
         {
-            Tnight_year += NightTemperature[i];
+            ctx.climate.Tnight_year += ctx.climate.NightTemperature[i];
         }
 
-        Tnight_year *= 1.0 / float(ctx.time.nbdays);
+        ctx.climate.Tnight_year *= 1.0 / float(ctx.time.nbdays);
 
         cout << "Successfully read the climate file" << endl;
     }
@@ -4715,11 +4715,11 @@ void ReadInputDailyvar()
                 nbhours_current = 24.0 - (starttime_current - endtime_current); // i.e. if starttime is 23.5 and endtime is 0.5, etc. Calculate the inverse time window and then subtract from 24
 
             ctx.time.nbhours_covered += nbhours_current;
-            varday_light.push_back(varday_light_current);
-            varday_vpd.push_back(varday_vpd_current);
-            varday_T.push_back(varday_T_current);
-            varday_WS.push_back(varday_WS_current);
-            cout << "at: " << starttime_current << " vardaytime_light: " << varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: " << varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: " << varday_WS[ctx.time.nbsteps_varday] << endl;
+            ctx.climate.varday_light.push_back(varday_light_current);
+            ctx.climate.varday_vpd.push_back(varday_vpd_current);
+            ctx.climate.varday_T.push_back(varday_T_current);
+            ctx.climate.varday_WS.push_back(varday_WS_current);
+            cout << "at: " << starttime_current << " vardaytime_light: " << ctx.climate.varday_light[ctx.time.nbsteps_varday] << " vardaytime_vpd: " << ctx.climate.varday_vpd[ctx.time.nbsteps_varday] << " vardaytime_T: " << ctx.climate.varday_T[ctx.time.nbsteps_varday] << " vardaytime_WS: " << ctx.climate.varday_WS[ctx.time.nbsteps_varday] << endl;
             ctx.time.nbsteps_varday++;
         }
 
@@ -4727,8 +4727,8 @@ void ReadInputDailyvar()
         totday_light = 0.0;
         for (int i = 0; i < ctx.time.nbsteps_varday; i++)
         {
-            totday_light += varday_light[i];
-            cout << i << "\t" << varday_light[i] << endl;
+            totday_light += ctx.climate.varday_light[i];
+            cout << i << "\t" << ctx.climate.varday_light[i] << endl;
         }
         cout << totday_light << endl;
         totday_light *= 1.0 / float(ctx.time.nbsteps_varday);
@@ -4768,12 +4768,12 @@ void ReadInputClimate()
             float DailyMeanTemperature_current, NightTemperature_current, Rainfall_current, DailyMeanWindSpeed_current, DailyMeanIrradiance_current, DailyMeanVapourPressureDeficit_current;
             linestream >> DailyMeanTemperature_current >> NightTemperature_current >> Rainfall_current >> DailyMeanWindSpeed_current >> DailyMeanIrradiance_current >> DailyMeanVapourPressureDeficit_current;
 
-            DailyMeanTemperature.push_back(DailyMeanTemperature_current);
-            NightTemperature.push_back(NightTemperature_current);
-            Rainfall.push_back(Rainfall_current);
-            DailyMeanWindSpeed.push_back(DailyMeanWindSpeed_current);
-            DailyMeanIrradiance.push_back(DailyMeanIrradiance_current);
-            DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
+            ctx.climate.DailyMeanTemperature.push_back(DailyMeanTemperature_current);
+            ctx.climate.NightTemperature.push_back(NightTemperature_current);
+            ctx.climate.Rainfall.push_back(Rainfall_current);
+            ctx.climate.DailyMeanWindSpeed.push_back(DailyMeanWindSpeed_current);
+            ctx.climate.DailyMeanIrradiance.push_back(DailyMeanIrradiance_current);
+            ctx.climate.DailyMeanVapourPressureDeficit.push_back(DailyMeanVapourPressureDeficit_current);
             // cout <<  DailyMeanTemperature_current << "\t" <<  NightTemperature_current << "\t" <<  Rainfall_current << "\t" <<  DailyMeanWindSpeed_current << "\t" <<  DailyMeanIrradiance_current << "\t" <<   DailyMeanVapourPressureDeficit_current << endl;
             ctx.time.iterperyear++;
         }
@@ -4781,39 +4781,39 @@ void ReadInputClimate()
         ctx.time.timestep = 1.0 / float(ctx.time.iterperyear);
         cout << "Read in climate data for " << ctx.time.iterperyear << " iterations per year." << endl;
         // choose average conditions
-        WDailyMean_year = tDailyMean_year = VPDDailyMean_year = Tnight_year = 0.0;
+        ctx.climate.WDailyMean_year = ctx.climate.tDailyMean_year = ctx.climate.VPDDailyMean_year = ctx.climate.Tnight_year = 0.0;
 #ifdef WATER
-        windDailyMean_year = 0.0;
+        ctx.climate.windDailyMean_year = 0.0;
 #endif
 
         for (int i = 0; i < ctx.time.iterperyear; i++)
         {
-            // DailyMeanVapourPressureDeficit[i]*=1.33; test main_1.33VPD on MESO@LR - 13/05/22
+            // ctx.climate.DailyMeanVapourPressureDeficit[i]*=1.33; test main_1.33VPD on MESO@LR - 13/05/22
 
-            WDailyMean_year += DailyMeanIrradiance[i] * SWtoPPFD;
-            tDailyMean_year += DailyMeanTemperature[i];
-            VPDDailyMean_year += DailyMeanVapourPressureDeficit[i];
+            ctx.climate.WDailyMean_year += ctx.climate.DailyMeanIrradiance[i] * SWtoPPFD;
+            ctx.climate.tDailyMean_year += ctx.climate.DailyMeanTemperature[i];
+            ctx.climate.VPDDailyMean_year += ctx.climate.DailyMeanVapourPressureDeficit[i];
 #ifdef WATER
-            windDailyMean_year += DailyMeanWindSpeed[i];
+            ctx.climate.windDailyMean_year += ctx.climate.DailyMeanWindSpeed[i];
 #endif
-            Tnight_year += NightTemperature[i];
+            ctx.climate.Tnight_year += ctx.climate.NightTemperature[i];
         }
 
-        WDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
-        tDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
-        VPDDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        ctx.climate.WDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        ctx.climate.tDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        ctx.climate.VPDDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
 #ifdef WATER
-        windDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
+        ctx.climate.windDailyMean_year *= 1.0 / float(ctx.time.iterperyear);
 #endif
-        // cout << "WDailyMean: " << WDailyMean_year << endl;
-        Tnight_year *= 1.0 / float(ctx.time.iterperyear);
+        // cout << "ctx.climate.WDailyMean: " << ctx.climate.WDailyMean_year << endl;
+        ctx.climate.Tnight_year *= 1.0 / float(ctx.time.iterperyear);
 
-        tnight = NightTemperature[ctx.time.iter % ctx.time.iterperyear];
-        precip = Rainfall[ctx.time.iter % ctx.time.iterperyear];
-        WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
-        WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
-        tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
-        VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
+        ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.iterperyear];
+        ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.iterperyear];
+        ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
+        ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+        ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
+        ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
         cout << "Successfully read the climate file" << endl;
     }
@@ -5246,7 +5246,7 @@ void InitialiseLookUpTables()
         LookUp_Rleaf[i] = exp((temper - 25.0) * 0.1 * log(3.09 - 0.0215 * (25.0 + temper))); // this is equ. 1 in Atkin et al. 2015 New phytologist //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
         LookUp_Rstem[i] = 39.6 * 378.7 * ctx.time.timestep * exp(((temper - 25.0) / 10.0) * log(2.0));
         // LookUp_Rnight[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-        //  exp((temp-25)/10*log(2)) is the temperature dependency of Rstem, supposing a constant Q10=2, according to Ryan et al 1994 and Meir & Grace 2002 exp((tnight-25)*0.1*log(3.09-0.0215*(25+tnight))) is the temperature dependencies used by Atkin 2015 (equ1)
+        //  exp((temp-25)/10*log(2)) is the temperature dependency of Rstem, supposing a constant Q10=2, according to Ryan et al 1994 and Meir & Grace 2002 exp((ctx.climate.tnight-25)*0.1*log(3.09-0.0215*(25+ctx.climate.tnight))) is the temperature dependencies used by Atkin 2015 (equ1)
 #ifdef WATER
         // for computation of isothermal net long-range radiation
         float ESAT = 0.61121 * exp((18.678 - temper / 234.5) * temper / (257.14 + temper)); // Saturation partial pressure of water vapour in kPa From Jones 2013, Eq (5.15) page 102 (in agreement with Cochard 2019 equ 2 -- Buck equation)
@@ -6644,20 +6644,20 @@ void UpdateField()
 
 #ifdef FULL_CLIMATE
 
-    tnight = NightTemperature[ctx.time.iter % ctx.time.nbdays];
-    precip = Rainfall[ctx.time.iter % ctx.time.nbdays];
-    WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.nbdays];
-    WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.nbdays] * SWtoPPFD;
-    tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.nbdays];
-    VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.nbdays];
+    ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.nbdays];
+    ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.nbdays];
+    ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.nbdays];
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.nbdays] * SWtoPPFD;
+    ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.nbdays];
+    ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.nbdays];
 
 #else
-    tnight = NightTemperature[ctx.time.iter % ctx.time.iterperyear];
-    precip = Rainfall[ctx.time.iter % ctx.time.iterperyear];
-    WSDailyMean = DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
-    WDailyMean = DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
-    tDailyMean = DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
-    VPDDailyMean = DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
+    ctx.climate.tnight = ctx.climate.NightTemperature[ctx.time.iter % ctx.time.iterperyear];
+    ctx.climate.precip = ctx.climate.Rainfall[ctx.time.iter % ctx.time.iterperyear];
+    ctx.climate.WSDailyMean = ctx.climate.DailyMeanWindSpeed[ctx.time.iter % ctx.time.iterperyear];
+    ctx.climate.WDailyMean = ctx.climate.DailyMeanIrradiance[ctx.time.iter % ctx.time.iterperyear] * SWtoPPFD;
+    ctx.climate.tDailyMean = ctx.climate.DailyMeanTemperature[ctx.time.iter % ctx.time.iterperyear];
+    ctx.climate.VPDDailyMean = ctx.climate.DailyMeanVapourPressureDeficit[ctx.time.iter % ctx.time.iterperyear];
 
 #endif // FULL_CLIMATE
 
@@ -6799,13 +6799,13 @@ void UpdateField()
 #else
         if (Canopy_height_DCELL[d] <= MeteoStation_Height)
         {
-            TopWindSpeed_DCELL[d] = WSDailyMean * 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the ctx.time.timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
+            TopWindSpeed_DCELL[d] = ctx.climate.WSDailyMean * 1.204 / log(16.67 * ((MeteoStation_Height / Canopy_height_DCELL[d]) - 0.8)); // WS is the ctx.time.timestep windspeed at a height=MeteoStation_Height, and TopWindSpeed_DCELL is the wind speed computed at a height=Canopy_height_DCELL[d], according to the model of Monteith & Unsworth 2008 (see Rau et al's TROLL manuscript), with d=0.8H and z0=0.06H; 16.67~1/0.06, 1.204=log(0.2/0.06).
         }
         else
-            TopWindSpeed_DCELL[d] = WSDailyMean * exp(alphaInoue * (1 - MeteoStation_Height / Canopy_height_DCELL[d]));
+            TopWindSpeed_DCELL[d] = ctx.climate.WSDailyMean * exp(alphaInoue * (1 - MeteoStation_Height / Canopy_height_DCELL[d]));
 #endif
 
-        // cout << "iter=" << ctx.time.iter << " WSDailyMean=" << WSDailyMean << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] << " HSum_DCELL[d]=" << HSum_DCELL[d] <<" TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d];
+        // cout << "iter=" << ctx.time.iter << " ctx.climate.WSDailyMean=" << ctx.climate.WSDailyMean << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] << " HSum_DCELL[d]=" << HSum_DCELL[d] <<" TopWindSpeed_DCELL[d]=" << TopWindSpeed_DCELL[d];
         // if (d==225) cout << " d=" << d <<  " canopy_height_DCELL[d]=" << Canopy_height_DCELL[d] ;
         // cout << endl;
     }
@@ -6867,7 +6867,7 @@ void UpdateField()
         // here, we use a phenomenological approach, following Granier et al. 1999 Ecological Modelling and Wagner et al. 2011 AFM, which assumed that evaporation is proportional to the energy reaching the soil.[this is an approximation as as the soil gets drier, more energy would be needed to remove the same amount of water from the soil as water molecules should be more tighly bound to soil particules and cavitation also occur in the soil...] ==> see if a model under which evaporation also depends on the soil water potential would not be better -- I guess so.
         // parameter values are not so clear, so TO BE CHECKED.
         // float e_factor=PPFDtoSW * 3600*0.000001*ctx.time.nbhours_covered* 0.1 * ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001; // to be moved outside of the loop to avoid repeating calculation.
-        // float e_Granier = e_factor* WDailyMean * exp(-klight*LAI_DCELL[0][d]);
+        // float e_Granier = e_factor* ctx.climate.WDailyMean * exp(-klight*LAI_DCELL[0][d]);
         // 3600*0.000001*ctx.time.nbhours_covered to convert Wmax in micromol of PAR /s /m2 into  Joule, and 10^-6 to MJoule as in Wagner et al. 2011 (however the value provided by Wagner et al. 2011 seems really weird -too high-, and the values we obtained here are in agreement with the ones reported in Marthews et al. 2014.
         // the value 0.1 is drawn from Wagner et al. 2011, but not really explained... to be checked!
         // ctx.grid.sites_per_dcell*ctx.grid.LH*ctx.grid.LH*0.001 is to convert the amount of water in mm, ie. in 10-3 m3/m2, to the amount of water evaporated for the focal dcell in m3
@@ -6879,15 +6879,15 @@ void UpdateField()
         if (absorb_delta < 0.0)
             absorb_delta = 0.0; //! eliminate rounding errors
         int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
-        float VPDground = VPDDailyMean * LookUp_VPD[intabsorb] * 1000; // in Pa
-        float Tsoil = tDailyMean - LookUp_T[intabsorb];
+        float VPDground = ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb] * 1000; // in Pa
+        float Tsoil = ctx.climate.tDailyMean - LookUp_T[intabsorb];
         float esat_ground = 611.21 * exp((18.678 - (Tsoil / 234.5)) * (Tsoil / (257.14 + Tsoil))); // Buck equation; in Pa (see Jones p. 348)
         float esoil = esat_ground * exp(2.17 * soil_phi3D[0][d] / (Tsoil - ABSZERO));              // esoil variation with the top soil ctx.diag.layer water potential, following Duursma & Medlyn 2012 equ. 17, Cochard et al. 2021 equ. 36., see equ. 5.14 in Jones (p. 102), in Pa
         float eair = esat_ground - VPDground;                                                      // in Pa
         // float r_soil = exp(8.206 - 4.255*SWC3D[0][d]/Max_SWC[0]) ; // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
         float r_soil = exp(8.206 - 4.255 * SWC3D[0][d] / FC_SWC[0]); // soil surface resistance in s m-1, following Sellers et al. 1992 equ. 19, see also equ 12 in Merlin et al. 2016 (also used in CLM, Oleson et al. 2007).
 #ifdef FULL_CLIMATE
-        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / (WSDailyMean * TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
+        float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / (ctx.climate.WSDailyMean * TopWindSpeed_DCELL[d]); // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #else
         float r_aero = 43.17347 * exp(alphaInoue * (1 - 1 / Canopy_height_DCELL[d])) / TopWindSpeed_DCELL[d]; // aerodynamic resistance to hear transfer (boundary ctx.diag.layer just above the soil surface), in s m-1 (see equ. 7 and 14 in Duursma & Medlyn 2012; and equ. B10 in Merlin et al. 2016). 43.17347= log(1/0.001)/(0.40*0.40), where 1= the reference height where the wind speed is measured, in m, 0.001=the momentum soil roughness in m (set to 0.001 following Yang et al. 2008 and Stefan et al 2015 in Merlin et al. 2016 equ B10), and 0.40=the von Karman constant.
 #endif
@@ -6908,14 +6908,14 @@ void UpdateField()
 
         // Refilling by rainfall
 
-        Interception[d] = fminf(precip, 0.2 * LAI_DCELL[0][d]); // This is the amount of rainfall - in mm, as rainfall -, intercepted by vegetation cover, following the approach used in Liang et al. 1994 Journal of Geophysical Reserach, and also used by Laio et al. 2001 Advances in Water Resources and Fischer et al. 2014 Environmental Modelling & Software (FORMIX3, Madagascar). More complex approach can be used however - see eg. Gutierrez et al. 2014 Plos One (FORMIND, Chili), or Wagner et al. 2011 AFM (Paracou)
-        Throughfall[d] = precip - Interception[d];
+        Interception[d] = fminf(ctx.climate.precip, 0.2 * LAI_DCELL[0][d]); // This is the amount of rainfall - in mm, as rainfall -, intercepted by vegetation cover, following the approach used in Liang et al. 1994 Journal of Geophysical Reserach, and also used by Laio et al. 2001 Advances in Water Resources and Fischer et al. 2014 Environmental Modelling & Software (FORMIX3, Madagascar). More complex approach can be used however - see eg. Gutierrez et al. 2014 Plos One (FORMIND, Chili), or Wagner et al. 2011 AFM (Paracou)
+        Throughfall[d] = ctx.climate.precip - Interception[d];
         Throughfall[d] *= ctx.grid.sites_per_dcell * ctx.grid.LH * ctx.grid.LH * 0.001; // to convert in absolute amount of water entering the soil voxel in m3
 
         if (isnan(Throughfall[d]) || (Throughfall[d]) < 0)
         {
             cout << "Incorrect throughfall" << endl;
-            cout << precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
+            cout << ctx.climate.precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
         }
 
         float in = Throughfall[d];
@@ -6935,7 +6935,7 @@ void UpdateField()
                     SWC3D[l][d]+=in;
                     if (isnan(SWC3D[l][d]) || (SWC3D[l][d]-Min_SWC[l])<0) {
                         cout << "incorrect SWC3D, Min/Max_SWC" << endl;
-                        cout << Throughfall[d] << "\t" <<in <<"\t" <<  precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
+                        cout << Throughfall[d] << "\t" <<in <<"\t" <<  ctx.climate.precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
                     }
                     in=0.0;
                 }
@@ -6963,7 +6963,7 @@ void UpdateField()
                     if (isnan(SWC3D[l][d]) || (SWC3D[l][d] - Min_SWC[l]) < 0)
                     {
                         cout << "incorrect SWC3D, Min/Max_SWC" << endl;
-                        cout << Throughfall[d] << "\t" << in << "\t" << precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
+                        cout << Throughfall[d] << "\t" << in << "\t" << ctx.climate.precip << "\t" << Interception[d] << "\t" << LAI_DCELL[0][d] << endl;
                     }
                     in = 0.0;
                 }
@@ -7081,7 +7081,7 @@ void RecruitTree()
 
 #else // LCP_alternative
 
-                float flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
+                float flux = ctx.climate.WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
 #ifdef WATER
                 if (flux > (S[spp].s_LCP) && soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
@@ -7351,7 +7351,7 @@ void Average(void)
             float tototest = 0.0, tototest2 = 0.0, flux;
             for (int site = 0; site < ctx.grid.sites; site++)
             {
-                flux = WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
+                flux = ctx.climate.WDailyMean * exp(-fmaxf(LAI3D[0][site + ctx.grid.SBORD], 0.0) * kpar);
                 tototest += flux;
                 tototest2 += flux * flux;
             }
@@ -7455,7 +7455,7 @@ void Average(void)
     lai *= icells;
     transpiration_1016 *= isites;
 
-    output[11] << ctx.time.iter << "\t" << precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
+    output[11] << ctx.time.iter << "\t" << ctx.climate.precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
     output[21] << ctx.time.iter << "\t" << lai << endl;
 
 #ifdef MIP_Lichstein
