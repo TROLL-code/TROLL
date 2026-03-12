@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 
 // Forward declaration
 struct Species;
@@ -239,6 +241,10 @@ struct PointCloud
 struct RNGState
 {
     gsl_rng *gslrand = nullptr;
+    gsl_matrix *mcov_N_P_LMA = nullptr;
+    gsl_vector *mu_N_P_LMA = nullptr;
+    gsl_vector *variation_N_P_LMA = nullptr;
+    int covariance_status;
 };
 
 struct SpeciesState

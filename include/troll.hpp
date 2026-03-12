@@ -110,11 +110,8 @@ fstream output_track[3]; //!< Global variable: output streams for tracking of tr
 // GLOBAL PARAMETERS OF THE SIMULATION
 // (sites, cols, rows, nbspp migrated to ctx.grid)
 
-// Random number generator for trait covariance calculation
-gsl_rng *gslrand;                           //!< Global variable: random number generator
-gsl_matrix *mcov_N_P_LMA;                   //!< Global variable: covariance matrix for leaf_properties
-gsl_vector *mu_N_P_LMA, *variation_N_P_LMA; //!< Global variable: mean values of the distributions and the output vector for the multivariate draw
-int covariance_status;                      //!< Global variable: covariance status: if one of N, P, or LMA has zero variation, the Cholesky decomposition fails, we then use no correlation at all
+// RNG and covariance machinery migrated to ctx.rng:
+// gslrand, mcov_N_P_LMA, mu_N_P_LMA, variation_N_P_LMA, covariance_status
 
 // DCELL/Grid variables migrated to ctx.grid:
 // length_dcell, linear_nb_dcells, sites_per_dcell, nbdcells,
