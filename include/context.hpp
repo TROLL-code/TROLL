@@ -151,7 +151,7 @@ struct LookupTables
     float *LookUp_VPD = nullptr;
     float *LookUp_T = nullptr;
     float *LookUp_Rstem = nullptr;
-    int *LookUp_Crown_site = nullptr;
+    int LookUp_Crown_site[2601];
 
     int nbVPDbins;
     float iVPDaccuracy;
@@ -165,7 +165,7 @@ struct LookupTables
 
     float *LookUp_Wind = nullptr;
 
-    int LookUpLAImax;
+    std::vector<float> LookUpLAImax;
 };
 
 struct Soil

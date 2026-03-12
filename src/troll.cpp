@@ -118,7 +118,7 @@ void Tree::Birth(int nume, int site0)
     // # first test LAImax ##
     // ######################
     int index_LAImax = dev_rand + (nume - 1) * 10000;
-    float LAImax_precomputed = LookUpLAImax[index_LAImax];
+    float LAImax_precomputed = ctx.lookup.LookUpLAImax[index_LAImax];
 
     if (LAI3D[0][site0 + ctx.grid.SBORD] < LAImax_precomputed)
     {
@@ -968,7 +968,7 @@ void Tree::CalcLAI()
                 else
                 {
                     fraction_filled_actual = (fraction_filled_actual * float(i) + 1.0) / (float(i) + 1.0);
-                    int site_relative = LookUp_Crown_site[i];
+                    int site_relative = ctx.lookup.LookUp_Crown_site[i];
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
 
@@ -1323,7 +1323,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
         else
         {
             fraction_filled_actual = (fraction_filled_actual * float(i) + 1.0) / (float(i) + 1.0);
-            int site_relative = LookUp_Crown_site[i];
+            int site_relative = ctx.lookup.LookUp_Crown_site[i];
             int row = row_crowncenter + site_relative / 51 - 25;
             int col = col_crowncenter + site_relative % 51 - 25;
 
@@ -1336,9 +1336,9 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
                 if (absorb_delta < 0.0)
                     absorb_delta = 0.0; //! eliminate rounding errors
                 int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
-                PPFD += ctx.climate.WDailyMean * LookUp_flux_absorption[intabsorb];
-                VPD += ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb];
-                Tmp += ctx.climate.tDailyMean - LookUp_T[intabsorb];
+                PPFD += ctx.climate.WDailyMean * ctx.lookup.LookUp_flux_absorption[intabsorb];
+                VPD += ctx.climate.VPDDailyMean * ctx.lookup.LookUp_VPD[intabsorb];
+                Tmp += ctx.climate.tDailyMean - ctx.lookup.LookUp_T[intabsorb];
                 crown_intarea_allocated_nogaps++;
             }
         }
@@ -1492,10 +1492,10 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
 
     int ITERMAX = 30;
     // int itmax=ITERMAX;
-    int convTA = int(iTaccuracy * Ta); // discrete temperature to avoid repeated computation
-    // int convVPDA=int(iVPDaccuracy*VPDa); // discrete VPD to avoid repeated computation
-    int convTAtop = int(iTaccuracy * Tatop);       // discrete temperature to avoid repeated computation
-    int convVPDAtop = int(iVPDaccuracy * VPDatop); // discrete VPD to avoid repeated computation
+    int convTA = int(ctx.lookup.iTaccuracy * Ta); // discrete temperature to avoid repeated computation
+    // int convVPDA=int(ctx.lookup.iVPDaccuracy*VPDa); // discrete VPD to avoid repeated computation
+    int convTAtop = int(ctx.lookup.iTaccuracy * Tatop);       // discrete temperature to avoid repeated computation
+    int convVPDAtop = int(ctx.lookup.iVPDaccuracy * VPDatop); // discrete VPD to avoid repeated computation
     // float ESAT=LookUp_ESAT[convTA]; //ESAT: Saturation vapour pressure (in kPa)
     // VPD = ESAT*(1.0 - RH); // Calculation of air VPD from relative humidity and air temperature, in kPa (!!), needed only if RH, and not VPD, is provided as an argument.
 
@@ -1507,17 +1507,17 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
     // cout << "PPFDtop=" << PPFDtop << " PPFD=" << PPFD <<" PPFDinc=" << PPFDinc << " RSOL=" << RSOL << " RSOL_NIR=" << RSOL_NIR << endl;
     // }
     float LHV = (H2OLV0 - 2.365e3 * Ta) * H2OMW;               // Latent heat of water vapour at air temperature (J mol-1) (this is the "landa" in PM equation)
-    float SLOPE = LookUp_SLOPE[convTA];                        /* Slope of the dependence of saturated vapor pressure with temperature (Jones 2013, Equation (5.15), p.102)
+    float SLOPE = ctx.lookup.LookUp_SLOPE[convTA];                        /* Slope of the dependence of saturated vapor pressure with temperature (Jones 2013, Equation (5.15), p.102)
                                                                 This is constant s in Penman-Monteith equation  (Pa K-1) */
     float CMOLAR = 1000.0 * PRESS / (RCONST * (Ta - ABSZERO)); // 1000 because PRESS is in kPa
     float GAMMA = 1000.0 * PRESS * CPAIR * AIRMA / LHV;        // Psychrometric constant; 1000.0 to convert kPa into Pa. !! IM to be checked !! factor AIRMA not consistent with Jérôme's note and Appendix 3 of Jones, but similar to Duursma 's package
-    float GRADN = LookUp_GRADN[convTA];                        // Radiation conductance (mol m-2 s-1) at air temperature (Jones 2013, Eq 5.10 p. 101). // IM to be double-checked with Jones (not fully consistent with Medlyn et al. 2007)
+    float GRADN = ctx.lookup.LookUp_GRADN[convTA];                        // Radiation conductance (mol m-2 s-1) at air temperature (Jones 2013, Eq 5.10 p. 101). // IM to be double-checked with Jones (not fully consistent with Medlyn et al. 2007)
     float GBHU = 0.003 * sqrt(WIND / t_wleaf) * CMOLAR;        // Boundary ctx.diag.layer conductance to heat transfer by forced convection (single sided) in mol m-2 s-1; Leuning et al (1995) PC&E 18:1183-1200 Eqn E1; Equation A2 in Medlyn et al. 2007
-    // Rnetiso = absorptance_leaves*RSOL - LookUp_INLR[convTA][convVPDA]; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100)
-    Rnetiso = RSOL - LookUp_INLR[convTAtop][convVPDAtop] * ExtinctLW; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100). No need of absorptance_leaves, since PPFD provided in argument is already the absorbed flux.
+    // Rnetiso = absorptance_leaves*RSOL - ctx.lookup.LookUp_INLR[convTA][convVPDA]; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100)
+    Rnetiso = RSOL - ctx.lookup.LookUp_INLR[convTAtop][convVPDAtop] * ExtinctLW; // Calculation of isothermal net radiation (J m-2 s-1; Jones (2013) equation (5.4) p.100). No need of absorptance_leaves, since PPFD provided in argument is already the absorbed flux.
 
     // if (ExtinctLW<0.2) {
-    //    cout << "Rnetiso=" << Rnetiso << " RSOL=" << RSOL << " INLR=" << LookUp_INLR[convTA][convVPDA]  << " INLR_top=" << LookUp_INLR[convTAtop][convVPDAtop] << " //ExtinctLW=" << ExtinctLW <<  endl;
+    //    cout << "Rnetiso=" << Rnetiso << " RSOL=" << RSOL << " INLR=" << ctx.lookup.LookUp_INLR[convTA][convVPDA]  << " INLR_top=" << ctx.lookup.LookUp_INLR[convTAtop][convVPDAtop] << " //ExtinctLW=" << ExtinctLW <<  endl;
     // }
 
     // Iterative scheme to determine TLEAF and CO2 concentration and VPD at leaf surface, and the corresponding Anet and ET:
@@ -1640,10 +1640,10 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     float Anet;
 
     // Parameters for the Farquhar model
-    int convT = int(iTaccuracy * TLEAF);
-    float KmT = LookUp_KmT[convT];                        // with temperature dependencies
-    float GammaT = LookUp_GammaT[convT];                  // with temperature dependencies
-    float Rday = t_Rdark * LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
+    int convT = int(ctx.lookup.iTaccuracy * TLEAF);
+    float KmT = ctx.lookup.LookUp_KmT[convT];                        // with temperature dependencies
+    float GammaT = ctx.lookup.LookUp_GammaT[convT];                  // with temperature dependencies
+    float Rday = t_Rdark * ctx.lookup.LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
 
     ////////////// Model of stomatal conductance for CO2 /////////////
     float GSDIVA;
@@ -1663,7 +1663,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     float A, B, C, AC, AJ;
 
     // Solution when Rubisco activity is limiting
-    float VcmaxTW = t_Vcmax * LookUp_VcmaxT[convT] * t_WSF_A;
+    float VcmaxTW = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT] * t_WSF_A;
     A = g0 + GSDIVA * (VcmaxTW - Rday);
     B = (1.0 - CS * GSDIVA) * (VcmaxTW - Rday) + g0 * (KmT - CS) - GSDIVA * (VcmaxTW * GammaT + KmT * Rday);
     C = -(1.0 - CS * GSDIVA) * (VcmaxTW * GammaT + KmT * Rday) - g0 * KmT * CS;
@@ -1676,7 +1676,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
         AC = VcmaxTW * (CIC - GammaT) / (CIC + KmT);
 
     // Solution when electron transport rate is limiting
-    float JmaxTW = t_Jmax * LookUp_JmaxT[convT] * t_WSF_A;
+    float JmaxTW = t_Jmax * ctx.lookup.LookUp_JmaxT[convT] * t_WSF_A;
     float I = alpha * PPFD;
     float J = QUAD(theta, -(I + JmaxTW), JmaxTW * I, -1); // theta is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
     float VJ = J * 0.25;
@@ -1726,10 +1726,10 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     float CI, Anet;
 
     // Parameters for the Farquhar model
-    int convT = int(iTaccuracy * TLEAF);
-    float KmT = LookUp_KmT[convT];                        // with temperature dependencies
-    float GammaT = LookUp_GammaT[convT];                  // with temperature dependencies
-    float Rday = t_Rdark * LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
+    int convT = int(ctx.lookup.iTaccuracy * TLEAF);
+    float KmT = ctx.lookup.LookUp_KmT[convT];                        // with temperature dependencies
+    float GammaT = ctx.lookup.LookUp_GammaT[convT];                  // with temperature dependencies
+    float Rday = t_Rdark * ctx.lookup.LookUp_Rleaf[convT] * DAYRESP; // leaf respiration with temperature dependencies and inhibition due to light (DAYRESP).
 
     // Model of stomatal conductance for CO2
     float GSDIVA = (1.0 + t_g1 / sqrt(DS)) / CS; // Medlyn et al. 2011 Global Change Biology. Note that g1 is now a tree class variable that is initiated at tree birth (in Tree::Birth) and updated in Tree::Water_Availability depending on the tree water stress.
@@ -1746,7 +1746,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     // Farquhar model of photosynthesis
     // Solution when Rubisco activity is limiting
     float AC, AJ;
-    float VcmaxTW = t_Vcmax * LookUp_VcmaxT[convT] * t_WSF_A;
+    float VcmaxTW = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT] * t_WSF_A;
     if ((CI <= 0.0) || (CI - CS > 0.01))
     { // newIM: have replaced CI>CS by (CI-CS>0.01) to avoid error due to comparing floats (maybe there would be a best way to fix this...)
         AC = 0.0;
@@ -1754,7 +1754,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
     else
         AC = VcmaxTW * (CI - GammaT) / (CI + KmT);
     // Solution when electron transport rate is limiting
-    float JmaxTW = t_Jmax * LookUp_JmaxT[convT] * t_WSF_A;
+    float JmaxTW = t_Jmax * ctx.lookup.LookUp_JmaxT[convT] * t_WSF_A;
     float I = alpha * PPFD;
     float J = (I + JmaxTW - sqrt((JmaxTW + I) * (JmaxTW + I) - 4.0 * theta * JmaxTW * I)) * 0.5 / theta; // THETA is the convexity term for electron transport rates (dimensionless, 0–1), here provided in input (default value =0.7, as in von Caemmerer 2000, but a value of 0.85 is used in Duursma' R package
     AJ = 0.25 * J * (CI - GammaT) / (CI + 2.0 * GammaT);
@@ -1937,17 +1937,17 @@ float Tree::GPPleaf(float PPFD, float VPD, float T)
     // float theta=0.76+0.018*T-0.00037*T*T;         // theta, but temperature dependent cf. Bernacchi et al 2003 PCE
 
     // Parameters for Farquhar model, with temperature dependencies
-    int convT = int(iTaccuracy * T); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    int convT = int(ctx.lookup.iTaccuracy * T); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
 
     // if(convT>500 || isnan(convT) || convT <0) cout << t_site << " | convT: " << convT << " | T: " << T << " | PPFD: " << PPFD << " | VPD: " << VPD << endl;
-    float KmT = LookUp_KmT[convT];
-    float GammaT = LookUp_GammaT[convT];
+    float KmT = ctx.lookup.LookUp_KmT[convT];
+    float GammaT = ctx.lookup.LookUp_GammaT[convT];
 
     // float g1 = -3.97 * t_wsg + 6.53 (Lin et al. 2015)
 
     float t_fci = g1 / (g1 + sqrt(VPD));
-    float VcmaxT = t_Vcmax * LookUp_VcmaxT[convT];
-    float JmaxT = t_Jmax * LookUp_JmaxT[convT];
+    float VcmaxT = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT];
+    float JmaxT = t_Jmax * ctx.lookup.LookUp_JmaxT[convT];
 
     // Farquhar - -von Caemmerer - Berry model of carbon assimilation rate
     float I = alpha * PPFD;
@@ -2032,9 +2032,9 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
 
 float Tree::Rdayleaf(float T)
 {
-    int convT = int(iTaccuracy * T);
+    int convT = int(ctx.lookup.iTaccuracy * T);
     // if(T < 0 || isnan(T) || T > 50) cout << t_site << " species: " << t_s->s_name << " convT: " << T << endl;
-    float Rday_leaf = t_Rdark * LookUp_Rleaf[convT]; // new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
+    float Rday_leaf = t_Rdark * ctx.lookup.LookUp_Rleaf[convT]; // new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
     return Rday_leaf;
 }
 
@@ -2191,27 +2191,27 @@ void Tree::CalcLAImax()
 #ifdef FULL_CLIMATE // if FULL_CLIMATE is defined, then the terms just below should be only the relative attenuation due to the vertical structure of the canopy. Currently, CalcLAImax is defined depending on the climate conditions on the day of birth (see ctx.time.iter, in dailyFluxesLeaf), and not to the climate yearly mean as before. This needs to be rethought and changed.
 
         // get PPFD, VPD, and temperature at each discretisation step
-        float PPFD_LAI = LookUp_flux_absorption[intabsorb];
-        float VPD_LAI = LookUp_VPD[intabsorb];
-        float Tmp_LAI = LookUp_T[intabsorb];
+        float PPFD_LAI = ctx.lookup.LookUp_flux_absorption[intabsorb];
+        float VPD_LAI = ctx.lookup.LookUp_VPD[intabsorb];
+        float Tmp_LAI = ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
         int intincident = CalcIntabsorb(absorb_prev);
         float Wind_LAI = exp(-0.5 * absorb_prev); // to be thoroughly checked and computed using a look up table as well.
-        float ExtinctLW_LAI = LookUp_ExtinctLW[intincident];
-        float PPFD_LAI_inc = LookUp_flux[intincident];
+        float ExtinctLW_LAI = ctx.lookup.LookUp_ExtinctLW[intincident];
+        float PPFD_LAI_inc = ctx.lookup.LookUp_flux[intincident];
 #endif // WATER
 
 #else // FULL_CLIMATE
 
         // get PPFD, VPD, and temperature at each discretisation step
-        float PPFD_LAI = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intabsorb];
-        float VPD_LAI = ctx.climate.VPDDailyMean_year * LookUp_VPD[intabsorb];
-        float Tmp_LAI = ctx.climate.tDailyMean_year - LookUp_T[intabsorb];
+        float PPFD_LAI = ctx.climate.WDailyMean_year * ctx.lookup.LookUp_flux_absorption[intabsorb];
+        float VPD_LAI = ctx.climate.VPDDailyMean_year * ctx.lookup.LookUp_VPD[intabsorb];
+        float Tmp_LAI = ctx.climate.tDailyMean_year - ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
         int intincident = CalcIntabsorb(absorb_prev);
         float Wind_LAI = ctx.climate.windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly checked and computed using a look up table as well.
-        float ExtinctLW_LAI = LookUp_ExtinctLW[intincident];
-        float PPFD_LAI_inc = ctx.climate.WDailyMean_year * LookUp_flux[intincident];
+        float ExtinctLW_LAI = ctx.lookup.LookUp_ExtinctLW[intincident];
+        float PPFD_LAI_inc = ctx.climate.WDailyMean_year * ctx.lookup.LookUp_flux[intincident];
 #endif // WATER
 
 #endif // FULL_CLIMATE
@@ -2234,11 +2234,11 @@ void Tree::CalcLAImax()
 
         // get the night respiration
 #ifdef FULL_CLIMATE
-        int convTnight = int(iTaccuracy * ctx.climate.tnight);
+        int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.tnight);
 #else
-        int convTnight = int(iTaccuracy * ctx.climate.Tnight_year);
+        int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.Tnight_year);
 #endif
-        float Rnight_LAI = t_Rdark * effLA_night * LookUp_Rleaf[convTnight];
+        float Rnight_LAI = t_Rdark * effLA_night * ctx.lookup.LookUp_Rleaf[convTnight];
 
         // add up the two components of leaf respiration, and multiply the result by 1.5 (fine root respiration), since in TROLL, this cannot be separated from leaf respiration
 #ifdef WATER
@@ -2315,7 +2315,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
             else
             {
                 fraction_filled_actual = (fraction_filled_actual * float(i) + 1.0) / (float(i) + 1.0);
-                int site_relative = LookUp_Crown_site[i];
+                int site_relative = ctx.lookup.LookUp_Crown_site[i];
                 int row = row_crowncenter + site_relative / 51 - 25;
                 int col = col_crowncenter + site_relative % 51 - 25;
 
@@ -2327,7 +2327,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
                     int intabsorb = CalcIntabsorb(absorb_prev);
 
                     // obtain PPFD for the voxel, and also record the circled area
-                    ppfd_experienced += ctx.climate.WDailyMean * LookUp_flux[intabsorb];
+                    ppfd_experienced += ctx.climate.WDailyMean * ctx.lookup.LookUp_flux[intabsorb];
                     crown_area_looped++;
                 }
             }
@@ -2391,14 +2391,14 @@ float Tree::predLeafLifespanKikuzawa()
 
 #ifdef FULL_CLIMATE
 
-    float PPFD = LookUp_flux_absorption[intabsorb];
-    float VPD = LookUp_VPD[intabsorb];
-    float T = LookUp_T[intabsorb];
+    float PPFD = ctx.lookup.LookUp_flux_absorption[intabsorb];
+    float VPD = ctx.lookup.LookUp_VPD[intabsorb];
+    float T = ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
     float W = exp(-0.5 * absorb_prev); // to be thoroughly re-thought, and computed using a look-up table as well -- IM June 2021
     int intincident = CalcIntabsorb(absorb_prev);
-    float PPFDinc = LookUp_flux_absorption[intincident];
-    float ExtinctLW = LookUp_ExtinctLW[intincident];
+    float PPFDinc = ctx.lookup.LookUp_flux_absorption[intincident];
+    float ExtinctLW = ctx.lookup.LookUp_ExtinctLW[intincident];
     float wf = 0.0;
     float GPP = Tree::dailyFluxesLeaf(PPFD, VPD, T, W, ExtinctLW, PPFDinc, wf).carbon_flux;
 #else
@@ -2406,28 +2406,28 @@ float Tree::predLeafLifespanKikuzawa()
     float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
-    int convTnight = int(iTaccuracy * ctx.climate.tnight);
+    int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.tnight);
 
 #else // FULL_CLIMATE
 
-    float PPFD = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intabsorb];
-    float VPD = ctx.climate.VPDDailyMean_year * LookUp_VPD[intabsorb];
-    float T = ctx.climate.tDailyMean_year - LookUp_T[intabsorb];
+    float PPFD = ctx.climate.WDailyMean_year * ctx.lookup.LookUp_flux_absorption[intabsorb];
+    float VPD = ctx.climate.VPDDailyMean_year * ctx.lookup.LookUp_VPD[intabsorb];
+    float T = ctx.climate.tDailyMean_year - ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
     float W = ctx.climate.windDailyMean_year * exp(-0.5 * absorb_prev); // to be thoroughly re-thought, and computed using a look-up table as well -- IM June 2021
     int intincident = CalcIntabsorb(absorb_prev);
-    float PPFDinc = ctx.climate.WDailyMean_year * LookUp_flux_absorption[intincident];
-    float ExtinctLW = LookUp_ExtinctLW[intincident];
+    float PPFDinc = ctx.climate.WDailyMean_year * ctx.lookup.LookUp_flux_absorption[intincident];
+    float ExtinctLW = ctx.lookup.LookUp_ExtinctLW[intincident];
     float GPP = Tree::dailyFluxesLeaf(PPFD, VPD, T, W, ExtinctLW, PPFDinc).carbon_flux;
 #else
     float GPP = Tree::dailyGPPleaf(PPFD, VPD, T);
     float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
-    int convTnight = int(iTaccuracy * ctx.climate.Tnight_year);
+    int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.Tnight_year);
 
 #endif // FULL_CLIMATE
-    float Rnight = t_Rdark * LookUp_Rleaf[convTnight];
+    float Rnight = t_Rdark * ctx.lookup.LookUp_Rleaf[convTnight];
 
 #ifdef WATER
     float GPP_effective = (GPP - Rtot_by_Rabove * Rtotleaf_by_Rdark * Rnight + (Rtotleaf_by_Rdark - 1) * Rnight);
@@ -2437,8 +2437,8 @@ float Tree::predLeafLifespanKikuzawa()
 
     GPP_effective *= ctx.time.nbhours_covered * 3600.0 * 12.0 / 1000000.0; // we convert micromoles C/m^2/s into gC/m^2/day (factor 12.0 for conversion into gC, 3600 for second-hour conversion, and 10^6 to convert micromoles to moles; finally, we divide by the total leaf area that intercepted the light, since
 
-    int convT = int(iTaccuracy * 25.0); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
-    float Vcmax_25_mass = t_Vcmax * LookUp_VcmaxT[convT] / t_LMA;
+    int convT = int(ctx.lookup.iTaccuracy * 25.0); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    float Vcmax_25_mass = t_Vcmax * ctx.lookup.LookUp_VcmaxT[convT] / t_LMA;
 
     // Core model
     float b = exp(5.467025 - 1.138354 * log(Vcmax_25_mass) + gsl_ran_gaussian(gslrand, 0.6112195)); // parameter as in Xu et al. 2017, fit to their data
@@ -2618,14 +2618,14 @@ void Tree::CalcRespGPP()
 #ifdef WATER
             float PPFD_incident = 0.0, ExtinctLW = 0.0;
             // float W=WS*exp(-0.5*LAI_DCELL[h][ctx.grid.site_DCELL[t_site]]); // computation of wind speed, which is here assumed to declined exponentially with the cumulative LAI within a given neighborhood (here taken as the tree's dcell) (see equation B11 in Medvigy et al. 2009; see Leuning et al. 1995 PCE equ. E2). We could alternatively used the aerodynamic momentum transfer model (Monteith and Unsworth 2008) using Lorey'sheight (see E-Ping's second manuscript) -- to be discussed. // to be computed with a lookup table maybe, and within Fluxh probably.
-            int convHratio = int(iHaccuracy * h / MeanDCELLHeight);
-            float W = TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] * LookUp_Wind[convHratio];
+            int convHratio = int(ctx.lookup.iHaccuracy * h / MeanDCELLHeight);
+            float W = TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] * ctx.lookup.LookUp_Wind[convHratio];
             if (W <= 0)
             {
-                cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight << " convHratio=" << convHratio << " LookUp_Wind[convHratio]=" << LookUp_Wind[convHratio] << endl;
+                cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight << " convHratio=" << convHratio << " ctx.lookup.LookUp_Wind[convHratio]=" << ctx.lookup.LookUp_Wind[convHratio] << endl;
             }
 
-            // cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight <<" convHratio=" << convHratio << " LookUp_Wind[convHratio]=" << LookUp_Wind[convHratio] << " TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]]=" << TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] << endl;
+            // cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight <<" convHratio=" << convHratio << " ctx.lookup.LookUp_Wind[convHratio]=" << ctx.lookup.LookUp_Wind[convHratio] << " TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]]=" << TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] << endl;
 
             Fluxh(h, PPFD, VPD, Tmp, leafarea_layer, PPFD_incident, ExtinctLW);
 #else
@@ -2712,13 +2712,13 @@ void Tree::CalcRespGPP()
     transpiration_1016 += tree_transpiration_1016;
 #endif
 
-    int convT = int(iTaccuracy * ctx.climate.tDailyMean);  // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
-    int convTnight = int(iTaccuracy * ctx.climate.tnight); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    int convT = int(ctx.lookup.iTaccuracy * ctx.climate.tDailyMean);  // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
+    int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.tnight); // temperature data at a resolution of Taccuracy=0.1°C -- stored in lookup tables ranging from 0°C to 50°C ---
 
-    t_Rstem = t_sapwood_area * (t_height - t_CD) * 0.5 * (LookUp_Rstem[convT] + LookUp_Rstem[convTnight]);
+    t_Rstem = t_sapwood_area * (t_height - t_CD) * 0.5 * (ctx.lookup.LookUp_Rstem[convT] + ctx.lookup.LookUp_Rstem[convTnight]);
 
     // the following two lines should maybe be revised, because the decline in respiration might not be the same as in photosynthetic activity. Kitajima et al. 2002 found no or small reductions in respiration with leaf age, Reich et al. 2009 did (Rdark/Amax constant), but often respiration declines are less steep than photosynthetic capacity, cf. Villar et al. 1995
-    t_Rnight = t_Rdark * effLA_night * LookUp_Rleaf[convTnight];
+    t_Rnight = t_Rdark * effLA_night * ctx.lookup.LookUp_Rleaf[convTnight];
 #ifdef WATER
 #else
     t_Rday *= effLA * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
@@ -3546,7 +3546,7 @@ void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int
         {
             fraction_filled_actual = (fraction_filled_actual * float(i) + 1.0) / (float(i) + 1.0);
 
-            int site_relative = LookUp_Crown_site[i];
+            int site_relative = ctx.lookup.LookUp_Crown_site[i];
             int row, col;
             row = row_center + site_relative / 51 - 25;
             col = col_center + site_relative % 51 - 25;
@@ -3761,7 +3761,7 @@ void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
     int intabsorb = CalcIntabsorb(absorb_prev);
 
     // Obtain PPFD for the voxel, and also record the circled area
-    ppfd_CA[0] += ctx.climate.WDailyMean * LookUp_flux[intabsorb];
+    ppfd_CA[0] += ctx.climate.WDailyMean * ctx.lookup.LookUp_flux[intabsorb];
     ppfd_CA[1] += 1.0; // add area
 }
 
@@ -3788,22 +3788,22 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 
 #ifdef FULL_CLIMATE
     // Obtain PPFD, VPD and T for the voxel
-    float PPFD_voxel = LookUp_flux_absorption[intabsorb];
-    float VPD_voxel = LookUp_VPD[intabsorb];
-    float T_voxel = LookUp_T[intabsorb];
+    float PPFD_voxel = ctx.lookup.LookUp_flux_absorption[intabsorb];
+    float VPD_voxel = ctx.lookup.LookUp_VPD[intabsorb];
+    float T_voxel = ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
-    float PPFD_voxel_incident = LookUp_flux[intincident];
-    float ExtinctLW_voxel = LookUp_ExtinctLW[intincident];
+    float PPFD_voxel_incident = ctx.lookup.LookUp_flux[intincident];
+    float ExtinctLW_voxel = ctx.lookup.LookUp_ExtinctLW[intincident];
 #endif // WATER
 
 #else // FULL_CLIMATE
       // Obtain PPFD, VPD and T for the voxel
-    float PPFD_voxel = ctx.climate.WDailyMean * LookUp_flux_absorption[intabsorb];
-    float VPD_voxel = ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb];
-    float T_voxel = ctx.climate.tDailyMean - LookUp_T[intabsorb];
+    float PPFD_voxel = ctx.climate.WDailyMean * ctx.lookup.LookUp_flux_absorption[intabsorb];
+    float VPD_voxel = ctx.climate.VPDDailyMean * ctx.lookup.LookUp_VPD[intabsorb];
+    float T_voxel = ctx.climate.tDailyMean - ctx.lookup.LookUp_T[intabsorb];
 #ifdef WATER
-    float PPFD_voxel_incident = ctx.climate.WDailyMean * LookUp_flux[intincident];
-    float ExtinctLW_voxel = LookUp_ExtinctLW[intincident];
+    float PPFD_voxel_incident = ctx.climate.WDailyMean * ctx.lookup.LookUp_flux[intincident];
+    float ExtinctLW_voxel = ctx.lookup.LookUp_ExtinctLW[intincident];
 #endif // WATER
 
 #endif // FULL_CLIMATE
@@ -3820,7 +3820,7 @@ void GetCanopyEnvironment(int height, int site, float dens, float (&canopy_envir
 
     // if (canopy_environment_cumulated[1]<=0 || dens < 0.05 || absorb_delta < 0.05) {
     //  cout << "Warning in GetCanopyEnvironment, PPFD <=0; PPFD_voxel=" << PPFD_voxel << "; dens=" << dens << endl;
-    //  cout << "ctx.climate.WDailyMean=" << ctx.climate.WDailyMean << "; LookUp_flux_absorption[intabsorb]=" << LookUp_flux_absorption[intabsorb] << "; intabsorb=" << intabsorb << "; absorb_prev=" << absorb_prev << "; absorb_delta=" << absorb_delta << endl;
+    //  cout << "ctx.climate.WDailyMean=" << ctx.climate.WDailyMean << "; ctx.lookup.LookUp_flux_absorption[intabsorb]=" << ctx.lookup.LookUp_flux_absorption[intabsorb] << "; intabsorb=" << intabsorb << "; absorb_prev=" << absorb_prev << "; absorb_delta=" << absorb_delta << endl;
     //  }
 }
 
@@ -5135,7 +5135,7 @@ void InitialiseIntraspecific()
 // v.3.1.5: create a LookUp table based on species identity and intraspecific deviation
 void InitialiseLookUpLAImax()
 {
-    LookUpLAImax.reserve(10000 * ctx.grid.nbspp); // 10000 is the possible number of combinations for intraspecific variation
+    ctx.lookup.LookUpLAImax.reserve(10000 * ctx.grid.nbspp); // 10000 is the possible number of combinations for intraspecific variation
 
     // since LAImax is defined at Tree level, we create pseudo trees (i.e. trees with only information on Pmass, Nmass and LMA) to calculate it from
     // for control purposes output min and max LAImax
@@ -5170,7 +5170,7 @@ void InitialiseLookUpLAImax()
 
             pseudotree.CalcLAImax();
 
-            LookUpLAImax.push_back(pseudotree.t_LAImax);
+            ctx.lookup.LookUpLAImax.push_back(pseudotree.t_LAImax);
             if (pseudotree.t_LAImax < minLAImax)
                 minLAImax = pseudotree.t_LAImax;
             if (pseudotree.t_LAImax > maxLAImax)
@@ -5192,70 +5192,70 @@ void InitialiseLookUpLAImax()
 void InitialiseLookUpTables()
 {
 
-    nbTbins = 500;
+    ctx.lookup.nbTbins = 500;
     float Taccuracy = 0.1;
-    iTaccuracy = 1.0 / Taccuracy;
+    ctx.lookup.iTaccuracy = 1.0 / Taccuracy;
     cout << endl
-         << "Built-in maximal temperature: " << float(nbTbins) * Taccuracy << endl;
-    if (NULL == (LookUp_KmT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_KmT" << endl;
-    if (NULL == (LookUp_GammaT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_GammaT" << endl;
-    if (NULL == (LookUp_VcmaxT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_VcmaxT" << endl;
-    if (NULL == (LookUp_JmaxT = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_JmaxT" << endl;
-    // if(NULL==(LookUp_Rday=new float[nbTbins])) cerr<<"!!! Mem_Alloc LookUp_Rday" << endl; //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-    if (NULL == (LookUp_Rleaf = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_Rleaf" << endl; // newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-    if (NULL == (LookUp_Rstem = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_Rstem" << endl;
-    // if(NULL==(LookUp_Rnight=new float[nbTbins])) cerr<<"!!! Mem_Alloc LookUp_Rnight" << endl; //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
+         << "Built-in maximal temperature: " << float(ctx.lookup.nbTbins) * Taccuracy << endl;
+    if (NULL == (ctx.lookup.LookUp_KmT = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_KmT" << endl;
+    if (NULL == (ctx.lookup.LookUp_GammaT = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_GammaT" << endl;
+    if (NULL == (ctx.lookup.LookUp_VcmaxT = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_VcmaxT" << endl;
+    if (NULL == (ctx.lookup.LookUp_JmaxT = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_JmaxT" << endl;
+    // if(NULL==(LookUp_Rday=new float[ctx.lookup.nbTbins])) cerr<<"!!! Mem_Alloc LookUp_Rday" << endl; //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
+    if (NULL == (ctx.lookup.LookUp_Rleaf = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_Rleaf" << endl; // newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
+    if (NULL == (ctx.lookup.LookUp_Rstem = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_Rstem" << endl;
+    // if(NULL==(LookUp_Rnight=new float[ctx.lookup.nbTbins])) cerr<<"!!! Mem_Alloc LookUp_Rnight" << endl; //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
 #ifdef WATER
-    nbVPDbins = 600;
+    ctx.lookup.nbVPDbins = 600;
     float VPDaccuracy = 0.01;
-    iVPDaccuracy = 1.0 / VPDaccuracy;
-    cout << "Built-in maximal VPD: " << float(nbVPDbins) * VPDaccuracy << endl;
-    if (NULL == (LookUp_INLR = new float *[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_INLR" << endl;
-    for (int i = 1; i < nbTbins; i++)
+    ctx.lookup.iVPDaccuracy = 1.0 / VPDaccuracy;
+    cout << "Built-in maximal VPD: " << float(ctx.lookup.nbVPDbins) * VPDaccuracy << endl;
+    if (NULL == (ctx.lookup.LookUp_INLR = new float *[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_INLR" << endl;
+    for (int i = 1; i < ctx.lookup.nbTbins; i++)
     {
-        if (NULL == (LookUp_INLR[i] = new float[nbVPDbins]))
-            cerr << "!!! Mem_Alloc LookUp_INLR" << endl;
+        if (NULL == (ctx.lookup.LookUp_INLR[i] = new float[ctx.lookup.nbVPDbins]))
+            cerr << "!!! Mem_Alloc ctx.lookup.LookUp_INLR" << endl;
     }
-    // if(NULL==(LookUp_ESAT=new float[nbTbins])) cerr<<"!!! Mem_Alloc LookUp_ESAT" << endl;
-    if (NULL == (LookUp_SLOPE = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_SLOPE" << endl;
-    if (NULL == (LookUp_GRADN = new float[nbTbins]))
-        cerr << "!!! Mem_Alloc LookUp_GRADN" << endl;
+    // if(NULL==(LookUp_ESAT=new float[ctx.lookup.nbTbins])) cerr<<"!!! Mem_Alloc LookUp_ESAT" << endl;
+    if (NULL == (ctx.lookup.LookUp_SLOPE = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_SLOPE" << endl;
+    if (NULL == (ctx.lookup.LookUp_GRADN = new float[ctx.lookup.nbTbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_GRADN" << endl;
     float ESAT0 = 0.61121;
 #endif
-    for (int i = 1; i < nbTbins; i++)
+    for (int i = 1; i < ctx.lookup.nbTbins; i++)
     { // loop over "T" in GPPleaf()
         float temper = float(i) * Taccuracy;
         // !!!UPDATE provide references for these equations
 
 #ifdef WATER
-        LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
+        ctx.lookup.LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
                         (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)); // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-        LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4);                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
+        ctx.lookup.LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4);                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
 #else
-        LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
+        ctx.lookup.LookUp_KmT[i] = 404.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 59.36) *
                         (1 + 210 * 1.0 / 248.0 * exp(-(temper - 25.0) / (298 * 0.00831 * (273 + temper)) * 35.94)) * iCair; // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
-        LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4) * iCair;                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
+        ctx.lookup.LookUp_GammaT[i] = 37.0 * exp(((temper - 25.0) / (298 * 0.00831 * (273 + temper))) * 23.4) * iCair;                 // taken from von Caemmerer 2000, as in Domingues et al. 2010, for consistency
 #endif
-        LookUp_VcmaxT[i] = exp(26.35 - 65.33 / (0.00831 * (temper + 273.15))); // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
-        LookUp_JmaxT[i] = exp(17.57 - 43.54 / (0.00831 * (temper + 273.15)));  // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
+        ctx.lookup.LookUp_VcmaxT[i] = exp(26.35 - 65.33 / (0.00831 * (temper + 273.15))); // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
+        ctx.lookup.LookUp_JmaxT[i] = exp(17.57 - 43.54 / (0.00831 * (temper + 273.15)));  // taken from Bernacchi et al. 2003 PCE, as in Domingues et al. 2010 for consistency
         // LookUp_Rday[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-        LookUp_Rleaf[i] = exp((temper - 25.0) * 0.1 * log(3.09 - 0.0215 * (25.0 + temper))); // this is equ. 1 in Atkin et al. 2015 New phytologist //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
-        LookUp_Rstem[i] = 39.6 * 378.7 * ctx.time.timestep * exp(((temper - 25.0) / 10.0) * log(2.0));
+        ctx.lookup.LookUp_Rleaf[i] = exp((temper - 25.0) * 0.1 * log(3.09 - 0.0215 * (25.0 + temper))); // this is equ. 1 in Atkin et al. 2015 New phytologist //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
+        ctx.lookup.LookUp_Rstem[i] = 39.6 * 378.7 * ctx.time.timestep * exp(((temper - 25.0) / 10.0) * log(2.0));
         // LookUp_Rnight[i]=exp((temper-25.0)*0.1*log(3.09-0.0215*(25.0+temper))); //newIM: no redundancy anymore between LookUp_Rday and LookUP_Rnight
         //  exp((temp-25)/10*log(2)) is the temperature dependency of Rstem, supposing a constant Q10=2, according to Ryan et al 1994 and Meir & Grace 2002 exp((ctx.climate.tnight-25)*0.1*log(3.09-0.0215*(25+ctx.climate.tnight))) is the temperature dependencies used by Atkin 2015 (equ1)
 #ifdef WATER
         // for computation of isothermal net long-range radiation
         float ESAT = 0.61121 * exp((18.678 - temper / 234.5) * temper / (257.14 + temper)); // Saturation partial pressure of water vapour in kPa From Jones 2013, Eq (5.15) page 102 (in agreement with Cochard 2019 equ 2 -- Buck equation)
         // float INLR=SIGMA*EMLEAF*pow(temper-ABSZERO,4.0); // Longwave radiation Jones (2014) Eq. 5.5, p101. // as in Jerome's script, but does not provide sound values (pb with EMLEAF ==> to be checked in Jones)
-        for (int v = 1; v < nbVPDbins; v++)
+        for (int v = 1; v < ctx.lookup.nbVPDbins; v++)
         {
             float vpd = float(v) * VPDaccuracy;
             // float ea=1000.0*(ESAT - vpd);
@@ -5264,7 +5264,7 @@ void InitialiseLookUpTables()
             // float emaI=1-0.261*exp(-0.000777*temper*temper); // cf. Idso & Jackson 1969 (see also Marthews et al. 2012 Theor Appl Climatol, Table 2)
             float ema = 1 / (SIGMA * pow(temper - ABSZERO, 4.0)) * (59.38 + (113.7 * pow((ABSZERO - temper) / ABSZERO, 6)) + 96.96 * sqrt(186 * vpd / (temper - ABSZERO))); // cf. Dilley & O'Brien 1998 (see also Marthews et al. 2012 Theor Appl Climatol, Table 2); 186=4650/25
             float INLR = (1 - ema) * SIGMA * pow(temper - ABSZERO, 4.0);                                                                                                    // as in Duursma R package, following Leuning et al. 1995 PCE, equs D2-D5
-            LookUp_INLR[i][v] = INLR;
+            ctx.lookup.LookUp_INLR[i][v] = INLR;
             // cout << "T=" << temper << " vpd=" << vpd <<  " ema=" << ema <<  " INLR=" << INLR << endl;
         }
         float SLOPE = 1000.0 * (ESAT - ESAT0) / Taccuracy; // Slope of the ESAT function, but in Pa (not in kPa)
@@ -5272,30 +5272,30 @@ void InitialiseLookUpTables()
         float GRADN = 4. * EMLEAF * SIGMA * pow(temper - ABSZERO, 3.0) / (CPAIR * AIRMA); // Equivalent conductance to radiative heat transfer Jones 2013 (page 101)
         // LookUp_ESAT[i]=ESAT;
 
-        LookUp_SLOPE[i] = SLOPE;
-        LookUp_GRADN[i] = GRADN;
+        ctx.lookup.LookUp_SLOPE[i] = SLOPE;
+        ctx.lookup.LookUp_GRADN[i] = GRADN;
 #endif
     }
 
 #ifdef WATER
 
-    nbHbins = 2000;
+    ctx.lookup.nbHbins = 2000;
     float Haccuracy = 0.01;
-    iHaccuracy = 1.0 / Haccuracy;
-    if (NULL == (LookUp_Wind = new float[nbHbins]))
-        cerr << "!!! Mem_Alloc LookUp_Wind" << endl;
+    ctx.lookup.iHaccuracy = 1.0 / Haccuracy;
+    if (NULL == (ctx.lookup.LookUp_Wind = new float[ctx.lookup.nbHbins]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_Wind" << endl;
 
-    for (int i = 1; i < nbHbins; i++)
+    for (int i = 1; i < ctx.lookup.nbHbins; i++)
     { // loop over "T" in GPPleaf()
         float h_ratio = float(i) * Haccuracy;
 
         if (h_ratio >= 1)
         {
-            LookUp_Wind[i] = 0.831 * log(16.67 * ((h_ratio)-0.8)); // drawn from Monteith & Unsworth 2008, with d = 0.8 H and z0 = 0.06 H (cf. Rau et al's TROLL wind manuscript).
+            ctx.lookup.LookUp_Wind[i] = 0.831 * log(16.67 * ((h_ratio)-0.8)); // drawn from Monteith & Unsworth 2008, with d = 0.8 H and z0 = 0.06 H (cf. Rau et al's TROLL wind manuscript).
         }
         else
         {
-            LookUp_Wind[i] = exp(-alphaInoue * (1 - h_ratio));
+            ctx.lookup.LookUp_Wind[i] = exp(-alphaInoue * (1 - h_ratio));
         }
     }
 
@@ -5304,16 +5304,16 @@ void InitialiseLookUpTables()
     // look up table for flux averaging/integration
     // division into absorption prior to current voxel (absorb_prev) and absorption in current voxel (absorb_delta)
     // prior absorption has a maximum of 20 m2/m3, while absorption within one voxel can maximally reach 10 m2/m3
-    if (NULL == (LookUp_flux_absorption = new float[80000]))
-        cerr << "!!! Mem_Alloc LookUp_flux" << endl;
-    if (NULL == (LookUp_flux = new float[80000]))
-        cerr << "!!! Mem_Alloc LookUp_flux" << endl;
-    if (NULL == (LookUp_ExtinctLW = new float[80000]))
-        cerr << "!!! Mem_Alloc LookUp_flux" << endl;
-    if (NULL == (LookUp_VPD = new float[80000]))
-        cerr << "!!! Mem_Alloc LookUp_VPD" << endl;
-    if (NULL == (LookUp_T = new float[80000]))
-        cerr << "!!! Mem_Alloc LookUp_VPD" << endl;
+    if (NULL == (ctx.lookup.LookUp_flux_absorption = new float[80000]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_flux" << endl;
+    if (NULL == (ctx.lookup.LookUp_flux = new float[80000]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_flux" << endl;
+    if (NULL == (ctx.lookup.LookUp_ExtinctLW = new float[80000]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_flux" << endl;
+    if (NULL == (ctx.lookup.LookUp_VPD = new float[80000]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_VPD" << endl;
+    if (NULL == (ctx.lookup.LookUp_T = new float[80000]))
+        cerr << "!!! Mem_Alloc ctx.lookup.LookUp_VPD" << endl;
     for (int i = 0; i < 400; i++)
     { // loop over "absorb" in Fluxh()
         for (int j = 0; j < 200; j++)
@@ -5323,37 +5323,37 @@ void InitialiseLookUpTables()
             if (absorb_delta == 0)
             {
                 // flux is now computed simply as absorption on a per m2 plant matter basis (cf. explanation below) but since there is no plant matter in the case of absorb_delta == 0, PPFD should be zero here
-                LookUp_flux_absorption[i + 400 * j] = 0.0; // in this case
+                ctx.lookup.LookUp_flux_absorption[i + 400 * j] = 0.0; // in this case
 
                 // if the voxel does not contain any plant matter, values are constant across the voxel, e.g. just the top value calculated from absorb_prev
-                LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev);
-                LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
-                LookUp_VPD[i + 400 * j] = 0.25 + sqrt(fmaxf(0.0, 0.08035714 * (7.0 - absorb_prev)));
-                LookUp_T[i + 400 * j] = 0.4285714 * (fminf(7.0, absorb_prev));
+                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev);
+                ctx.lookup.LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
+                ctx.lookup.LookUp_VPD[i + 400 * j] = 0.25 + sqrt(fmaxf(0.0, 0.08035714 * (7.0 - absorb_prev)));
+                ctx.lookup.LookUp_T[i + 400 * j] = 0.4285714 * (fminf(7.0, absorb_prev));
             }
             else
             {
                 // Flux is now computed simply as absorption on a per m2 plant matter basis, and not incident flux, since the FvCB model requires a transformation of incident into absorbed flux (cf. original Farquhar 1980 paper, or Medlyn et al. 2002, Plant, Cell & Environment). For example, Medlyn et al. use 0.093 quantum yield, 4 mol electron/mol photon and an absorptance of leaves of 0.8 to arrive at a factor of 0.3 to be multiplied with incident PPFD. Now, in a dense forest, kpar modifies the absorbed PPFD per leaf area. For simplicity, we separate the 0.093 and 4 mol electrion/mol photon from the absorptance and calculate the latter directly from an effective kpar which includes a general k (i.e. leaf angle distribution) and a leaf absorptance factor, e.g. 0.9. The main effect of this scheme is that lowering k (reflecting, for example, steeper leaf angles) may result in more incident light per m2 ground, but absorption also gets lower, since leaves are not perfectly illuminated
                 // To calculate absorbed PPFD, a formula can either be derived through integration or be motivated as follows: 1) incoming flux is exp(-kpar * absorb_prev), equivalent to what was previously computed as flux, 2) the absorbed fraction of the incoming flux in a ctx.diag.layer of "absorb_delta" is (1.0 - exp(-kpar * absorb_delta), and 3) the amount of leaf area per ground area is absorb_delta, which is needed as divisor to convert to absorption per m2 leaf area
                 // Since PPFD is a density (i.e. given relative to m2 leaf area), a lower absorb_delta results in slightly higher PPFD. A lower absorb_delta implies that leaves are less densely distributed in space, so there is a slight increase in absorbed photons per leaf area, even though overall absorbed photon numbers decrease. While an absorb_delta = 0 implies zero absorption, in the limit of very low absorb_delta (-> 0), the absorption approaches kpar (Taylor expansion: exp(x) ~ 1 + x, so (1 - exp(-kpar*x))/x ~ kpar*x/x ~ kpar). This is not realistic, since leaves cannot get infinitesimally small and the assumptions of Beer-Lambert breaks down beforehand. But since the linear approximation should be justified in low density layers, maybe this could be used to accelerate the computation?
-                LookUp_flux_absorption[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / absorb_delta;
+                ctx.lookup.LookUp_flux_absorption[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / absorb_delta;
 
                 // an alternative to calculating the absorbed flux density, is to calculate the average flux density
                 // for voxels of 1 unit length depth, this corresponds just to the integral over LAI, which can be decomposed into a constant absorb_prev and a linearly increasing absorb_delta
                 // once LAI reaches the critical value of 7.0, VPD And T do not decrease anymore, hence the distinction between two cases
 
-                LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / (kpar * absorb_delta);
-                LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
+                ctx.lookup.LookUp_flux[i + 400 * j] = exp(-kpar * absorb_prev) * (1.0 - exp(-kpar * absorb_delta)) / (kpar * absorb_delta);
+                ctx.lookup.LookUp_ExtinctLW[i + 400 * j] = 0.8 * exp(-0.8 * absorb_prev); // extinction of thermal radiation, following Leuning et al. 1995 equ. D1
 
                 if (absorb_prev + absorb_delta >= 7)
                 { // This is related to the empirical description of VPD and temperature decrease through the canopy. These empirical description were derived from literature and data from HOBO on the COPAS tower, and assumed that above a LAI of 7, the VPD and temperature are pretty constant (e.g. Within the understory).
-                    LookUp_VPD[i + 400 * j] = 0.25;
-                    LookUp_T[i + 400 * j] = 3.0; // 0.4285714 * 7.0
+                    ctx.lookup.LookUp_VPD[i + 400 * j] = 0.25;
+                    ctx.lookup.LookUp_T[i + 400 * j] = 3.0; // 0.4285714 * 7.0
                 }
                 else
                 {
-                    LookUp_VPD[i + 400 * j] = 0.25 + (0.188982 / absorb_delta) * (pow((7.0 - absorb_prev), 1.5) - pow((7.0 - absorb_prev - absorb_delta), 1.5));
-                    LookUp_T[i + 400 * j] = 0.4285714 * (absorb_prev + 0.5 * absorb_delta);
+                    ctx.lookup.LookUp_VPD[i + 400 * j] = 0.25 + (0.188982 / absorb_delta) * (pow((7.0 - absorb_prev), 1.5) - pow((7.0 - absorb_prev - absorb_delta), 1.5));
+                    ctx.lookup.LookUp_T[i + 400 * j] = 0.4285714 * (absorb_prev + 0.5 * absorb_delta);
                 }
             }
         }
@@ -5366,7 +5366,7 @@ void InitialiseLookUpTables()
     int extent_full = 2 * 25 + 1;
     int index_crown = 0, xx, yy, site_rel, dist;
     Crown_dist[index_crown] = 0;                                    // this is the distance of the center of the crown from the center (0)
-    LookUp_Crown_site[index_crown] = extent + extent_full * extent; // this is the label of the site at the center of the crown ( x = extent, y = extent)
+    ctx.lookup.LookUp_Crown_site[index_crown] = extent + extent_full * extent; // this is the label of the site at the center of the crown ( x = extent, y = extent)
 
     // loop over crown
     for (int col = 0; col < extent_full; col++)
@@ -5385,11 +5385,11 @@ void InitialiseLookUpTables()
                 for (int i = 0; i < index_crown + 1; i++)
                 {
                     int temp = Crown_dist[i];
-                    int site_rel_temp = LookUp_Crown_site[i];
+                    int site_rel_temp = ctx.lookup.LookUp_Crown_site[i];
                     if (dist <= temp)
                     { // if distance is smaller than at current array position, move everything up
                         Crown_dist[i] = dist;
-                        LookUp_Crown_site[i] = site_rel;
+                        ctx.lookup.LookUp_Crown_site[i] = site_rel;
                         dist = temp;
                         site_rel = site_rel_temp;
                     }
@@ -5405,10 +5405,10 @@ void InitialiseLookUpTables()
     // in the new version, we simply shuffle a few values that are close to each other - they have a similar or the same distance, so the overall outward-spiralling allocation remains the same, just with a slightly shifted order. To break the 4-based pattern, we use an increment of 7 and a distance of 3 for the exchanges. We start at the 6th pixel as the order will not matter for the innermost crown part.
     for (int i = 5; i < 2598; i += 7)
     {
-        int site_current = LookUp_Crown_site[i];
-        int site_exchange = LookUp_Crown_site[i + 3];
-        LookUp_Crown_site[i] = site_exchange;
-        LookUp_Crown_site[i + 3] = site_current;
+        int site_current = ctx.lookup.LookUp_Crown_site[i];
+        int site_exchange = ctx.lookup.LookUp_Crown_site[i + 3];
+        ctx.lookup.LookUp_Crown_site[i] = site_exchange;
+        ctx.lookup.LookUp_Crown_site[i + 3] = site_current;
     }
 
 #ifdef LCP_alternative
@@ -6097,7 +6097,7 @@ void ReadInputInventory()
                     while (T[site].t_age != 0.0 && i < area_max)
                     {
                         i++;
-                        int site_relative = LookUp_Crown_site[i];
+                        int site_relative = ctx.lookup.LookUp_Crown_site[i];
                         int row_new = row + site_relative / 51 - 25;
                         int col_new = col + site_relative % 51 - 25;
                         if (row_new >= 0 && row_new < ctx.grid.rows && col_new >= 0 && col_new < ctx.grid.cols)
@@ -6883,8 +6883,8 @@ void UpdateField()
         if (absorb_delta < 0.0)
             absorb_delta = 0.0; //! eliminate rounding errors
         int intabsorb = CalcIntabsorb(absorb_prev, absorb_delta);
-        float VPDground = ctx.climate.VPDDailyMean * LookUp_VPD[intabsorb] * 1000; // in Pa
-        float Tsoil = ctx.climate.tDailyMean - LookUp_T[intabsorb];
+        float VPDground = ctx.climate.VPDDailyMean * ctx.lookup.LookUp_VPD[intabsorb] * 1000; // in Pa
+        float Tsoil = ctx.climate.tDailyMean - ctx.lookup.LookUp_T[intabsorb];
         float esat_ground = 611.21 * exp((18.678 - (Tsoil / 234.5)) * (Tsoil / (257.14 + Tsoil))); // Buck equation; in Pa (see Jones p. 348)
         float esoil = esat_ground * exp(2.17 * soil_phi3D[0][d] / (Tsoil - ABSZERO));              // esoil variation with the top soil ctx.diag.layer water potential, following Duursma & Medlyn 2012 equ. 17, Cochard et al. 2021 equ. 36., see equ. 5.14 in Jones (p. 102), in Pa
         float eair = esat_ground - VPDground;                                                      // in Pa
@@ -7865,7 +7865,7 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
 
                 for (int i = 0; i < crown_intarea; i++)
                 {
-                    int site_relative = LookUp_Crown_site[i];
+                    int site_relative = ctx.lookup.LookUp_Crown_site[i];
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
                     if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
@@ -7980,7 +7980,7 @@ void OutputVisual()
                 {
                     for (int i = 0; i < crown_intarea; i++)
                     {
-                        int site_relative = LookUp_Crown_site[i];
+                        int site_relative = ctx.lookup.LookUp_Crown_site[i];
                         int row_crown = row + site_relative / 51 - 25;
                         int col_crown = col + site_relative % 51 - 25;
                         int site_crown = col_crown + row_crown * ctx.grid.cols;
@@ -8705,7 +8705,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
 
                 for (int i = 0; i < crown_intarea; i++)
                 {
-                    int site_relative = LookUp_Crown_site[i];
+                    int site_relative = ctx.lookup.LookUp_Crown_site[i];
                     int row = row_crowncenter + site_relative / 51 - 25;
                     int col = col_crowncenter + site_relative % 51 - 25;
                     if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
@@ -10508,22 +10508,22 @@ void FreeMem()
     delete[] traits_species10;
 
 #endif
-    delete[] LookUp_T;
-    delete[] LookUp_KmT;
-    delete[] LookUp_VPD;
-    delete[] LookUp_flux_absorption;
-    delete[] LookUp_flux;
-    delete[] LookUp_ExtinctLW;
-    // delete [] LookUp_Rday; //newIM: no redundancy anymore between LookUp_Rday and LookUp_Rleaf
-    delete[] LookUp_JmaxT;
-    delete[] LookUp_Rstem;
-    delete[] LookUp_Rleaf; // newIM: no redundancy anymore between LookUp_Rday and LookUp_Rleaf
-    delete[] LookUp_GammaT;
-    // delete [] LookUp_Rnight; //newIM: no redundancy anymore between LookUp_Rday and LookUp_Rleaf
-    delete[] LookUp_VcmaxT;
+    delete[] ctx.lookup.LookUp_T;
+    delete[] ctx.lookup.LookUp_KmT;
+    delete[] ctx.lookup.LookUp_VPD;
+    delete[] ctx.lookup.LookUp_flux_absorption;
+    delete[] ctx.lookup.LookUp_flux;
+    delete[] ctx.lookup.LookUp_ExtinctLW;
+    // delete [] LookUp_Rday; //newIM: no redundancy anymore between LookUp_Rday and ctx.lookup.LookUp_Rleaf
+    delete[] ctx.lookup.LookUp_JmaxT;
+    delete[] ctx.lookup.LookUp_Rstem;
+    delete[] ctx.lookup.LookUp_Rleaf; // newIM: no redundancy anymore between LookUp_Rday and ctx.lookup.LookUp_Rleaf
+    delete[] ctx.lookup.LookUp_GammaT;
+    // delete [] LookUp_Rnight; //newIM: no redundancy anymore between LookUp_Rday and ctx.lookup.LookUp_Rleaf
+    delete[] ctx.lookup.LookUp_VcmaxT;
 #ifdef WATER
-    delete[] LookUp_INLR;
-    delete[] LookUp_SLOPE;
-    delete[] LookUp_GRADN;
+    delete[] ctx.lookup.LookUp_INLR;
+    delete[] ctx.lookup.LookUp_SLOPE;
+    delete[] ctx.lookup.LookUp_GRADN;
 #endif
 }

@@ -143,34 +143,11 @@ float iCair; //!< Global variable: inverse of Cair
 // DailyMeanVapourPressureDeficit, NightTemperature,
 // Rainfall, DailyMeanWindSpeed
 
-// LOOKUP TABLES
-// Complex temperature-dependent functions used in the Farquhar model are computed once at 'Taccuracy' resolution. Leaf temperature must be comprised between 0°C and 60°C, Values are stored every 0.5°C step in Tleaf, so 120 values in total
-int nbTbins;             //!< Global variable: number of bins for the temperature lookup tables
-float iTaccuracy;        //!< Global variable: inverse of accuracy of a temperature bin (e.g. if Taccuracy is 0.1 or 0.5 °C, then iTaccuracy is 10.0 or 2.0, respectively)
-float *LookUp_KmT(0);    //!< Global vector: lookup table for Km(T) in Farquhar model
-float *LookUp_GammaT(0); //!< Global vector: lookup table for Gamma(T) in Farquhar model
-float *LookUp_VcmaxT(0); //!< Global vector: lookup table for Vcmax(T) in Farquhar model
-float *LookUp_JmaxT(0);  //!< Global vector: lookup table for Jmax(T) in Farquhar model
-// float *LookUp_Rday(0);                  //!< Global vector: lookup table for Rday(T) in Farquhar model //new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
-float *LookUp_Rleaf(0);           //!< Global vector: lookup table for Rleaf(T) in Farquhar model //new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
-float *LookUp_flux_absorption(0); //!< Global vector: lookup table for faster computation of PPFD. New in v.2.4: absorption flux
-float *LookUp_flux(0);            //!< Global vector: lookup table for faster computation of PPFD. New in v.2.4: averaging instead of top value, largely replaced by LookUp_flux_absorption, but still needed, for example to compute light above crown without explicit computation of absorption
-float *LookUp_ExtinctLW(0);       //!< Global vector: lookup table for faster computation of extinction of thermal radiation, following Leuning et al. 1995 equ D1
-float *LookUp_VPD(0);             //!< Global vector: lookup table for faster computation of vapour pressure deficit (VPD). New in v.2.4:averaging instead of top value
-float *LookUp_T(0);               //!< Global vector: lookup table for faster computation of temperature. New in v.2.4: averaging instead of top value
-float *LookUp_Rstem(0);           //!< Global vector: lookup table for faster computation of Rstem
-// float *LookUp_Rnight(0);                //!< Global vector: lookup table for faster computation of Rstem //new IM: no redundancy anymore between LookUp_Rday and LookUp_Rnight
-int LookUp_Crown_site[2601]; //!< Global vector: new in v.2.4: lookup table to fill crown cylinder sequentially from inside to outside, allowing for smooth crown growth
-#ifdef WATER
-int nbVPDbins;          //!< Global variable: number of bins for the VPD lookup tables
-float iVPDaccuracy;     //!< Global variable: inverse of accuracy of a vpd bin (e.g. if VPDaccuracy is 0.01 kPa, then iVPDaccuracy is 100.0)
-float **LookUp_INLR(0); //!< Global vector: lookup table for the isothermal net radiation computation in Penman-Monteith equation
-float *LookUp_SLOPE(0); //!< Global vector: lookup table for constant s in Penman-Monteith equation
-float *LookUp_GRADN(0); //!< Global vector: lookup table for radiation conductance in Penman-Monteith equation
-int nbHbins;            //!< Global variable: number of bins for the Wind lookup tables
-float iHaccuracy;
-float *LookUp_Wind(0);
-#endif
+// LOOKUP TABLES migrated to ctx.lookup:
+// nbTbins, iTaccuracy, LookUp_KmT/GammaT/VcmaxT/JmaxT/Rleaf,
+// LookUp_flux_absorption/flux/ExtinctLW/VPD/T/Rstem/Crown_site,
+// nbVPDbins, iVPDaccuracy, LookUp_INLR/SLOPE/GRADN,
+// nbHbins, iHaccuracy, LookUp_Wind, LookUpLAImax
 
 // ENVIRONMENTAL VARIABLES migrated to ctx.climate:
 // tnight, precip, WSDailyMean, WDailyMean, tDailyMean, VPDDailyMean,
@@ -250,9 +227,7 @@ float d_intraspecific_leafarea[10000]; //!< Global vector: distribution of intra
 float d_intraspecific_tlp[10000];      //!< Global vector: distribution of intraspecific values for turgor loss point (TLP)
 #endif
 
-#ifdef LCP_alternative
-vector<float> LookUpLAImax; // new v.3.1.5: array to save the LAImax per species and intraspecific deviation
-#endif
+// LookUpLAImax migrated to ctx.lookup
 
 // THREE DIMENSIONAL LAI FIELD
 float **LAI3D(0); //!< Global 3D field: leaf density (per volume unit)
