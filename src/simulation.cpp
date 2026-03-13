@@ -20,7 +20,7 @@ void Evolution(Context &ctx)
     ctx.soil.transpiration_1016 = 0.0;
 #endif
 
-    UpdateField(); // Update light fields and seed banks
+    UpdateField(ctx); // Update light fields and seed banks
     ctx.diag.nbtrees_n10 = ctx.diag.nbtrees_n30 = ctx.diag.nbdead_n1 = ctx.diag.nbdead_n10 = ctx.diag.nbdead_n30 = 0;
     ctx.diag.nbtrees_carbstarv_n1 = ctx.diag.nbtrees_carbstarv_n10 = ctx.diag.nbtrees_carbstarv_n30 = 0;
 
@@ -30,8 +30,8 @@ void Evolution(Context &ctx)
     if (ctx.opt._BASICTREEFALL)
     {
         // secondary treefalls are triggered first, since they have been caused in the previous iteration
-        TriggerTreefallSecondary(); // Compute and distribute Treefall events, caused by treefalls in the previous iteration
-        TriggerTreefall();          // Compute and distribute Treefall events, caused by wind drag
+        TriggerTreefallSecondary(ctx); // Compute and distribute Treefall events, caused by treefalls in the previous iteration
+        TriggerTreefall(ctx);          // Compute and distribute Treefall events, caused by wind drag
     }
 
     for (int site = 0; site < ctx.grid.sites; site++)
@@ -61,7 +61,7 @@ void Evolution(Context &ctx)
 // #################################
 //  Global function: Compute field Seed
 // #################################
-void UpdateSeeds()
+void UpdateSeeds(Context &ctx)
 {
     // With MPI option: Pass seeds across processors => two more fields to be communicated between n.n. (nearest neighbor) processors. NB: dispersal distance is bounded by the value of 'ctx.grid.rows'. At least 99 % of the seeds should be dispersed within the stripe or on the n.n. stripe. Hence ctx.grid.rows > 4.7*max(dist_moy_dissemination),for an exponential dispersal kernel.
     // dispersal only once a year
@@ -128,7 +128,7 @@ void UpdateSeeds()
 // #################################
 //! - This is an important function for TROLL -- Includes many of the operations
 //! - set the iteration environment -- nb: the current structure of code suppose that environment is periodic (a period = a year), if one wants to input a variable climate, with interannual variation and climate change along the simulation, a full climatic input needs to be input (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
-void UpdateField()
+void UpdateField(Context &ctx)
 {
 
 #ifdef FULL_CLIMATE
@@ -150,7 +150,7 @@ void UpdateField()
 
 #endif // FULL_CLIMATE
 
-    UpdateSeeds();
+    UpdateSeeds(ctx);
 
     if (ctx.opt._NDD)
     {
@@ -187,7 +187,7 @@ void UpdateField()
         }
     }
 
-    RecruitTree();
+    RecruitTree(ctx);
 
     //  Compute Field ctx.field.LAI3D
 #ifdef MPI
@@ -531,7 +531,7 @@ void FillSeed(int col, int row, int spp)
 // #############################
 //  Global function: tree germination module
 // #############################
-void RecruitTree()
+void RecruitTree(Context &ctx)
 {
     for (int site = 0; site < ctx.grid.sites; site++)
     { //**** Local germination ****
@@ -597,7 +597,7 @@ void RecruitTree()
 //  Global function: Treefall gap formation
 // #############################
 //! change in v.2.4: resetting ctx.field.Thurt[0] field is done in TriggerSecondaryTreefall() at the beginning of each iteration. Further changes: rewriting of Tree::FallTree() which is now Tree::Treefall(angle). t_hurt can now persist longer, so new treefall events are added to older damages (that, in turn are decaying)
-void TriggerTreefall()
+void TriggerTreefall(Context &ctx)
 {
     for (int site = 0; site < ctx.grid.sites; site++)
         if (T[site].t_age)
@@ -642,7 +642,7 @@ void TriggerTreefall()
 //! - NEW in v.2.4: TriggerSecondaryTreefall(), called at the beginning of each iteration
 //! - translates damages from previous round into tree deaths, partly treefalls, partly removing them only (e.g. splintering)
 //! - in the limit of ctx.params.p_tfsecondary = 0.0, this is equivalent to the previous computation
-void TriggerTreefallSecondary()
+void TriggerTreefallSecondary(Context &ctx)
 {
     ctx.diag.nbTreefall1 = 0;
     ctx.diag.nbTreefall10 = 0;
@@ -686,7 +686,7 @@ void TriggerTreefallSecondary()
 }
 
 // Helper function
-int GetTimeofyear()
+int GetTimeofyear(Context &ctx)
 {
     // new function to derive time of year, extended to negative iterations (-1 would be treated as last iteration of previous year)
     int timeofyear;

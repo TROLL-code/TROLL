@@ -351,12 +351,12 @@ void ReadInputInventory(Context &ctx);                              //!< Global 
 void ReadInputPointcloud(Context &ctx);                             //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
 void AllocMem(Context &ctx);                                        //!< Global function: Field dynamic memory allocation
 void Evolution(Context &ctx);                                       //!< Global function: Evolution at each timestep
-void UpdateSeeds(void);                                             //!< Global function: Compute field Seed
-void UpdateField(void);                                             //!< Global function: Update all fields
-void TriggerTreefall(void);                                         //!< Global function: Treefall gap formation; v.2.4
-void TriggerTreefallSecondary(void);                                //!< Global function: Secondary treefall gap formation
+void UpdateSeeds(Context &ctx);                                     //!< Global function: Compute field Seed
+void UpdateField(Context &ctx);                                     //!< Global function: Update all fields
+void TriggerTreefall(Context &ctx);                                 //!< Global function: Treefall gap formation; v.2.4
+void TriggerTreefallSecondary(Context &ctx);                        //!< Global function: Secondary treefall gap formation
 void FillSeed(int col, int row, int spp);                           //!< Global function: update SPECIES_SEEDS field; v.2.5
-void RecruitTree(void);                                             //!< Global function: tree germination module; v.2.5
+void RecruitTree(Context &ctx);                                     //!< Global function: tree germination module; v.2.5
 void Average(void);                                                 //!< Global function: output of the global averages every timestep
 void OutputField(void);                                             //!< Global function: output of the field variables every timestep
 void OutputSnapshot(fstream &output, bool header, float dbh_limit); //!< Global function: output snapshots of the scene at one point in time
@@ -369,7 +369,7 @@ void FreeMem(Context &ctx);
 void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream &output_pointcloud); //!< Global function: point cloud output, v.3.1.6; kept separately from other output functions, as we write to a dedicated external file format (.las)
 
 // HELPER FUNCTIONS
-int GetTimeofyear();                                          //!< Helper function, new in v.3.1: converts current iteration into time of year, also works backwards (negative iterations)
+int GetTimeofyear(Context &ctx);                              //!< Helper function, new in v.3.1: converts current iteration into time of year, also works backwards (negative iterations)
 float CalcHeightBaseline(float &ah, float &hmax, float &dbh); //!< Helper function: calculates mean predicted height from allometry
 float CalcCDBaseline(float &height);                          //!< Helper function, new in v.3.1: calculates mean predicted crown radius from allometry
 float CalcCRBaseline(float &dbh);                             //!< Helper function new in v.3.1: calculates mean predicted crown diameter from allometry

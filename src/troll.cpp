@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
         if (ctx.opt._OUTPUT_extended == 1 && ctx.crown.extent_visual > 0)
         {
-            int timeofyear = GetTimeofyear();
+            int timeofyear = GetTimeofyear(ctx);
             if (timeofyear == 0)
                 OutputVisual();
         }
