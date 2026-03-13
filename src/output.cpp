@@ -1504,18 +1504,18 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
 // ##############################################
 //  Global ABC function: output general ABC statistics
 // ##############################################
-void OutputABC()
+void OutputABC(Context &ctx)
 {
     cout << " ABC: Conservation of Traits " << endl;
-    OutputABCConservationTraits(ctx.out.output[11]);
+    OutputABCConservationTraits(ctx, ctx.out.output[11]);
     cout << " ABC: Ground data " << endl;
-    OutputABC_ground(ctx.out.output[12]);
+    OutputABC_ground(ctx, ctx.out.output[12]);
     cout << " ABC: CHM simulation " << endl;
-    OutputABC_CHM(ctx.out.output[13], ctx.out.output[14], ctx.out.output[19]);
+    OutputABC_CHM(ctx, ctx.out.output[13], ctx.out.output[14], ctx.out.output[19]);
     cout << " ABC: Transmittance simulation " << endl;
-    OutputABC_transmittance(ctx.out.output[15], ctx.out.output[16]);
+    OutputABC_transmittance(ctx, ctx.out.output[15], ctx.out.output[16]);
     cout << " ABC: Species outputs " << endl;
-    OutputABC_species(ctx.out.output[23], ctx.out.output[24], ctx.out.output[25], ctx.out.output[26], ctx.out.output[27]);
+    OutputABC_species(ctx, ctx.out.output[23], ctx.out.output[24], ctx.out.output[25], ctx.out.output[26], ctx.out.output[27]);
 }
 
 // ##############################################
@@ -1721,7 +1721,7 @@ void OutputABCWriteHeaders(fstream &output_traitconservation, fstream &output_fi
 // ##############################################
 //! - for example, it may be that a particular species is more successful than expected from its relative frequency at the parameterized site, and thus its abundance will exceed the real abundance. This could then lead to important shifts in the overall community trait patterns between the trait pattern that is provided to TROLL and the one that is found in the simulated community
 //! - There is a potentially important ecological question behind it, namely: to what extent do the trait distributions that we observe for seeds/seedlings/saplings (i.e. input from seedrain) differ from those of the mature community
-void OutputABCConservationTraits(fstream &output_traitconservation)
+void OutputABCConservationTraits(Context &ctx, fstream &output_traitconservation)
 {
 
     // Trait input/output variation
@@ -1741,7 +1741,7 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
     {
         if (ctx.T[s].t_age > 0 && ctx.T[s].t_dbh >= 0.1)
         {
-            int dev_rand = int(gsl_rng_uniform_int(gslrng, 10000)); // modified FF, v.3.1.5
+            int dev_rand = int(gsl_rng_uniform_int(ctx.rng.gslrand, 10000)); // modified FF, v.3.1.5
 
             nb_trees_counted++;
             mu_random += dev_rand;
@@ -1845,7 +1845,7 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
 //  Global ABC function: returns ABC ground outputs
 // ##############################################
 //! - field measured summary statistics: total number of species, abundances > 10cm, >30cm (provided for convenience, information already included in distribution below), AGB
-void OutputABC_ground(fstream &output_field)
+void OutputABC_ground(Context &ctx, fstream &output_field)
 {
 
     // Self-explanatory
@@ -2301,7 +2301,7 @@ void OutputABC_ground(fstream &output_field)
 // ##############################################
 //  Global ABC function: returns ABC outputs for species
 // ##############################################
-void OutputABC_species(fstream &output_species, fstream &output_species10, fstream &output_traits, fstream &output_traits10, fstream &output_biomass)
+void OutputABC_species(Context &ctx, fstream &output_species, fstream &output_species10, fstream &output_traits, fstream &output_traits10, fstream &output_biomass)
 {
 
     // Empty the vectors
@@ -2454,7 +2454,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
 // ##############################################
 //  Global function: returns ABC outputs for canopy height model (CHM)
 // ##############################################
-void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output_chmpotential)
+void OutputABC_CHM(Context &ctx, fstream &output_CHM, fstream &output_CHM_ALS, fstream &output_chmpotential)
 {
     // Compute CHM changes
     for (int s = 0; s < ctx.grid.sites; s++)
@@ -2624,7 +2624,7 @@ void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output
 //! - additional metrics are the total number of voxels that have been considered for the averages
 //! - all metrics will be computed normalized to the ground (suffix z) and normalized to the canopy (suffix d), and both for the actual 3D canopy (no additional suffix) and a simulated lidar (additional suffix ALS)
 //! - !!!: TODO, detailed documentation
-void OutputABC_transmittance(fstream &output_transmittance, fstream &output_transmittance_ALS)
+void OutputABC_transmittance(Context &ctx, fstream &output_transmittance, fstream &output_transmittance_ALS)
 {
 
     // Compute height normalized metrics (z stands for height dimension) from it, both directly and with ALS simulation

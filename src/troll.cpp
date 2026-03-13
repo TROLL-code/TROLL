@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
             float sd_beam = 5.0;           // standard deviation of those
 
             UpdateTransmittanceCHM_ABC(mean_beam, sd_beam, ctx.params.klight, transmittance_nir);
-            OutputABC();
+            OutputABC(ctx);
             UpdateDBHtrackingABC(ctx);
         }
 #endif
