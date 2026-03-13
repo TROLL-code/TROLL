@@ -354,7 +354,7 @@ void Initialise(Context &ctx)
     T.reserve(ctx.grid.sites);
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        Tree T_site;
+        Tree T_site(ctx);
         T.push_back(T_site);
 #ifdef WATER
         // FF: not sure this check is necessary anymore (it's a check for memory allocation problems, I presume?), but I kept it just in case
@@ -368,11 +368,11 @@ void Initialise(Context &ctx)
     }
     InitialiseIntraspecific(ctx);
 #ifdef CACHE_LUT
-    if (!LoadLookUpTablesFromCache())
+    if (!LoadLookUpTablesFromCache(ctx))
     {
         std::cout << "LUT cache missing → computing LUTs..." << std::endl;
         InitialiseLookUpTables(ctx);
-        SaveLookUpTablesToCache();
+        SaveLookUpTablesToCache(ctx);
     }
     else
     {
@@ -695,7 +695,7 @@ void ReadInputInventory(Context &ctx)
 
                     if (T[site].t_age == 0.0)
                     {
-                        int success = T[site].BirthFromInventory(site, parameter_names, parameter_values, nb_speciesrandom);
+                        int success = T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
                         if (success == 1)
                         {
                             nb_individuals++;
@@ -714,7 +714,7 @@ void ReadInputInventory(Context &ctx)
                     {
                         // as long as the search has stopped and the index has not run outside the range, the tree can be initialized
                         int site = sites_shuffled[sites_shuffled_index];
-                        int success = T[site].BirthFromInventory(site, parameter_names, parameter_values, nb_speciesrandom);
+                        int success = T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
                         if (success == 1)
                         {
                             nb_individuals++;
@@ -819,7 +819,7 @@ void ReadInputInventory(Context &ctx)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(); // Each tree contribues to ctx.field.LAI3D
+        T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
         for (int site = 0; site < ctx.grid.sites; site++)

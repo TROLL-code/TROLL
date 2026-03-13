@@ -4,8 +4,7 @@
 #include "context.hpp"
 #include "params/param_registry.hpp"
 
-// File-scope globals — declared extern in troll.hpp, defined here once.
-Context ctx;
+// File-scope globals — defined here once.
 vector<Species> S;
 vector<Tree> T;
 int mpi_rank = 0;
@@ -24,6 +23,7 @@ int easympi_rank = 0;
 
 int main(int argc, char *argv[])
 {
+    Context ctx{};
 
     //!*********************
     //!** Initializations **
@@ -196,11 +196,11 @@ int main(int argc, char *argv[])
 
     // initial pattern, should be empty, unless an inventory has been provided
     if (ctx.opt._OUTPUT_extended & !ctx.opt._OUTPUT_inventory)
-        OutputSnapshot(ctx.out.output_basic[1], 1, 0.01); // Initial Pattern, for trees > 0.01m DBH
+        OutputSnapshot(ctx, ctx.out.output_basic[1], 1, 0.01); // Initial Pattern, for trees > 0.01m DBH
     else if (ctx.opt._OUTPUT_inventory)
-        OutputSnapshot(ctx.out.output_basic[1], 1, 0.001);
+        OutputSnapshot(ctx, ctx.out.output_basic[1], 1, 0.001);
     else
-        OutputSnapshot(ctx.out.output_basic[1], 1, 0.1); // Initial Pattern, for trees > 0.1m DBH
+        OutputSnapshot(ctx, ctx.out.output_basic[1], 1, 0.1); // Initial Pattern, for trees > 0.1m DBH
 
     double start_time, stop_time, duration = 0.0; // for simulation duration
     stop_time = clock();
@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
         {
             int timeofyear = GetTimeofyear(ctx);
             if (timeofyear == 0)
-                OutputVisual();
+                OutputVisual(ctx);
         }
 
         /*if(ctx.opt._OUTPUT_pointcloud > 0 && ctx.time.iter == ctx.pc.iter_pointcloud_generation){
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 
             UpdateTransmittanceCHM_ABC(mean_beam, sd_beam, ctx.params.klight, transmittance_nir);
             OutputABC();
-            UpdateDBHtrackingABC();
+            UpdateDBHtrackingABC(ctx);
         }
 #endif
     }
@@ -247,20 +247,20 @@ int main(int argc, char *argv[])
     // final pattern
     if (ctx.opt._OUTPUT_extended & !ctx.opt._OUTPUT_inventory)
     {
-        OutputSnapshot(ctx.out.output_basic[2], 1, 0.01); // Final Pattern, for trees > 0.01m DBH
+        OutputSnapshot(ctx, ctx.out.output_basic[2], 1, 0.01); // Final Pattern, for trees > 0.01m DBH
     }
     else if (ctx.opt._OUTPUT_inventory)
     {
-        OutputSnapshot(ctx.out.output_basic[2], 1, 0.001);
+        OutputSnapshot(ctx, ctx.out.output_basic[2], 1, 0.001);
     }
     else
     {
-        OutputSnapshot(ctx.out.output_basic[2], 1, 0.1); // Final Pattern, for trees > 0.1m DBH
+        OutputSnapshot(ctx, ctx.out.output_basic[2], 1, 0.1); // Final Pattern, for trees > 0.1m DBH
     }
     if (ctx.opt._OUTPUT_extended)
     {
-        OutputLAI(ctx.out.output_extended[7]);
-        OutputCHM(ctx.out.output_extended[8]);
+        OutputLAI(ctx, ctx.out.output_extended[7]);
+        OutputCHM(ctx, ctx.out.output_extended[8]);
     }
     if (ctx.opt._OUTPUT_inventory)
     {
@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
         cout << "End of simulation.\n";
     }
 
-    CloseOutputs(); // new in v.3.1: Close and clear outputs, maybe not necessary as main function terminates shortly after, but maybe it ensures a cleaner communication with file system/within Rcpp
+    CloseOutputs(ctx); // new in v.3.1: Close and clear outputs, maybe not necessary as main function terminates shortly after, but maybe it ensures a cleaner communication with file system/within Rcpp
     FreeMem(ctx);   // Free dynamic memory  //! added in oct2013
 #ifdef easyMPI
     MPI::Finalize();

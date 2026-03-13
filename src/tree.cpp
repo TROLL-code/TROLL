@@ -6,7 +6,7 @@
 // #############################################
 //  Tree constructor
 // #############################################
-Tree::Tree()
+Tree::Tree(Context &ctx)
 {
     t_from_Data = 0;
     t_sp_lab = 0;
@@ -50,7 +50,7 @@ Tree::Tree()
 //  Tree birth
 // #############################################
 //! Actions needed at birth for a tree (precisely, at time when a stem enters the > 1 cm trunk diameter class)
-void Tree::Birth(int nume, int site0)
+void Tree::Birth(Context &ctx, int nume, int site0)
 {
 
     int dev_rand = int(gsl_rng_uniform_int(ctx.rng.gslrand, 10000)); // modified FF v.3.1.5 (reduced to 10000)
@@ -115,7 +115,7 @@ void Tree::Birth(int nume, int site0)
 #endif
 
         t_Vcmax = CalcVcmaxm(t_LMA, t_Nmass, t_Pmass) * t_LMA; // in micromolC ctx.params.m-2 s-1
-        t_Jmax = CalcJmaxm() * t_LMA;                          // in micromolC ctx.params.m-2 s-1
+        t_Jmax = CalcJmaxm(ctx) * t_LMA;                          // in micromolC ctx.params.m-2 s-1
         t_Rdark = CalcRdark(t_LMA, t_Nmass, t_Pmass, t_Vcmax); // in micromolC ctx.params.m-2 s-1
 #ifdef WATER
         // t_g1_0=-0.0224 * t_LMA + 4.8278; // this is the relationship provided by Wu et al. 2019 GCB
@@ -140,15 +140,15 @@ void Tree::Birth(int nume, int site0)
         t_dbhmax = fmaxf(t_dbhmax, ctx.params.DBH0 * 2.0);
         t_dbhmature = t_dbhmax * 0.5; // Mean threshold of tree size to maturity - see Visser et al. 2016 Functional Ecology (suited to both understory and top-canopy species). NOTE that if we decide to keep it as a fixed species-specific value, this could be defined as a Species calss variable, and computed once in Species::Init. -- v230
 
-        UpdateHeight();
-        UpdateCR();
-        UpdateCD();
+        UpdateHeight(ctx);
+        UpdateCR(ctx);
+        UpdateCD(ctx);
 
         t_CrownDisplacement = 0;
 
         if (ctx.opt._BASICTREEFALL)
         {
-            t_Ct = CalcCt();
+            t_Ct = CalcCt(ctx);
         }
 
         // ##################
@@ -170,20 +170,20 @@ void Tree::Birth(int nume, int site0)
 
             // In this case, we determine both maximum LAI (theoretical if fully exposed to sunlight) and maximum leaf area (actual, i.e. also considering shading by neighboring trees)
             //  v.3.1.5, we can simply set t_LAImax to the precomputed value
-            // CalcLAImax();
+            // CalcLAImax(ctx);
             // cout << "LAImax: " << t_LAImax << " precomputed: " << LAImax_precomputed << endl; // check consistency
 #ifdef LCP_alternative
             t_LAImax = LAImax_precomputed;
 #else
-        CalcLAImax();
+        CalcLAImax(ctx);
 #endif
             float LAIexperienced_eff;
-            CalcLAmax(LAIexperienced_eff, t_LAmax);
+            CalcLAmax(ctx, LAIexperienced_eff, t_LAmax);
             // t_LA = 0.5 * t_LAmax;    //tets post_fusion 27/01/2023 IM
             t_LA = 0.25 * t_LAmax; // Initially trees are set to have a quarter of their maximum leaf area
 
             t_LAI = t_LA / crown_area_nogaps;
-            t_carbon_storage = CalcCarbonStorageMax() * 0.5; // Initial value with half of the maximum storage
+            t_carbon_storage = CalcCarbonStorageMax(ctx) * 0.5; // Initial value with half of the maximum storage
             t_carbon_biometry = 0.0;
         }
         else
@@ -195,8 +195,8 @@ void Tree::Birth(int nume, int site0)
 #endif
             t_LA = t_LAI * crown_area_nogaps;
         }
-        CalcLeafLifespan();
-        InitialiseLeafPools(); // new in v.3.1, formerly part of CalcLeafLifespan()
+        CalcLeafLifespan(ctx);
+        InitialiseLeafPools(ctx); // new in v.3.1, formerly part of CalcLeafLifespan()
 
 #ifdef PHENO_DROUGHT
         t_Ndays_dry = 0;
@@ -209,15 +209,15 @@ void Tree::Birth(int nume, int site0)
         // ############
         float ddbh = t_dbh;   // Initially each stem can be treated as juvenile and stem cross section is mostly sapwood
         t_sapwood_area = 0.0; // the sapwood area is initialized to zero and then updated
-        UpdateSapwoodArea(ddbh);
+        UpdateSapwoodArea(ctx, ddbh);
 
 #ifdef WATER
         // ##########
         // # water ##
         // ##########
-        // Water_availability();
+        // Water_availability(ctx);
         t_transpiration = 0.0;
-        Water_availability(); // Roots are not set here, but at the beginning of Tree::Update (however see comments within function Tree::Water_availability)
+        Water_availability(ctx); // Roots are not set here, but at the beginning of Tree::Update (however see comments within function Tree::Water_availability)
                               // UpdateRootDistribution();
 #endif
 
@@ -229,7 +229,7 @@ void Tree::Birth(int nume, int site0)
 #endif
 
 #ifdef TRACK_INDIVIDUALS
-        StartTracking();
+        StartTracking(ctx);
 #endif
 
 #ifdef LCP_alternative
@@ -243,7 +243,7 @@ void Tree::Birth(int nume, int site0)
 // ##############################################
 //! - Modelled for compatibility with Tree::Birth. For comments cf. Tree::Birth
 //! - For comments regarding allometries and t_LA cf. Tree::Growth.
-int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<string> &parameter_values, int &nb_speciesrandom)
+int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_names, vector<string> &parameter_values, int &nb_speciesrandom)
 {
     int success = 0;
     bool quiet = 1;
@@ -519,7 +519,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_height == 0.0)
         {
             t_mult_height = ctx.intra.d_intraspecific_height[dev_rand];
-            UpdateHeight();
+            UpdateHeight(ctx);
         }
         else
         {
@@ -537,8 +537,9 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_CD == 0.0)
         {
             t_mult_CD = ctx.intra.d_intraspecific_CD[dev_rand];
-            UpdateCD();
+            UpdateCD(ctx);
         }
+
         else
         {
             // t_mult_CD = t_CD/CalcCDBaseline(t_height);
@@ -555,7 +556,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_CR == 0.0)
         {
             t_mult_CR = ctx.intra.d_intraspecific_CR[dev_rand];
-            UpdateCR();
+            UpdateCR(ctx);
         }
         else
         {
@@ -575,7 +576,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_Ct, 0.0f, float(ctx.grid.HEIGHT), 0.0f, quiet); // the default is a height fall threshold of maximum height (so sth the tree never reaches)
             if (t_Ct == 0.0)
-                t_Ct = CalcCt();
+                t_Ct = CalcCt(ctx);
         }
 
         // float fraction_filled_general = 1.0 - ctx.crown.crown_gap_fraction;
@@ -646,7 +647,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         if (t_sapwood_area == 0.0)
         {
             float ddbh = fminf(t_dbh, 0.04f); // limit the approximate sapwood thickness to 5cm
-            UpdateSapwoodArea(ddbh);
+            UpdateSapwoodArea(ctx, ddbh);
         }
 
         if (ctx.opt._LA_regulation > 0)
@@ -787,7 +788,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
         t_dbh_previous = t_dbh; // check whether proper initialisation is needed
 #endif
 #ifdef TRACK_INDIVIDUALS
-        StartTracking();
+        StartTracking(ctx);
 #endif
     }
     return (success);
@@ -846,7 +847,7 @@ int Tree::BirthFromInventory(int site, vector<string> &parameter_names, vector<s
 //! - modified in v.2.3: additional contribution to voxels that are not fully occupied by the tree crown. !!!: this does not calculate ctx.field.LAI3D directly, this only calculates the density in each voxel belonging to a tree. The final LAI field is calculated outside of the class Tree
 //! - modified in v.2.4 and v.2.5: introducing an alternative crown shape, "umbrella"-like, inspired by previous shell models and similar to the crown shapes in the PPA. If activated, crowns contain three layers of vegetation that, once the crown goes beyond 3m in depth, will bend downwards on the edges with a linear slope. Since v.2.5 all loops (CalcLAI, Fluxh, leafarea_max) are executed through the same template. This allows to implement other crown shapes in the future and ensures that modifications are carried through across the code
 #ifdef CROWN_UMBRELLA
-void Tree::CalcLAI()
+void Tree::CalcLAI(Context &ctx)
 {
     if (t_age > 0)
     {
@@ -863,12 +864,12 @@ void Tree::CalcLAI()
 
         for (int shell_fromtop = 0; shell_fromtop < max_shells; shell_fromtop++)
         {
-            LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, LA_cumulated, LAI2dens, [](int h, int s, float d, float &la){ UpdateLAI3D(ctx, h, s, d, la); });
+            LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, LA_cumulated, LAI2dens, [&ctx](int h, int s, float d, float &la){ UpdateLAI3D(ctx, h, s, d, la); });
         }
     }
 }
 #else
-void Tree::CalcLAI()
+void Tree::CalcLAI(Context &ctx)
 {
     if (t_age > 0)
     {
@@ -936,7 +937,7 @@ void Tree::CalcLAI()
 //! -# Water_availability: the equivalent of Tree::Fluxh but for water, ie compute the tree water conditions, and which updates t_phi_root and t_WSF
 //! -# another function that could be called UpdateRootDistribution, similar to UpdateLeafDynamics and UpdateTreeBiometry, that would update t_root_depth and t_soil_layer_weight and t_root_biomass, at the end of Tree::Growth (and in Tree::Birth)
 //! The current use of one function was chosen for simplicity's sake, but we could shift to a version with 2 functions if we prefer similarity to what has been already done
-void Tree::Water_availability()
+void Tree::Water_availability(Context &ctx)
 {
 
     // if(t_LA > 0.0){       // TO BE CHECKED: what happens to a tree with leafarea=0 in the following timesteps ?
@@ -1160,7 +1161,7 @@ void Tree::Water_availability()
 // ####################################################################
 //! - Adds up each tree contribution to the stand ctx.soil.Transpiration field, that is the water removed from the soil through all tree transpiration.
 //! - Similar to CalcLAI, that adds up each tree contribution to ctx.field.LAI3D field.
-void Tree::Water_uptake()
+void Tree::Water_uptake(Context &ctx)
 {
     if (t_age > 0.0)
     {
@@ -1194,10 +1195,10 @@ void Tree::Water_uptake()
 //! - modified in v.2.4 and v.2.5: introducing an alternative crown shape, "umbrella"-like, inspired by previous shell models and similar to the crown shapes in the PPA. If activated, crowns contain three layers of vegetation that, once the crown goes beyond 3m in depth, will bend downwards on the edges with a linear slope. Since v.2.5 all loops (CalcLAI, Fluxh, leafarea_max) are executed through the same template. This allows to implement other crown shapes in the future and ensures that modifications are carried through across the code
 #ifdef CROWN_UMBRELLA
 #ifdef WATER
-void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer, float &PPFD_incident, float &ExtinctLW)
+void Tree::Fluxh(Context &ctx, int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer, float &PPFD_incident, float &ExtinctLW)
 {
 #else
-void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer)
+void Tree::Fluxh(Context &ctx, int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer)
 {
 #endif
 
@@ -1213,7 +1214,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 #endif
     float fraction_filled_target = t_fraction_filled;
 
-    LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, canopy_environment_cumulated, LAI2dens, [](int h, int s, float d, auto &ce){ GetCanopyEnvironment(ctx, h, s, d, ce); });
+    LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, canopy_environment_cumulated, LAI2dens, [&ctx](int h, int s, float d, auto &ce){ GetCanopyEnvironment(ctx, h, s, d, ce); });
 
     float LA_layer = canopy_environment_cumulated[0];
     float iLA_layer;
@@ -1237,7 +1238,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 }
 
 #else
-void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer)
+void Tree::Fluxh(Context &ctx, int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer)
 {
 
     int site_crowncenter = t_site + t_CrownDisplacement;
@@ -1325,7 +1326,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 //  Empirical functions (traits)
 // #############################
 
-float Tree::CalcJmaxm()
+float Tree::CalcJmaxm(Context &ctx)
 {
     float SLA = 10000.0 / t_LMA;                                                                                                                                // in cm2 g-1
     float Jmaxm = pow(10.0, fminf((-1.50 + 0.41 * log10(t_Nmass * 1000.0) + 0.45 * log10(SLA)), (-0.74 + 0.44 * log10(t_Pmass * 1000.0) + 0.32 * log10(SLA)))); // added as a Species member variable 14-04-2015; this is equ 2 in Domingues et al 2010 PCE (coefficients from fig7). s_Nmass and s_Pmass are given in g g-1, but should be in mg g-1 in equ 2 in Domingues et al. 2010, hence the mutiplication by 1000.
@@ -1335,7 +1336,7 @@ float Tree::CalcJmaxm()
 // #######################
 //  Death rate calculation
 // #######################
-float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
+float Tree::DeathRateNDD(Context &ctx, float dbh, float carbon_starv, float ndd)
 {
     float dr = 0;
     float basal = ctx.params.m * (1 - t_wsg);
@@ -1358,7 +1359,7 @@ float Tree::DeathRateNDD(float dbh, float carbon_starv, float ndd)
 }
 
 #ifdef WATER
-float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
+float Tree::DeathRate(Context &ctx, float dbh, float carbon_starv, float phi_root)
 {
     float dr = 0;
     float basal = fmaxf(ctx.params.m - ctx.params.m1 * t_wsg, 0.0);
@@ -1388,7 +1389,7 @@ float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
     return dr * ctx.time.timestep;
 }
 #else
-float Tree::DeathRate(float dbh, float carbon_starv)
+float Tree::DeathRate(Context &ctx, float dbh, float carbon_starv)
 {
     float dr = 0.0;
     float basal = fmaxf(ctx.params.m - ctx.params.m1 * t_wsg, 0.0);
@@ -1425,7 +1426,7 @@ float Tree::DeathRate(float dbh, float carbon_starv)
 //! - It uses lookup tables for acceleration of computation of T dependencies. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
 
 //!  the function Tree::FluxesLeaf implements an iterative algorithm to determine the leaf temperature, and CO2 concentration and VPD at the leaf surface, ie the ones that should be taken as arguments of the Farquhar and stomatal conductance models. The latters are themeselves implemented within the function Tree::Photosyn (analogy with the MAESTRA/MAESPA code from which this iterative scheme has been inspired, see Medlyn et al. 2007 Tree physiology). At each iteration, Tree::FluxesLeaf computes carbon and water fluxes at the leaf level using the Farqhuar model and the Penman-Monteith equation, and updates T, CO2 and VPD accordingly. Starting by assuming that leaf T, CO2 and VPD equal the ones of the surrounding air, the iterative scheme stops when the difference in leaf T between two consecutive iterations is negligble. The corresponding carbon assimilation and water transpiration are then retained and provided as outputs of Tree::FluxesLeaf.
-leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float ExtinctLW, float PPFDtop, float PPFDinc, float Tatop, float VPDatop)
+leafFluxes Tree::FluxesLeaf(Context &ctx, float PPFD, float VPDa, float Ta, float WIND, float ExtinctLW, float PPFDtop, float PPFDinc, float Tatop, float VPDatop)
 {
 
     float TLEAF = 0.0, CS = 0.0, DS = 0.0,                              // leaf temperature and CO2 concentration and vapour pressure deficit at the leaf surface.
@@ -1478,7 +1479,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
             cout << "Warning in FluxesLeaf ! DS=" << DS << "; CS=" << CS << "; PPFD=" << PPFD << "; TLEAF=" << TLEAF << endl;
         }
 
-        ps = Photosyn(PPFD, TLEAF, CS, DS); // Compute CO2 assimilation rate and stomatal conductance at TLEAF, CS and DS
+        ps = Photosyn(ctx, PPFD, TLEAF, CS, DS); // Compute CO2 assimilation rate and stomatal conductance at TLEAF, CS and DS
         ALEAF = ps.carbon_flux;             // in micromolCO2 ctx.params.m-2 s-1
         GSC = ps.water_flux;                // in mol CO2 ctx.params.m-2 s-1 by Photosyn function
 
@@ -1577,7 +1578,7 @@ leafFluxes Tree::FluxesLeaf(float PPFD, float VPDa, float Ta, float WIND, float 
 
 #ifdef G0
 
-leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
+leafFluxes Tree::Photosyn(Context &ctx, float PPFD, float TLEAF, float CS, float DS)
 {
 
     float Anet;
@@ -1663,7 +1664,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
 #else
 
-leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
+leafFluxes Tree::Photosyn(Context &ctx, float PPFD, float TLEAF, float CS, float DS)
 {
 
     float CI, Anet;
@@ -1738,7 +1739,7 @@ leafFluxes Tree::Photosyn(float PPFD, float TLEAF, float CS, float DS)
 
 //! - Function Tree::dailyGPPleaf when the WATER option is off, Tree::dailyFluxesLeaf when WATER option is on
 //! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf, or Tree::FluxesLeaf) averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/ctx.params.m^2/s.
-leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float ExtinctLW, float PPFDinc, float &wf_1016)
+leafFluxes Tree::dailyFluxesLeaf(Context &ctx, float PPFD, float VPD, float T, float W, float ExtinctLW, float PPFDinc, float &wf_1016)
 {
     float dailyA = 0.0;
     float dailylT = 0.0;
@@ -1828,7 +1829,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 
 #endif
 
-        leafFluxes fluxes_vardaytimestep = FluxesLeaf(ppfd_vardaytimestep, vpd_vardaytimestep, t_vardaytimestep, ws_vardaytimestep, ExtinctLW, ppfd_top_vardaytimestep, ppfd_inc_vardaytimestep, t_top_vardaytimestep, vpd_top_vardaytimestep);
+        leafFluxes fluxes_vardaytimestep = FluxesLeaf(ctx, ppfd_vardaytimestep, vpd_vardaytimestep, t_vardaytimestep, ws_vardaytimestep, ExtinctLW, ppfd_top_vardaytimestep, ppfd_inc_vardaytimestep, t_top_vardaytimestep, vpd_top_vardaytimestep);
 
         dailyA += fluxes_vardaytimestep.carbon_flux;
         dailylT += fluxes_vardaytimestep.water_flux;
@@ -1872,7 +1873,7 @@ leafFluxes Tree::dailyFluxesLeaf(float PPFD, float VPD, float T, float W, float 
 //! - NB1: 12 is the molar mass of carbon NB2: ctx.time.timestep is given as fraction of a year, so what is computed is actually the full assimilation per year which, in turn, is multiplied by the fraction per year that is under consideration.
 //! - BEWARE: slight inconsistency through use of 365.25 when daily ctx.time.timestep is likely to be given as 365, but not incorrect. Commented version below was in use prior to version 2.3.0
 //! lookup tables for acceleration of T dependence. cf. Bernacchi et al 2003 PCE; von Caemmerer 2000
-float Tree::GPPleaf(float PPFD, float VPD, float T)
+float Tree::GPPleaf(Context &ctx, float PPFD, float VPD, float T)
 {
     // v.2.3.0: ctx.params.theta defined as a global variable
     // ctx.params.theta=0.7;   // this is the fixed value of ctx.params.theta used by von Caemmerer 2000
@@ -1903,7 +1904,7 @@ float Tree::GPPleaf(float PPFD, float VPD, float T)
 //! - Function Tree::dailyGPPleaf when the WATER option is off, Tree::dailyFluxesLeaf when WATER option is on
 //! - Includes Medlyn et al. 2011 model of stomatal conductance: formula for s_fci (ci/ca) -- see also Prentice et al 2014 Ecology Letters and Lin et al 2015 Nature Climate Change; min added in order to prevent ci:ca bigger than 1 (even though Ehleringer et al 1986 reported some values above 1 (Fig3)
 //! - Returns the *daily* primary productivity (assimilation; computed from Tree::GPPleaf)averaged across the daily fluctuations in climatic conditions, per unit leaf area, in micromoles C/ctx.params.m^2/s.
-float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
+float Tree::dailyGPPleaf(Context &ctx, float PPFD, float VPD, float T)
 {
     float dailyA = 0.0;
 
@@ -1914,8 +1915,8 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
         float vpd_vardaytimestep = VPD * ctx.climate.varday_vpd[i];
         float t_vardaytimestep = T * ctx.climate.varday_T[i];
         if (ppfd_vardaytimestep > 0.1)
-            dailyA += Tree::GPPleaf(ppfd_vardaytimestep, vpd_vardaytimestep, t_vardaytimestep);
-        // else { cout << endl << t_site << " species: " << t_s->s_name << " t_age: " << t_age << " PPFD: " << ppfd_vardaytimestep << " vpd_vardaytimestep " << vpd_vardaytimestep << " t_vardaytimestep: " << t_vardaytimestep << " GPPleaf: " << Tree::GPPleaf(ppfd_vardaytimestep,vpd_vardaytimestep,t_vardaytimestep) << endl;}
+            dailyA += Tree::GPPleaf(ctx, ppfd_vardaytimestep, vpd_vardaytimestep, t_vardaytimestep);
+        // else { cout << endl << t_site << " species: " << t_s->s_name << " t_age: " << t_age << " PPFD: " << ppfd_vardaytimestep << " vpd_vardaytimestep " << vpd_vardaytimestep << " t_vardaytimestep: " << t_vardaytimestep << " GPPleaf: " << Tree::GPPleaf(ctx, ppfd_vardaytimestep,vpd_vardaytimestep,t_vardaytimestep) << endl;}
         //  deprecated in v.2.4.1: compute GPP only if enough light is available threshold is arbitrary, but set to be low: in full sunlight ppfd is aroung 700 W/m2, and even at dawn, it is ca 3% of the max value, or 20 W/m2. The minimum threshold is set to 0.1 W/m2
         //  Future update: compute slightly more efficiently, using 3-hourly values? This will have to be aligned with climate forcing layers (e.g. NCAR)
 
@@ -1933,7 +1934,7 @@ float Tree::dailyGPPleaf(float PPFD, float VPD, float T)
 
 //! - Function Tree::dailyGPPcrown similar to Tree::dailyGPPleaf
 //! Faster, whole crown GPP calculation
-float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
+float Tree::dailyGPPcrown(Context &ctx, float PPFD, float VPD, float T, float LAI)
 {
     float ppfde, dailyA = 0.0;
 
@@ -1943,7 +1944,7 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
         if (ppfde > 0.1)
             // new v.2.3.0: compute GPP only if enough light is available threshold is arbitrary, but set to be low: in full sunlight ppfd is aroung 700 W/m2, and even at dawn, it is ca 3% of the max value, or 20 W/m2. The minimum threshold is set to 0.1 W/m2
             // Future update: compute slightly more efficiently, using 3-hourly values? This will have to be aligned with climate forcing layers (e.g. NCAR)
-            dailyA += Tree::GPPleaf(ppfde, VPD * ctx.climate.varday_vpd[i], T * ctx.climate.varday_T[i]);
+            dailyA += Tree::GPPleaf(ctx, ppfde, VPD * ctx.climate.varday_vpd[i], T * ctx.climate.varday_T[i]);
         // the 6 lines in comment below corresponds to a finer version in which the multiplier is computed and used every 48 half hour, ie. with the corresponding environment instead of assuming a constant multiplier correponding the one at maximum incoming irradiance
         // float hhA=0;
         // hhA=GPPleaf(PPFD*vardaytime_light[i], VPD*vardaytime_vpd[i], T*vardaytime_T[i]);
@@ -1954,7 +1955,7 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
     }
     // vardaytime_light is the averaged (across one year, meteo station Nouragues DZ) and normalized (from 0 to 1) daily fluctuation of light, with half-hour time step, during the day time (from 7am to 7pm, ie 12 hours in total), same for vardaytime_vpd and vardaytime_T. Taking into account these daily variation is necessary considering the non-linearity of FvCB model
 
-    float alpha_crown = ctx.params.phi * PPFD / GPPleaf(PPFD, VPD, T); // RENAMED: ctx.params.alpha → alpha_crown (FvCB canopy integration ratio; distinct from global ctx.params.alpha = apparent quantum yield)
+    float alpha_crown = ctx.params.phi * PPFD / GPPleaf(ctx, PPFD, VPD, T); // RENAMED: ctx.params.alpha → alpha_crown (FvCB canopy integration ratio; distinct from global ctx.params.alpha = apparent quantum yield)
     float D = ctx.params.klight * LAI;                                                         // D is a non-dimensional figure used to compute the multiplier below, update in v.2.5: replaced ctx.params.dens * CD by LAI
     dailyA *= alpha_crown / (D * (alpha_crown - 1)) * log(alpha_crown / (1 + (alpha_crown - 1) * exp(-D))); // the FvCB assimilation rate computed at the top of the tree crown is multiplied by a multiplier<1, to account for the lower rate at lower light level within the crown depth. This multiplier is computed assuming that change in photosynthetic assimilation rate within a tree crown is mainly due to light decrease due to self-shading following a Michealis-menten relationship (ie. we assume that 1/ the change is not due to changes in VPD or temperature, which are supposed homogeneous at the intra-crown scale, and 2/ that other tree contributions to light decrease is neglected).
 
@@ -1973,7 +1974,7 @@ float Tree::dailyGPPcrown(float PPFD, float VPD, float T, float LAI)
 // Rdayleaf is actually not used anymore when WATER is activated
 #endif
 
-float Tree::Rdayleaf(float T)
+float Tree::Rdayleaf(Context &ctx, float T)
 {
     int convT = int(ctx.lookup.iTaccuracy * T);
     // if(T < 0 || isnan(T) || T > 50) cout << t_site << " species: " << t_s->s_name << " convT: " << T << endl;
@@ -1981,18 +1982,18 @@ float Tree::Rdayleaf(float T)
     return Rday_leaf;
 }
 
-float Tree::dailyRdayleaf(float T)
+float Tree::dailyRdayleaf(Context &ctx, float T)
 {
     float Rdayleaf_daily = 0.0;
     for (int i = 0; i < ctx.time.nbsteps_varday; i++)
-        Rdayleaf_daily += Tree::Rdayleaf(T * ctx.climate.varday_T[i]);
+        Rdayleaf_daily += Tree::Rdayleaf(ctx, T * ctx.climate.varday_T[i]);
     Rdayleaf_daily *= 0.0417;
     return Rdayleaf_daily;
 }
 
 // Calculation of above ground biomass (in kg)
 //  !!!: if updated, also update CalcIncrementDBH, cf. below
-float Tree::CalcAGB()
+float Tree::CalcAGB(Context &ctx)
 {
     // allometric equations from Chave et al. 2014 Global Change Biology to compute above ground biomass (conversion from dbh^2 in cm2 to m2, ie. factor e4)
     // float agb = 0.0673*pow(t_wsg*t_height*ctx.grid.LV*t_dbh*t_dbh*ctx.grid.LH*ctx.grid.LH*10000.0, 0.976);
@@ -2001,25 +2002,25 @@ float Tree::CalcAGB()
 }
 
 // Calculation of the increment of dbh from assimilated carbon/biomass (in ctx.params.m)
-float Tree::CalcIncrementDBH(float delta_agb)
+float Tree::CalcIncrementDBH(Context &ctx, float delta_agb)
 {
     float ddbh = fmaxf((delta_agb / (0.559 * t_wsg * 1.0e6 * t_dbh * ctx.grid.LH * t_height * ctx.grid.LV * (3.0 - t_dbh / (t_dbh + t_ah)))), 0.0) * ctx.grid.NH;
     return (ddbh);
 }
 
 // Calculation of the maximum amount of carbon stored in a tree
-float Tree::CalcCarbonStorageMax()
+float Tree::CalcCarbonStorageMax(Context &ctx)
 {
     // we assume non-structural carbohydrates (NSC) is around 10% of the whole tree's carbon. We assume that only half of NSC (i.e. 5% of whole tree carbon) can be remobilized, since NSC has important metabolic functions or can be stored in tissues that are no longer accessible (heartwood). So NSC for remobilization should never exceed 0.05 * above ground biomass (in units of carbon). Cf. Martínez-Vilalta 2016, Ecological Monographs
     // to calculate the 5% value, we use CalcAGB(), and reconvert kg into gram (1000.0), then convert biomass into carbon by multiplying with 0.5, and take 5%
     // newIM 2021: trees actually store a lot of NSC in roots ! and the 10% estimate account for belowground stock. Add a factor 1.25 to account for belowground biomass, with 0.25 being an estimate of root:shott ration from Ledo et al. 2018 New Phytologist (although this ratio  varies with dbh, species and environment...).
-    float carbon_storage_max = 1000.0 * CalcAGB() * 0.5 * 0.05 * 1.25;
+    float carbon_storage_max = 1000.0 * CalcAGB(ctx) * 0.5 * 0.05 * 1.25;
     return (carbon_storage_max);
 }
 
 // Calculation of the treefall threshold, if ctx.opt._BASICTREEFALL is activated
 // Slightly updated in v.3.1
-float Tree::CalcCt()
+float Tree::CalcCt(Context &ctx)
 {
     float dbhrealmax = t_dbhmax * 1.5;
     float hrealmax = t_mult_height * CalcHeightBaseline(t_ah, t_hmax, dbhrealmax); // realized maximum height
@@ -2029,7 +2030,7 @@ float Tree::CalcCt()
 }
 
 // Determines leaf life span, either from empirical function or from Kikuzawa model
-void Tree::CalcLeafLifespan()
+void Tree::CalcLeafLifespan(Context &ctx)
 {
     if (ctx.opt._LL_parameterization == 0)
     {                                                                   // prescribed relationship for LL
@@ -2041,7 +2042,7 @@ void Tree::CalcLeafLifespan()
     }
     else
     { // relationship based on optimal theory for LL
-        t_leaflifespan = predLeafLifespanKikuzawa();
+        t_leaflifespan = predLeafLifespanKikuzawa(ctx);
     }
 
     t_leaflifespan *= 0.08333333 * ctx.time.iterperyear; // Converts leaflifespan from month unit to ctx.time.timestep units, this is needed for UpdateLeafDynamics and nppneg (0.08333333=1/12)
@@ -2056,7 +2057,7 @@ void Tree::CalcLeafLifespan()
     t_lambda_old = 1.0 / time_old;
 }
 
-void Tree::InitialiseLeafPools()
+void Tree::InitialiseLeafPools(Context &ctx)
 {
     t_youngLA = t_LA / (t_lambda_young * t_leaflifespan);
     t_matureLA = t_LA / (t_lambda_mature * t_leaflifespan);
@@ -2067,7 +2068,7 @@ void Tree::InitialiseLeafPools()
 // Determine sapwood area, limited by increase in dbh (ddbh) (in m2)
 //! - Options: fixed percentage (option ctx.opt._sapwood == 0) or based on tree's leaf area (option ctx.opt._sapwood > 0). In the case ctx.opt._sapwood>0, a tree cannot retroactively convert heartwood into sapwood, just because it could allocate more leaves
 //! - TODO: should there be another limit on leaf area? (i.e. if sapwood cannot grow more than ddbh increment, then leaf area should probably not be allowed to grow beyond what is reasonable through the current sapwood area)
-void Tree::UpdateSapwoodArea(float ddbh)
+void Tree::UpdateSapwoodArea(Context &ctx, float ddbh)
 {
     if (ctx.opt._sapwood > 0)
     {
@@ -2093,24 +2094,24 @@ void Tree::UpdateSapwoodArea(float ddbh)
 }
 
 // Updates t_height, based on t_dbh
-void Tree::UpdateHeight()
+void Tree::UpdateHeight(Context &ctx)
 {
     float height_baseline = CalcHeightBaseline(t_ah, t_hmax, t_dbh);
     t_height = fminf(t_mult_height * height_baseline, ctx.grid.HEIGHT - 1);
 }
 
 // Updates t_CR, based on t_dbh
-void Tree::UpdateCR()
+void Tree::UpdateCR(Context &ctx)
 {
-    t_CR = CalcCRBaseline(t_dbh) * t_mult_CR;
+    t_CR = CalcCRBaseline(ctx, t_dbh) * t_mult_CR;
     t_CR = fmaxf(ctx.params.CR_min, t_CR);
 }
 
 // Updates t_CD based on t_height
-void Tree::UpdateCD()
+void Tree::UpdateCD(Context &ctx)
 {
     // Since v.2.5, simplification of the computation of the crown depth, in accordance with the Canopy Constructor algorithm
-    t_CD = CalcCDBaseline(t_height) * t_mult_CD;
+    t_CD = CalcCDBaseline(ctx, t_height) * t_mult_CD;
     t_CD = fminf(t_CD, 0.5 * t_height);
 }
 
@@ -2118,7 +2119,7 @@ void Tree::UpdateCD()
 //! - LAImax (maximum LAI) is assumed to lie between 0 and 10, and is such that adding more leaves results in net loss of carbon
 //! - Range of LAImax is narrowed down by bisection (sequentially halving the possible range)
 //! - Uses actually absorbed PPFD instead of incident PPFD, since leaves are not perfectly illuminated, but often in the lower canopy layers
-void Tree::CalcLAImax()
+void Tree::CalcLAImax(Context &ctx)
 {
     float LAI_lowerbound = 0.0;
     float LAI_upperbound = 10.0;
@@ -2162,10 +2163,10 @@ void Tree::CalcLAImax()
         // calculate the GPP
 #ifdef WATER
         float wf = 0.0;
-        float GPP_LAI = Tree::dailyFluxesLeaf(PPFD_LAI, VPD_LAI, Tmp_LAI, Wind_LAI, ExtinctLW_LAI, PPFD_LAI_inc, wf).carbon_flux;
+        float GPP_LAI = Tree::dailyFluxesLeaf(ctx, PPFD_LAI, VPD_LAI, Tmp_LAI, Wind_LAI, ExtinctLW_LAI, PPFD_LAI_inc, wf).carbon_flux;
 #else
-        float GPP_LAI = Tree::dailyGPPleaf(PPFD_LAI, VPD_LAI, Tmp_LAI);
-        float Rday_LAI = Tree::dailyRdayleaf(Tmp_LAI);
+        float GPP_LAI = Tree::dailyGPPleaf(ctx, PPFD_LAI, VPD_LAI, Tmp_LAI);
+        float Rday_LAI = Tree::dailyRdayleaf(ctx, Tmp_LAI);
 #endif
         float effLA = 0.66 * ctx.time.nbhours_covered * 15.7788 * ctx.time.timestep;                // convert  from micromoles C/ctx.params.m^2/s into gC per ctx.params.m^2 of leaf per ctx.time.timestep by "ctx.time.nbhours_covered*15.7788*ctx.time.timestep" where 15.7788 = 3600*365.25*12/1000000 (seconds, days, and mass of carbon) and ctx.time.nbhours_covered is the amount of time that is covered by the daily variation file. We also assume that one third of the leaves are mature and that the rest of the leaves have half the assimilation rates, so we derive a factor 0.66
         float effLA_night = 0.83 * (24.0 - ctx.time.nbhours_covered) * 15.7788 * ctx.time.timestep; // same as during the day, but inverse of hours covered (we assume that non-covered hours are night values), assuming that respiration rate of yound and old leaves are 75% that of mature leaves.
@@ -2210,7 +2211,7 @@ void Tree::CalcLAImax()
 // Determines the maximum LAI that the tree should reach, similar to CalcLAImax, but it directly calculates the maximum leafarea for the current light environment the tree experiences rather than for theoretical day
 //! - the idea is to compute the LAI that the tree experiences at the crown top and compare it to its maximum LAI, then the tree adjusts its LAI or leaf area accordingly
 //! - importantly, since PPFD is an exponential function of leaf density (nonlinear), averaging LAI across the whole crown would not correspond to the LAI experienced by the tree. A heterogeneous environment with a mixture of light specks and dense spots above the crown will contribute considerably more PPFD (and have a lower effective LAI) than a homogeneously filled crown. We calculate the effective LAI instead of the real LAI above the crown top by first calculating average PPFD and then converting back to LAI
-void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
+void Tree::CalcLAmax(Context &ctx, float &LAIexperienced_eff, float &LAmax)
 {
     float crown_area = PI * t_CR * t_CR;
     float crown_area_nogaps = GetCrownAreaFilled(crown_area);
@@ -2234,7 +2235,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
         int shell_fromtop = 0;
         float fraction_filled_target = t_fraction_filled;
 
-        LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, ppfd_CA, KeepFloatAsIs, [](int h, int s, float ni, float (&ca)[2]){ GetPPFDabove(ctx, h, s, ni, ca); });
+        LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, ppfd_CA, KeepFloatAsIs, [&ctx](int h, int s, float ni, float (&ca)[2]){ GetPPFDabove(ctx, h, s, ni, ca); });
 
         float ppfd_experienced = ppfd_CA[0];
         float crown_area_looped = ppfd_CA[1];
@@ -2320,7 +2321,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
 //! - the model assumes that the daily photosynthesis of leaves declines (linearly) with leaf age, then calculates the optimal leaf lifespan, i.e. the one that maximizes lifetime carbon gain for a leaf
 //! - this model is here implemented by calculating the LAI that the tree could have under optimal conditions (i.e. no leaf area above, and a LAI equivalent to LAImax), then calculating the effective daily assimilation (GPP) per unit leaf area (i.e. excluding stem respiration), and solving the model equation for leaf lifespan
 //! - there are a few caveats/things to consider in further developing/exploring this model a) A crucial parameter is the leaf age when carbon assimilation would reach 0, often denoted as b. This parameter has been shown to correlate with LMA in Xu et al. 2017, but, like LL-SLA relations, the relation comes with a lot of unexplained variation (on log scales, so multiplicative), and when I (FF) looked at their data, I obtained a better fit with Vcmax_25_mass, which we calculate anyways in TROLL, so it seemed to be internally consistent to use this relation. However, variation is still enormous (exp(0.6)), and this is clearly far from mechanistic. So while the Kikuzawa model partially solves the problem of deriving LL from LMA and the large uncertainties as well as potentially misleading inferences (i.e. very short leaf lifespans), part of the problem with large variation and weak correlations still remains and is now just shifted onto the derivation of b! Any more research on b and how to derive it for trees would thus be important  b) A second, crucial question is, what exactly the costs are that should be considered in the cost-benefit analysis. While leaf construction cost is uncontroversial (here taken to be LMA, i.e. mass per unit leaf area * 1.5 gC/gC to account for additional respiration in construction), there is a host of other costs that could be considered. We here also consider costs for leaf maintenance and for fine roots transpiration, but do not account for other cost such as building of support structures (Kikuzawa and Ackerly 2002, https://esj-journals.onlinelibrary.wiley.com/doi/abs/10.1046/j.1442-1984.1999.00005.x). Conversely, some papers, discount any respiration (e.g. Wang et al. 2021, https://www.biorxiv.org/content/10.1101/2021.02.07.430028v1.full). This is fundamentally about how modular/interconnected a tree is, and whether leaves could be modelled, at least as a first order approximation, as isolated. c) There is a choice to be made about what kind of environment should be supposed for leaf life span calculations. Are tree leaves optimized for an optimal light environment or the light environment when they are produced?  d) Finally, a minor point: I simply transferred the linear model of decline in leaf photosynthesis from Kikuzawa, etc. into TROLL. But this should probably be checked again, since we have an alternative way of simulating decline in leaf photosynthesis through young, mature and old leaves
-float Tree::predLeafLifespanKikuzawa()
+float Tree::predLeafLifespanKikuzawa(Context &ctx)
 {
 
     float absorb_prev = 0.0;
@@ -2343,10 +2344,10 @@ float Tree::predLeafLifespanKikuzawa()
     float PPFDinc = ctx.lookup.LookUp_flux_absorption[intincident];
     float ExtinctLW = ctx.lookup.LookUp_ExtinctLW[intincident];
     float wf = 0.0;
-    float GPP = Tree::dailyFluxesLeaf(PPFD, VPD, T, W, ExtinctLW, PPFDinc, wf).carbon_flux;
+    float GPP = Tree::dailyFluxesLeaf(ctx, PPFD, VPD, T, W, ExtinctLW, PPFDinc, wf).carbon_flux;
 #else
-    float GPP = Tree::dailyGPPleaf(PPFD, VPD, T);
-    float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
+    float GPP = Tree::dailyGPPleaf(ctx, PPFD, VPD, T);
+    float Rday = Tree::dailyRdayleaf(ctx, T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
     int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.tnight);
@@ -2361,10 +2362,11 @@ float Tree::predLeafLifespanKikuzawa()
     int intincident = CalcIntabsorb(absorb_prev);
     float PPFDinc = ctx.climate.WDailyMean_year * ctx.lookup.LookUp_flux_absorption[intincident];
     float ExtinctLW = ctx.lookup.LookUp_ExtinctLW[intincident];
-    float GPP = Tree::dailyFluxesLeaf(PPFD, VPD, T, W, ExtinctLW, PPFDinc).carbon_flux;
+    float wf_fc = 0.0;
+    float GPP = Tree::dailyFluxesLeaf(ctx, PPFD, VPD, T, W, ExtinctLW, PPFDinc, wf_fc).carbon_flux;
 #else
-    float GPP = Tree::dailyGPPleaf(PPFD, VPD, T);
-    float Rday = Tree::dailyRdayleaf(T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
+    float GPP = Tree::dailyGPPleaf(ctx, PPFD, VPD, T);
+    float Rday = Tree::dailyRdayleaf(ctx, T) * 0.4; // inhibition of respiration by ca. 40%, cf. Atkin et al. 2000
 #endif // WATER
 
     int convTnight = int(ctx.lookup.iTaccuracy * ctx.climate.Tnight_year);
@@ -2394,7 +2396,7 @@ float Tree::predLeafLifespanKikuzawa()
 // #############################################
 //  Tree growth
 // #############################################
-void Tree::Growth()
+void Tree::Growth(Context &ctx)
 {
     // update age
     t_age += ctx.time.timestep; // new v.2.2: increments are not 1 yr, but the duration of the ctx.time.timestep (usually 1 or <1, i.e. 1/12 if monthly, 1/365 if daily
@@ -2406,10 +2408,10 @@ void Tree::Growth()
 #endif
 
     // calculate GPP and respiration
-    CalcRespGPP();
+    CalcRespGPP(ctx);
 
     //! calculate NPP
-    CalcNPP();
+    CalcNPP(ctx);
 
 #ifdef CHECK_CARBON
     carbon_net_total += t_NPP;
@@ -2435,11 +2437,11 @@ void Tree::Growth()
         {
             t_NPPneg = 0;
             // NPP allocation to wood and tree size increment
-            UpdateTreeBiometry();
+            UpdateTreeBiometry(ctx);
         }
 
         // NPP allocation to leaves
-        UpdateLeafDynamics();
+        UpdateLeafDynamics(ctx);
     }
     else
     {
@@ -2468,7 +2470,7 @@ void Tree::Growth()
             // v.2.3.0 -- Line of code below was odd. If NPP <0.0, then to ensure C balance it should be simply reset to NPP=0 at this stage
             // t_NPP=t_GPP - 1.5*(t_Rday+t_Rnight+t_Rstem); REMOVED AS OF v.2.3.0.a4
             // NPP allocation to leaves
-            UpdateLeafDynamics();
+            UpdateLeafDynamics(ctx);
         }
         else
         {
@@ -2476,8 +2478,8 @@ void Tree::Growth()
             // in v.2.4.1: allocation to leaves is done before updating biometry
             // idea is: at least leaves need to be sustained, otherwise the tree cannot come back from carbon stress
             // NPP allocation to leaf, storage, wood and tree size increment
-            UpdateLeafDynamics();
-            UpdateTreeBiometry();
+            UpdateLeafDynamics(ctx);
+            UpdateTreeBiometry(ctx);
         }
     }
 
@@ -2485,24 +2487,24 @@ void Tree::Growth()
 
 #ifdef WATER
     if (ctx.time.iter == (ctx.time.nbiter - 90))
-        OutputTreeStandard(ctx.out.output[28]);
+        OutputTreeStandard(ctx, ctx.out.output[28]);
     if (ctx.time.iter == (ctx.time.nbiter - 45))
-        OutputTreeStandard(ctx.out.output[29]);
+        OutputTreeStandard(ctx, ctx.out.output[29]);
     if (ctx.time.iter == (ctx.time.nbiter - 1))
-        OutputTreeStandard(ctx.out.output[30]);
+        OutputTreeStandard(ctx, ctx.out.output[30]);
 
     if (t_site == 4)
-        OutputTreeStandard(ctx.out.output[12]);
+        OutputTreeStandard(ctx, ctx.out.output[12]);
     if (t_site == 10380)
-        OutputTreeStandard(ctx.out.output[13]);
+        OutputTreeStandard(ctx, ctx.out.output[13]);
     if (t_site == 100950)
-        OutputTreeStandard(ctx.out.output[14]);
+        OutputTreeStandard(ctx, ctx.out.output[14]);
     if (t_site == 12090)
-        OutputTreeStandard(ctx.out.output[15]);
+        OutputTreeStandard(ctx, ctx.out.output[15]);
     if (t_site == 120090)
-        OutputTreeStandard(ctx.out.output[16]);
+        OutputTreeStandard(ctx, ctx.out.output[16]);
     if (t_site == 150667)
-        OutputTreeStandard(ctx.out.output[17]);
+        OutputTreeStandard(ctx, ctx.out.output[17]);
 #endif
 }
 
@@ -2511,7 +2513,7 @@ void Tree::Growth()
 // #####################################################
 //! - new v.2.4: t_GPP and t_Rday are updated in separate function (thus adaptable for different modules)
 //! - but this is not the case when WATER is activated: indeed Rday is now computed within Photosyn and FluxesLeaf functions and thus included in GPP computation.
-void Tree::CalcRespGPP()
+void Tree::CalcRespGPP(Context &ctx)
 {
 
 #ifdef WATER
@@ -2526,9 +2528,9 @@ void Tree::CalcRespGPP()
         {
             // v.2.3.1 -- fast GPP calculation option.
             float PPFD = 0.0, VPD = 0.0, Tmp = 0.0, leafarea_layer;
-            Fluxh(int(t_height) + 1, PPFD, VPD, Tmp, leafarea_layer);
-            t_GPP = Tree::dailyGPPcrown(PPFD, VPD, Tmp, t_LAI);
-            t_Rday = Tree::dailyRdayleaf(Tmp);
+            Fluxh(ctx, int(t_height) + 1, PPFD, VPD, Tmp, leafarea_layer);
+            t_GPP = Tree::dailyGPPcrown(ctx, PPFD, VPD, Tmp, t_LAI);
+            t_Rday = Tree::dailyRdayleaf(ctx, Tmp);
         }
         else
         {
@@ -2570,10 +2572,10 @@ void Tree::CalcRespGPP()
 
             // cout << " Wind=" << W << " h=" << h << " MeanDCELLHeight=" << MeanDCELLHeight <<" convHratio=" << convHratio << " ctx.lookup.LookUp_Wind[convHratio]=" << ctx.lookup.LookUp_Wind[convHratio] << " ctx.soil.TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]]=" << ctx.soil.TopWindSpeed_DCELL[ctx.grid.site_DCELL[t_site]] << endl;
 
-            Fluxh(h, PPFD, VPD, Tmp, leafarea_layer, PPFD_incident, ExtinctLW);
+            Fluxh(ctx, h, PPFD, VPD, Tmp, leafarea_layer, PPFD_incident, ExtinctLW);
 #else
 
-                Fluxh(h, PPFD, VPD, Tmp, leafarea_layer);
+                Fluxh(ctx, h, PPFD, VPD, Tmp, leafarea_layer);
 #endif
 
 #ifdef WATER
@@ -2596,7 +2598,7 @@ void Tree::CalcRespGPP()
                     cout << "Warning PPFD <0 in CalcRespGPP !! PPFD=" << PPFD << endl;
                 }
                 float water_flux_1016 = 0.0;
-                leafFluxes dailyF = Tree::dailyFluxesLeaf(PPFD, VPD, Tmp, W, ExtinctLW, PPFD_incident, water_flux_1016);
+                leafFluxes dailyF = Tree::dailyFluxesLeaf(ctx, PPFD, VPD, Tmp, W, ExtinctLW, PPFD_incident, water_flux_1016);
                 t_GPP += leafarea_layer * dailyF.carbon_flux;
                 t_transpiration += leafarea_layer * dailyF.water_flux;
                 tree_transpiration_1016 += leafarea_layer * water_flux_1016;
@@ -2605,13 +2607,13 @@ void Tree::CalcRespGPP()
                     cout << "Problem at site: " << t_site << ", t_GPP= " << t_GPP << ", transpiration= " << t_transpiration << ", leafarea_layer= " << leafarea_layer << ", PPFD=" << PPFD << ", VPD= " << VPD << ", T= " << Tmp << ", t_WSF_A=" << t_WSF_A << ", t_WSF= " << t_WSF << endl;
 
 #else
-                t_GPP += leafarea_layer * Tree::dailyGPPleaf(PPFD, VPD, Tmp);
+                t_GPP += leafarea_layer * Tree::dailyGPPleaf(ctx, PPFD, VPD, Tmp);
                 // if(isnan(t_GPP) || t_GPP < 0.0 || PPFD == 0.0) cout << "Problem at site: " <<  t_site << " leafarea_layer: " << leafarea_layer << " GPP: " << t_GPP << " PPFD: " << PPFD << " VPD: " << VPD << " T: " << Tmp << endl << endl;
 #endif
 
 #ifdef WATER
 #else
-                t_Rday += leafarea_layer * Tree::dailyRdayleaf(Tmp);
+                t_Rday += leafarea_layer * Tree::dailyRdayleaf(ctx, Tmp);
 #endif
                 leafarea_cumulated += leafarea_layer;
                 // if(t_dbh > 0.2) cout << crown_above_top - h << "PPFD: " << PPFD << " VPD: " << VPD << " Tmp: " << Tmp << " leafarea_layer: " << endl;
@@ -2670,14 +2672,14 @@ void Tree::CalcRespGPP()
 
 #ifdef WATER
 
-void Tree::CalcNPP()
+void Tree::CalcNPP(Context &ctx)
 {
     t_NPP = 0.7 * (t_GPP - Rtot_by_Rabove * (Rtotleaf_by_Rdark * t_Rnight + t_Rstem) + (Rtotleaf_by_Rdark - 1) * t_Rnight); // t_GPP already accounts for daytime leaf respiration. would be good to go back to total respiration computation whith this new scheme (here is a succession of approximation..)
 }
 
 #else
 
-void Tree::CalcNPP()
+void Tree::CalcNPP(Context &ctx)
 {
     t_NPP = 0.7 * (t_GPP - Rtot_by_Rabove * (t_Rday + t_Rnight + t_Rstem)); // growth respiration, v. 2.4.1: 0.75 replaced by 0.7. According to Cannell and Thornley 2000, higher values should be used only if other sources of respiration (phloem loading etc.) are explicitly accounted for. For leaf construction, typically even a lower factor is a assumed (cf. Villar & Merino 2001, avg construction costs of 1.52 gC/gC)
     // Rleaf=Rday+Rnight is multiplied by 1.5 to also account for fine root respiration (cf as in Fyllas et al 2014 and Malhi 2012); Rstem is multiplied by 1.5 to account for coarse root respiration (according to the shoot root biomass ratio of 0.2 - Jérôme's paper in prep- and also to branch respiration (Meir & Grace 2002, Cavaleri 2006, Asao 2015).
@@ -2690,7 +2692,7 @@ void Tree::CalcNPP()
 // #####################################################
 //! - NPP allocation to leaves
 //! - In this current scheme of leaf demography and phenology in three leaf age classes: only the old leaves generate litterfall, and the dynamic of leaves cycle is generated by the dynamic of NPP, with a total leaf biomass varying - as opposed to De Weirdt et al 2012 in ORCHIDEE, but as in Wu et al 2016 but importantly without prescribing litterfall-
-void Tree::UpdateLeafDynamics()
+void Tree::UpdateLeafDynamics(Context &ctx)
 {
     float SLA = 1.0 / t_LMA; // newIM, but should be added as a tree variable to avoid multiple computation
 
@@ -2727,7 +2729,7 @@ void Tree::UpdateLeafDynamics()
         // the main idea is that the fixed fractions with which allocation to leaves and stem are modelled ("ctx.params.falloccanopy", "ctx.params.fallocwood", as fractions of newly assimilated carbon) are only regulative, i.e. they apply if the tree grows in sunlight without much constraint and still has space for new leaves. If a deviation from these conditions occurs, then the allocation patterns will change. 1) Reaching maximum leaf area: If a tree has filled its whole crown with leaves and any additional tree leaf would only result in more self-shading and a net loss of carbon, then the tree will only allocate leaves for keeping up the maximum leaf area and a) allocate excess carbon to a non-structural carbon (NSC) storage b) or allocate it to growth in diameter, if the storage is full already 2) Small or no potential for photosynthesis (maximum leaf area is smaller than the tree's actual leaf area, down to 0). Then, the tree will not allocate any carbon to leaf construction and reserve carbon mostly for respiration, storage or stem growth, until a gap appears. The module as a whole prioritizes leaf upkeep over growth, which is a conversative strategy. In reality trees or species may have more aggressive strategies (i.e. growing faster when shaded), but this would be worth a research project on its own
         // first, get LAmax, i.e. the maximum of leafarea that the tree could allocate before creating too much self-shading
         float LAIexperienced_eff;
-        CalcLAmax(LAIexperienced_eff, t_LAmax);
+        CalcLAmax(ctx, LAIexperienced_eff, t_LAmax);
 
 #ifdef PHENO_DROUGHT
 
@@ -2871,7 +2873,7 @@ void Tree::UpdateLeafDynamics()
 
         // refill storage, if storage has been tapped
         // in light of floating point calculations not being 100% exact, we have to make sure that quantities are above zero (and not -...e-9)
-        float carbon_storage_max = CalcCarbonStorageMax();
+        float carbon_storage_max = CalcCarbonStorageMax(ctx);
         float carbon_from_flush = 0.5 * (flush_storage + flush) * t_LMA;
         float carbon_excess = carbon_from_flush - carbon_storage_max;
 
@@ -2901,7 +2903,7 @@ void Tree::UpdateLeafDynamics()
 // Compute biometric relations, including allometry
 //! - New standalone function in v.2.3.0
 //! - volume in ctx.params.m^3: the first factor of 2 is to convert C into biomass. the 1/s_ wsg to convert biomass into volume (g/cm^3). the 1e-6 term converts cm^3 into ctx.params.m^3 (the sole metric unit in the model). ctx.params.fallocwood is the fraction of biomass allocated to aboveground wood (stem + branches) growth. For the time being, we shall assume that a fixed proportion of NPP is allocated into AGB production. Currently, 0.20=%biomasse allocated to stem increment could be a global variable, even though this % allocation could in fact vary with resouce variation/co-limitation
-void Tree::UpdateTreeBiometry()
+void Tree::UpdateTreeBiometry(Context &ctx)
 {
 
     //! taking into account wood elements recycling (ex. fallen branches etc...)
@@ -2921,7 +2923,7 @@ void Tree::UpdateTreeBiometry()
         delta_agb *= fmaxf(3.0 - 2.0 * t_dbh / t_dbhmax, 0.0);
 
     // Tree dbh increment
-    float ddbh = CalcIncrementDBH(delta_agb); // moved to a separate empirical function CalcIncrementDBH
+    float ddbh = CalcIncrementDBH(ctx, delta_agb); // moved to a separate empirical function CalcIncrementDBH
     // With V=pi*r^2*h, increment of volume = dV = 2*pi*r*h*dr + pi*r^2*dh
     // With isometric growth assumption (ddbh/dbh=dh/h)and dbh=2*r: dV=3/4*pi*dbh*h*ddbh, ddbh in ctx.params.m, it follows: ddbh = 4/3 * V = 4/3 * 1/(pi*dbh*h)
     if (t_dbh + ddbh > 0.1 && t_dbh < 0.1)
@@ -2930,11 +2932,11 @@ void Tree::UpdateTreeBiometry()
         S[t_sp_lab].s_nbind30++;
 
     t_dbh += ddbh;
-    UpdateSapwoodArea(ddbh);
+    UpdateSapwoodArea(ctx, ddbh);
 
-    UpdateHeight();
-    UpdateCR();
-    UpdateCD();
+    UpdateHeight(ctx);
+    UpdateCR(ctx);
+    UpdateCD(ctx);
 
 #ifdef Output_ABC
     S[t_sp_lab].s_dbhmax_realized = fmaxf(S[t_sp_lab].s_dbhmax_realized, t_dbh);
@@ -2953,13 +2955,13 @@ void Tree::UpdateVolumeDensity()
 // ####################################################
 //! - This function records basic properties of a tree that has died and empties the variables at the tree site.
 //! - It does not, however, apply the destructor to the tree object
-void Tree::Death()
+void Tree::Death(Context &ctx)
 {
 
 #ifdef TRACK_INDIVIDUALS
     if (t_timeofyear_born >= 0)
     {
-        float agb = 1000.0 * CalcAGB();
+        float agb = 1000.0 * CalcAGB(ctx);
         if (t_dbh >= 0.1)
         {
             ctx.out.output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t" << t_height - t_height_tracked << "\t" << t_CR << "\t" << t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear << "\t" << t_carbon_storage_avgyear << endl;
@@ -2974,7 +2976,7 @@ void Tree::Death()
     {
         if (t_dbh * ctx.grid.LH >= 0.01 && t_inInventory == 1)
         {
-            float agb = 0.5 * CalcAGB(); // in kg C
+            float agb = 0.5 * CalcAGB(ctx); // in kg C
             ctx.out.output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             t_inInventory = 0;
         }
@@ -3038,7 +3040,7 @@ void Tree::Death()
 //! - Dispersal is equiprobable in all direction and normally distributed (for 2D normal distribution, the absolute distance follows a Rayleigh distribution)
 //! - Reproduction only occurs for mature trees
 //! - New v.2.1 threshold of maturity is defined as a size threshold (and not age as before), following Wright et al 2005 JTE
-void Tree::DisperseSeed()
+void Tree::DisperseSeed(Context &ctx)
 {
     if (t_dbh >= t_dbhmature)
     {
@@ -3063,7 +3065,7 @@ void Tree::DisperseSeed()
             int dist_rows = int(rho * sin(theta_angle));
             int col_dispersal = dist_cols + col_tree;
             int row_dispersal = dist_rows + row_tree;
-            FillSeed(col_dispersal, row_dispersal, t_sp_lab);
+            FillSeed(ctx, col_dispersal, row_dispersal, t_sp_lab);
         }
 #ifdef TRACK_INDIVIDUALS
         if (t_month_born >= 0)
@@ -3079,7 +3081,7 @@ void Tree::DisperseSeed()
 //  Tree death and growth
 // ##################################
 //! - This routine calls the appropriate DeathRate modules; if the death condition is met, function Tree::Death() is called, otherwise function Tree::Growth is called
-void Tree::Update()
+void Tree::Update(Context &ctx)
 {
     int death;
     if (t_age)
@@ -3094,28 +3096,28 @@ void Tree::Update()
         // Start new in v3.0 IM
         // Fluxh(int(t_height)+1);            //strangly, t_PPFD was not updated at the beginning of Tree::Update (as I here suggest to do now),but only in Tree::Growth and CalcRespGPP, even though t_PPFD was already used in the first part of Tree::Update (death).
         // End new in v3.0 IM
-        Water_availability(); // here, t_phi_root and WSF are updated, which is needed to compute Deathrate, carbon assimilation and transpiration
+        Water_availability(ctx); // here, t_phi_root and WSF are updated, which is needed to compute Deathrate, carbon assimilation and transpiration
 #endif
         // v.2.4.0: outputs have been moved to Death() function
         if (ctx.opt._NDD)
-            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRateNDD(t_dbh, t_NPPneg, t_NDDfield[t_sp_lab]));
+            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRateNDD(ctx, t_dbh, t_NPPneg, t_NDDfield[t_sp_lab]));
         else
 #ifdef WATER // note that I did not include a version with both drought-induced mortality/carbon starvation and NDD effect on mortality, to be done if needed.
-             // death = int(gsl_rng_uniform(ctx.rng.gslrand)+DeathRate(t_dbh, t_NPPneg, t_phi_root));
+             // death = int(gsl_rng_uniform(ctx.rng.gslrand)+DeathRate(ctx, t_dbh, t_NPPneg, t_phi_root));
             if (ctx.opt._LA_regulation == 0)
-                death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(t_dbh, t_NPPneg, t_phi_root));
+                death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(ctx, t_dbh, t_NPPneg, t_phi_root));
             else
-                death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(t_dbh, t_carbon_storage, t_phi_root)); // newIM 2021: directly use the t_carbon_stoarge variable instead of NPPneg
+                death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(ctx, t_dbh, t_carbon_storage, t_phi_root)); // newIM 2021: directly use the t_carbon_stoarge variable instead of NPPneg
 #else
             if (ctx.opt._LA_regulation == 0)
-            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(t_dbh, t_NPPneg));
+            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(ctx, t_dbh, t_NPPneg));
         else
-            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(t_dbh, t_carbon_storage)); // newIM 2021: directly use the t_carbon_storage variable instead of NPPneg
+            death = int(gsl_rng_uniform(ctx.rng.gslrand) + DeathRate(ctx, t_dbh, t_carbon_storage)); // newIM 2021: directly use the t_carbon_storage variable instead of NPPneg
 #endif
         if (death)
-            Death();
+            Death(ctx);
         else
-            Growth(); // v.2.4: t_hurt is now updated in the TriggerTreefallSecondary() function
+            Growth(ctx); // v.2.4: t_hurt is now updated in the TriggerTreefallSecondary() function
     }
 }
 
@@ -3125,7 +3127,7 @@ void Tree::Update()
 //! - Tree falling routine, formerly FallTree(),  ctx.opt._BASICTREEFALL, changed in v.2.4.0
 //! - Creates a treefall (but no longer treefall probability). Takes angle as argument and can now be used for primary, secondary treefalls, forestry, or other disturbances
 //! - NEW in TROLL v.2.4: FallTree() function has become Treefall() function, calculation of angle and treefall outside of function, and damages are now added up from several treefalls
-void Tree::Treefall(float angle)
+void Tree::Treefall(Context &ctx, float angle)
 {
     // treefall statistics
     ctx.diag.nbTreefall1++;
@@ -3178,14 +3180,14 @@ void Tree::Treefall(float angle)
         }
     }
     // v.2.4.0: outputs have been moved to Death() function
-    Death();
+    Death(ctx);
 }
 
 // ####################################################
 //  Computes Average and OutputField
 // ####################################################
 //  - Short routine that basically only updates the vector s_output_field
-void Tree::Average()
+void Tree::Average(Context &ctx)
 {
     if (t_age > 0)
     {
@@ -3199,7 +3201,7 @@ void Tree::Average()
         S[t_sp_lab].s_ba += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
         S[t_sp_lab].s_npp += t_NPP * 1.0e-6;
         S[t_sp_lab].s_gpp += t_GPP * 1.0e-6;
-        float agb = CalcAGB();
+        float agb = CalcAGB(ctx);
         S[t_sp_lab].s_agb += agb;
         S[t_sp_lab].s_rday += t_Rday * 1.0e-6;
         S[t_sp_lab].s_rnight += t_Rnight * 1.0e-6;
@@ -3237,7 +3239,7 @@ void Tree::Average()
 }
 
 // Computation of dbh histograms
-void Tree::histdbh()
+void Tree::histdbh(Context &ctx)
 {
     if (t_age)
         ctx.diag.nbdbh[int(100. * t_dbh * ctx.grid.LH)]++;
@@ -3247,7 +3249,7 @@ void Tree::histdbh()
 
 #ifdef WATER
 // Standard outputs during the simulation -- written to file
-void Tree::OutputTreeStandard(fstream &output)
+void Tree::OutputTreeStandard(Context &ctx, fstream &output)
 {
     output << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rnight << "\t" << ctx.field.LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << ctx.field.LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF << "\t" << t_WSF_A << "\t" << t_transpiration << "\t" << t_LAImax << "\t" << t_LAmax;
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
@@ -3257,7 +3259,7 @@ void Tree::OutputTreeStandard(fstream &output)
     output << endl;
 }
 // Standard outputs during the simulation -- written to screen in real time
-void Tree::OutputTreeStandard()
+void Tree::OutputTreeStandard(Context &ctx)
 {
     cout << ctx.time.iter << "\t" << t_site << "\t" << t_sp_lab << "\t" << t_height << "\t" << t_dbh << "\t" << t_litter << "\t" << t_age << "\t" << t_LA << "\t" << t_youngLA << "\t" << t_matureLA << "\t" << t_oldLA << "\t" << t_CR << "\t" << t_CD << "\t" << t_GPP << "\t" << t_NPP << "\t" << t_Rstem << "\t" << t_Rday << "\t" << t_Rnight << "\t" << ctx.field.LAI3D[int(t_height)][t_site + ctx.grid.SBORD] << "\t" << ctx.field.LAI3D[int(t_height - t_CD) + 1][t_site + ctx.grid.SBORD] << "\t" << t_root_depth << "\t" << t_phi_root << "\t" << t_WSF;
     for (int l = 0; l < ctx.soil.nblayers_soil; l++)
@@ -3305,7 +3307,7 @@ float Tree::GetCrownAreaFilled(float crown_area)
 
 #ifdef TRACK_INDIVIDUALS
 // Diagnostic function to track trees born at a reference year
-float Tree::StartTracking()
+float Tree::StartTracking(Context &ctx)
 {
     // Only tracks trees born in a mature forest at year 501
     // currently hardcoded
@@ -3344,7 +3346,7 @@ float Tree::StartTracking()
         t_dbh_tracked = t_dbh;
         t_height_tracked = t_height;
         t_CR_tracked = t_CR;
-        t_agb_tracked = 1000.0 * CalcAGB();
+        t_agb_tracked = 1000.0 * CalcAGB(ctx);
 
         ctx.out.output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site % ctx.grid.cols << "\t" << t_site / ctx.grid.cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
     }

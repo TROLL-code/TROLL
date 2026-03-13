@@ -74,9 +74,6 @@ using namespace std;
 
 #include "context.hpp"
 
-// Global Context instance — defined in troll.cpp
-extern Context ctx;
-
 // FileIO and InputBuffers migrated to ctx.fileio / ctx.buffers
 // FILE OUTPUT STREAMS migrated to ctx.out (OutputConfig in context.hpp)
 
@@ -208,7 +205,7 @@ extern int easympi_rank; //!< Global variable: processor rank (easy Message Pass
 #ifdef MPI
 unsigned short **LAIc[2];                                        //!< Global 3D field: sharing LAI across boundaries
 void MPI_ShareSeed(unsigned char **, int);                       //!< Global MPI function: Communication of border fields in the parallel version of the code
-void MPI_ShareField(unsigned short **, unsigned short ***, int); //!< Global MPI function: Communication of fields
+void MPI_ShareField(Context &ctx, unsigned short **, unsigned short ***, int); //!< Global MPI function: Communication of fields
 void MPI_ShareTreefall(unsigned short **, int);                  //!< Global MPI function: Communication of treefalls
 #endif
 
@@ -355,15 +352,15 @@ void UpdateSeeds(Context &ctx);                                     //!< Global 
 void UpdateField(Context &ctx);                                     //!< Global function: Update all fields
 void TriggerTreefall(Context &ctx);                                 //!< Global function: Treefall gap formation; v.2.4
 void TriggerTreefallSecondary(Context &ctx);                        //!< Global function: Secondary treefall gap formation
-void FillSeed(int col, int row, int spp);                           //!< Global function: update SPECIES_SEEDS field; v.2.5
+void FillSeed(Context &ctx, int col, int row, int spp);                           //!< Global function: update SPECIES_SEEDS field; v.2.5
 void RecruitTree(Context &ctx);                                     //!< Global function: tree germination module; v.2.5
-void Average(void);                                                 //!< Global function: output of the global averages every timestep
-void OutputField(void);                                             //!< Global function: output of the field variables every timestep
-void OutputSnapshot(fstream &output, bool header, float dbh_limit); //!< Global function: output snapshots of the scene at one point in time
-void OutputLAI(fstream &output_transmLAI3D);                        //!< Global function: writes the whole 3D LAI voxel field to file
-void OutputCHM(fstream &output_CHM);                                //!< Global function: Outputs CHM
-void OutputVisual();                                                //!< Global function: Output function for visualization purposes
-void CloseOutputs();
+void Average(Context &ctx);                                                        //!< Global function: output of the global averages every timestep
+void OutputField(Context &ctx);                                                    //!< Global function: output of the field variables every timestep
+void OutputSnapshot(Context &ctx, fstream &output, bool header, float dbh_limit); //!< Global function: output snapshots of the scene at one point in time
+void OutputLAI(Context &ctx, fstream &output_transmLAI3D);                        //!< Global function: writes the whole 3D LAI voxel field to file
+void OutputCHM(Context &ctx, fstream &output_CHM);                                //!< Global function: Outputs CHM
+void OutputVisual(Context &ctx);                                                   //!< Global function: Output function for visualization purposes
+void CloseOutputs(Context &ctx);
 void FreeMem(Context &ctx);
 
 void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream &output_pointcloud); //!< Global function: point cloud output, v.3.1.6; kept separately from other output functions, as we write to a dedicated external file format (.las)
@@ -371,8 +368,8 @@ void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transm
 // HELPER FUNCTIONS
 int GetTimeofyear(Context &ctx);                              //!< Helper function, new in v.3.1: converts current iteration into time of year, also works backwards (negative iterations)
 float CalcHeightBaseline(float &ah, float &hmax, float &dbh); //!< Helper function: calculates mean predicted height from allometry
-float CalcCDBaseline(float &height);                          //!< Helper function, new in v.3.1: calculates mean predicted crown radius from allometry
-float CalcCRBaseline(float &dbh);                             //!< Helper function new in v.3.1: calculates mean predicted crown diameter from allometry
+float CalcCDBaseline(Context &ctx, float &height);            //!< Helper function, new in v.3.1: calculates mean predicted crown radius from allometry
+float CalcCRBaseline(Context &ctx, float &dbh);               //!< Helper function new in v.3.1: calculates mean predicted crown diameter from allometry
 int CalcIntabsorb(float absorb_prev, float absorb_delta);     //!< Helper function: returns index for LookUpTables of absorbed flux (considering leaves above and within voxel)
 int CalcIntabsorb(float absorb_prev);                         //!< Helper function: returns index for LookUpTables of absorbed flux (only considering leaves above voxel)
 
@@ -394,8 +391,8 @@ struct leafFluxes
 #ifdef Output_ABC
 // these are functions needed to create ABC output
 void InitialiseABC(Context &ctx);                                                                                                                                                                                                                                                                                                                                                                                              //!< Global ABC function: initialise ABC conditions
-void UpdateMovingAveragesABC();                                                                                                                                                                                                                                                                                                                                                                                            //!< Global ABC function: yearly statistics
-void UpdateDBHtrackingABC();                                                                                                                                                                                                                                                                                                                                                                                               //!< Global ABC function: update DBH function for ABC routines
+void UpdateMovingAveragesABC(Context &ctx);                                                                                                                                                                                                                                                                                                                                                                                //!< Global ABC function: yearly statistics
+void UpdateDBHtrackingABC(Context &ctx);                                                                                                                                                                                                                                                                                                                                                                                   //!< Global ABC function: update DBH function for ABC routines
 void UpdateTransmittanceCHM_ABC(int mean_beam, float sd_beam, float klaser, float transmittance_laser);                                                                                                                                                                                                                                                                                                                    //!< Global function: calculating the TROLL transmittance field from simulated LiDAR
 void OutputABCWriteHeaders(fstream &output_traitconservation, fstream &output_field, fstream &output_CHM, fstream &output_CHM_ALS, fstream &output_transmittance, fstream &output_transmittance_ALS, fstream &output_LAIfield, fstream &output_LAIfield_ALS, fstream &output_chmpotential, fstream &output_species, fstream &output_species10, fstream &output_traits, fstream &output_traits10, fstream &output_biomass); //!< Global function: write headers for ABC outputs
 void OutputABCConservationTraits(fstream &output_traitconservation);                                                                                                                                                                                                                                                                                                                                                       //!< Global ABC function: assesses the conservation of traits between input and output in TROLL
@@ -404,11 +401,11 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
 void OutputABC_CHM(fstream &output_CHM, fstream &output_CHM_ALS, fstream &output_chmpotential);                                                                                                                                                                                                                                                                                                                            //!< Global function: returns ABC outputs for canopy height model (CHM)
 void OutputABC_transmittance(fstream &output_transmittance, fstream &output_transmittance_ALS);                                                                                                                                                                                                                                                                                                                            //!< Global ABC function: ABC outputs
 void OutputABC();                                                                                                                                                                                                                                                                                                                                                                                                          //!< Global ABC function: output general ABC statistics
-void OutputCHM(fstream &output_CHM);                                                                                                                                                                                                                                                                                                                                                                                       //!< Global ABC function: creates a Canopy Height Model and LAD profile
+void OutputCHM(Context &ctx, fstream &output_CHM);                                                                                                                                                                                                                                                                                                                                                                        //!< Global ABC function: creates a Canopy Height Model and LAD profile
 #endif
 
 #ifdef TRACK_INDIVIDUALS
-void TrackingData_andOutput(); //!< Global function: tree level tracking of key variables
+void TrackingData_andOutput(Context &ctx); //!< Global function: tree level tracking of key variables
 #endif
 
 // ###########################################
@@ -623,81 +620,81 @@ public:
 
 #endif
     // Constructor
-    Tree();
+    Tree(Context &ctx);
 
-    void Birth(int, int);                                                                                                       //!< Tree birth
-    int BirthFromInventory(int site, vector<string> &parameter_names, vector<string> &parameter_values, int &nb_speciesrandom); //!< Tree initialisation from field data, completely updated in v.3.1
-    void Death();                                                                                                               //!< Tree death, called by Tree::Update
-    void Growth();                                                                                                              //!< Tree growth
+    void Birth(Context &ctx, int, int);                                                                                                       //!< Tree birth
+    int BirthFromInventory(Context &ctx, int site, vector<string> &parameter_names, vector<string> &parameter_values, int &nb_speciesrandom); //!< Tree initialisation from field data, completely updated in v.3.1
+    void Death(Context &ctx);                                                                                                               //!< Tree death, called by Tree::Update
+    void Growth(Context &ctx);                                                                                                              //!< Tree growth
 #ifdef WATER
-    void Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer, float &PPFD_incident, float &ExtinctLW); //!< Computation of PPFD right above the tree -- called by Tree::Birth and Tree::Growth
+    void Fluxh(Context &ctx, int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer, float &PPFD_incident, float &ExtinctLW); //!< Computation of PPFD right above the tree -- called by Tree::Birth and Tree::Growth
 #else
-    void Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer); //!< Computation of PPFD right above the tree -- called by Tree::Birth and Tree::Growth
+    void Fluxh(Context &ctx, int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_layer); //!< Computation of PPFD right above the tree -- called by Tree::Birth and Tree::Growth
 #endif
 
 #ifdef WATER
-    void Water_availability(); //!< Computation of the tree water availability in the root zone
+    void Water_availability(Context &ctx); //!< Computation of the tree water availability in the root zone
     // compute root depth, root biomass in each layer, soil water potential in the root zone, and water stress factor
     // see comments at Tree::Water_availability
     // void UpdateRootDistribution();  //compute root depth, root biomass in each layer, soil water potential in the root zone, and water stress factor
-    void Water_uptake(); //!< Contribution of trees to the stand Transpiration field -- called by UpdateField
+    void Water_uptake(Context &ctx); //!< Contribution of trees to the stand Transpiration field -- called by UpdateField
 #endif
 
-    void CalcRespGPP();         //!< GPP and respiration calculation, called by Tree::Growth
-    void CalcNPP();             //!< NPP calculation, called by Tree::Growth, new in v.3.1
-    void UpdateLeafDynamics();  //!< Leaf dynamics and C allocation, called by Tree::Growth
-    void UpdateTreeBiometry();  //!< Compute biometric relations, including allometry
+    void CalcRespGPP(Context &ctx);         //!< GPP and respiration calculation, called by Tree::Growth
+    void CalcNPP(Context &ctx);             //!< NPP calculation, called by Tree::Growth, new in v.3.1
+    void UpdateLeafDynamics(Context &ctx);  //!< Leaf dynamics and C allocation, called by Tree::Growth
+    void UpdateTreeBiometry(Context &ctx);  //!< Compute biometric relations, including allometry
     void UpdateVolumeDensity(); //!< Follows updates to leaf dynamics and biometry and computes the new leaf density; v.2.4.1
     //!< - For plastic and shy crowns, moved inside allocation step, otherwise computed straight after other update functions
 
-    void DisperseSeed();        //!< Seed dispersal, called by UpdateField
-    void Treefall(float angle); //!< Tree falling function, called by TriggerTreefall
-    void Update();              //!< Tree death and growth
-    void Average();             //!< Local computation of the averages
-    void CalcLAI();             //!< Update of the LAI3D field
+    void DisperseSeed(Context &ctx);        //!< Seed dispersal, called by UpdateField
+    void Treefall(Context &ctx, float angle); //!< Tree falling function, called by TriggerTreefall
+    void Update(Context &ctx);              //!< Tree death and growth
+    void Average(Context &ctx);             //!< Local computation of the averages
+    void CalcLAI(Context &ctx);             //!< Update of the LAI3D field
     // void CalcLAinitial();            //!< Initialise leaf area and related variables for trees that could not be initialized from data, new in v.3.1, not used yet
-    void histdbh(); //!< Computation of dbh histograms
+    void histdbh(Context &ctx); //!< Computation of dbh histograms
 
     //! empirical functions for trait calculation and tree level variables (Calc functions return the specific parameter, Update functions update a specific variable at tree level)
-    float CalcJmaxm();                       //!< Returns Jmax for for Farquhar model
-    float CalcAGB();                         //!< Calculation of above ground biomass (in kg) !!!: if updated, also update CalcIncrementDBH, cf. below
-    float CalcIncrementDBH(float delta_agb); //!< Calculation of the increment of dbh from assimilated carbon/biomass (in m)
-    float CalcCarbonStorageMax();            //!< Calculation of the maximum amount of carbon stored in a tree
-    float CalcCt();                          //!< Calculation of the treefall threshold, if _BASICTREEFALL is activated
+    float CalcJmaxm(Context &ctx);                       //!< Returns Jmax for for Farquhar model
+    float CalcAGB(Context &ctx);                         //!< Calculation of above ground biomass (in kg) !!!: if updated, also update CalcIncrementDBH, cf. below
+    float CalcIncrementDBH(Context &ctx, float delta_agb); //!< Calculation of the increment of dbh from assimilated carbon/biomass (in m)
+    float CalcCarbonStorageMax(Context &ctx);            //!< Calculation of the maximum amount of carbon stored in a tree
+    float CalcCt(Context &ctx);                          //!< Calculation of the treefall threshold, if _BASICTREEFALL is activated
 
-    void CalcLeafLifespan();            //!< Determines leaf life span, either from empirical function or from Kikuzawa model
-    void InitialiseLeafPools();         //!< Initialises leaf pools for newly germinated trees, formerly part of CalcLeafLifespan(), new in v.3.1 to clear up code
-    void UpdateSapwoodArea(float ddbh); //!< Determine sapwood area, limited by increase in dbh (ddbh) (in m2)
-    void UpdateHeight();                //!< Updates t_height, based on t_dbh
-    void UpdateCR();                    //!< Updates t_CR, based on t_dbh
-    void UpdateCD();                    //!< Updates t_CD based on t_height
+    void CalcLeafLifespan(Context &ctx);            //!< Determines leaf life span, either from empirical function or from Kikuzawa model
+    void InitialiseLeafPools(Context &ctx);         //!< Initialises leaf pools for newly germinated trees, formerly part of CalcLeafLifespan(), new in v.3.1 to clear up code
+    void UpdateSapwoodArea(Context &ctx, float ddbh); //!< Determine sapwood area, limited by increase in dbh (ddbh) (in m2)
+    void UpdateHeight(Context &ctx);                //!< Updates t_height, based on t_dbh
+    void UpdateCR(Context &ctx);                    //!< Updates t_CR, based on t_dbh
+    void UpdateCD(Context &ctx);        //!< Updates t_CD based on t_height
 
     // GPP functions are now calculated at tree level
-    float DeathRateNDD(float, float, float); //!< Death rate function, including negative density dependence mortality, called when option _NDD is on.
+    float DeathRateNDD(Context &ctx, float, float, float); //!< Death rate function, including negative density dependence mortality, called when option _NDD is on.
 #ifdef WATER
-    float DeathRate(float, float, float);                                                 //!< Death rate function, including drought-induced mortality
-    leafFluxes FluxesLeaf(float, float, float, float, float, float, float, float, float); //!< Determines the leaf-level temperature, CO2 concentration, and vapour pressure deficit using and iterative scheme, and provides the corresponding leaf-level photosyntehtic assimilation rate (call to Photosyn) and transpiration rate (using penman-Monteith equation) -- depends on light (PPFD), vapor pressure deficit (VPD), temperature (T), and wind (W) //IMmarch 2022: try to account for extinction of net thermal radiation in Rnet iso and of actually absorbed NIR radiation, hence the last two arguments
-    leafFluxes dailyFluxesLeaf(float, float, float, float, float, float, float &);        //!< Computation of average C assimilation rate and water evapotranspiration per leaf area across daily variation in light (PPFD), vapor pressure deficit (VPD), temperature (T), and wind (W); //IMmarch 2022: try to account for extinction of net thermal raditiion in Rnet iso, and of actuel NIR absorbed energy, hence the last two arguments
-    leafFluxes Photosyn(float, float, float, float);                                      //!< Implements the Farquhar von Caemmerer Berry model of photosynthesis together with the model of stomatal conductance provided by Medlyn et al. (2011).
-    void OutputTreeStandard(fstream &output);                                             //!< Standard outputs during the simulation -- written to file
-    void OutputTreeStandard();                                                            //!< Standard outputs during the simulation -- written to screen in real time
+    float DeathRate(Context &ctx, float, float, float);                                                 //!< Death rate function, including drought-induced mortality
+    leafFluxes FluxesLeaf(Context &ctx, float, float, float, float, float, float, float, float, float); //!< Determines the leaf-level temperature, CO2 concentration, and vapour pressure deficit using and iterative scheme, and provides the corresponding leaf-level photosyntehtic assimilation rate (call to Photosyn) and transpiration rate (using penman-Monteith equation) -- depends on light (PPFD), vapor pressure deficit (VPD), temperature (T), and wind (W) //IMmarch 2022: try to account for extinction of net thermal radiation in Rnet iso and of actually absorbed NIR radiation, hence the last two arguments
+    leafFluxes dailyFluxesLeaf(Context &ctx, float, float, float, float, float, float, float &); //!< Computation of average C assimilation rate and water evapotranspiration per leaf area across daily variation in light (PPFD), vapor pressure deficit (VPD), temperature (T), and wind (W); //IMmarch 2022: try to account for extinction of net thermal raditiion in Rnet iso, and of actuel NIR absorbed energy, hence the last two arguments
+    leafFluxes Photosyn(Context &ctx, float, float, float, float);                        //!< Implements the Farquhar von Caemmerer Berry model of photosynthesis together with the model of stomatal conductance provided by Medlyn et al. (2011).
+    void OutputTreeStandard(Context &ctx, fstream &output);                                             //!< Standard outputs during the simulation -- written to file
+    void OutputTreeStandard(Context &ctx);                                                            //!< Standard outputs during the simulation -- written to screen in real time
     // !!!UPDATE: question, why are these two functions needed? the first function with cout as an argument is the same as the second function, no? question2: why are these functions only available in WATER mode?
 #else
-    float DeathRate(float, float);                   //!< Death rate function
-    float GPPleaf(float, float, float);              //!< Farquhar von Caemmerer Berry model -- computation of the light-limited leaf-level average C assimilation rate per m^2 (micromol/m^2/s) -- depends on daily variation in light (PPFD), vapor pressure deficit (VPD) and temperature (T)
-    float dailyGPPleaf(float, float, float);         //!< Computation of average C assimilation rate per leaf area across daily variation in light (PPFD), vapor pressure deficit (VPD) and temperature (T)
-    float dailyGPPcrown(float, float, float, float); //!< Farquhar von Caemmerer Berry model -- proposition of reinsertion of fastdailyGPPleaf() as dailyGPPcrown(), main reason: despite sharing some code with dailyGPPleaf, structurally very different, updated in v.2.5, replaced dens * CD by LAI
+    float DeathRate(Context &ctx, float, float);                   //!< Death rate function
+    float GPPleaf(Context &ctx, float, float, float);              //!< Farquhar von Caemmerer Berry model -- computation of the light-limited leaf-level average C assimilation rate per m^2 (micromol/m^2/s) -- depends on daily variation in light (PPFD), vapor pressure deficit (VPD) and temperature (T)
+    float dailyGPPleaf(Context &ctx, float, float, float);         //!< Computation of average C assimilation rate per leaf area across daily variation in light (PPFD), vapor pressure deficit (VPD) and temperature (T)
+    float dailyGPPcrown(Context &ctx, float, float, float, float); //!< Farquhar von Caemmerer Berry model -- proposition of reinsertion of fastdailyGPPleaf() as dailyGPPcrown(), main reason: despite sharing some code with dailyGPPleaf, structurally very different, updated in v.2.5, replaced dens * CD by LAI
 #endif
-    float Rdayleaf(float T);      //!< !!!UPDATE
-    float dailyRdayleaf(float T); //!< !!!UPDATE
+    float Rdayleaf(Context &ctx, float T);      //!< !!!UPDATE
+    float dailyRdayleaf(Context &ctx, float T); //!< !!!UPDATE
 
-    void CalcLAImax();                                       //!< Determines the maximum LAI that the tree should reach, given the Farquhar model, at a theoretical average day, up to which point leaves can be allocated and until which the costs (self-shading) are lower than the benefits (additional assimilation), renamed in v.3.1
-    void CalcLAmax(float &LAIexperienced_eff, float &LAmax); //!<  Unlike CalcLAImax, calculates the maximum leafarea for the current light environment the tree experiences rather than for a theoretical day, renamed in v.3.1
-    float predLeafLifespanKikuzawa();                        //!< Kikuzawa model for leaf lifespan
+    void CalcLAImax(Context &ctx);                                       //!< Determines the maximum LAI that the tree should reach, given the Farquhar model, at a theoretical average day, up to which point leaves can be allocated and until which the costs (self-shading) are lower than the benefits (additional assimilation), renamed in v.3.1
+    void CalcLAmax(Context &ctx, float &LAIexperienced_eff, float &LAmax); //!<  Unlike CalcLAImax, calculates the maximum leafarea for the current light environment the tree experiences rather than for a theoretical day, renamed in v.3.1
+    float predLeafLifespanKikuzawa(Context &ctx);                        //!< Kikuzawa model for leaf lifespan
     float GetCrownAreaFilled(float crown_area);              //!< Calculate the crown area filled by leaves (only relevant for crown gap fractions > 0.0)
 
 #ifdef TRACK_INDIVIDUALS
-    float StartTracking(); //!< Diagnostic function to track trees born at a reference year
+    float StartTracking(Context &ctx); //!< Diagnostic function to track trees born at a reference year
 #endif
 };
 

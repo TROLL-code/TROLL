@@ -144,7 +144,7 @@ void InitialiseLookUpLAImax(Context &ctx)
     {
         for (int dev = 0; dev < 10000; dev++)
         {
-            Tree pseudotree;
+            Tree pseudotree(ctx);
             pseudotree.t_sp_lab = spp;
 
             pseudotree.t_Pmass = S[spp].s_Pmass * ctx.intra.d_intraspecific_P[dev];
@@ -161,10 +161,10 @@ void InitialiseLookUpLAImax(Context &ctx)
 #endif
 
             pseudotree.t_Vcmax = CalcVcmaxm(pseudotree.t_LMA, pseudotree.t_Nmass, pseudotree.t_Pmass) * pseudotree.t_LMA;
-            pseudotree.t_Jmax = pseudotree.CalcJmaxm() * pseudotree.t_LMA;
+            pseudotree.t_Jmax = pseudotree.CalcJmaxm(ctx) * pseudotree.t_LMA;
             pseudotree.t_Rdark = CalcRdark(pseudotree.t_LMA, pseudotree.t_Nmass, pseudotree.t_Pmass, pseudotree.t_Vcmax);
 
-            pseudotree.CalcLAImax();
+            pseudotree.CalcLAImax(ctx);
 
             ctx.lookup.LookUpLAImax.push_back(pseudotree.t_LAImax);
             if (pseudotree.t_LAImax < minLAImax)

@@ -37,7 +37,7 @@ void Evolution(Context &ctx)
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         //**** Tree evolution: Growth or death ****
-        T[site].Update();
+        T[site].Update(ctx);
     }
 
     for (int d = 0; d < ctx.grid.nbdcells; d++)
@@ -49,13 +49,13 @@ void Evolution(Context &ctx)
     }
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        T[site].Water_uptake();
+        T[site].Water_uptake(ctx);
     }
 
     // Update trees
-    Average(); //! Compute averages for outputs
+    Average(ctx); //! Compute averages for outputs
     if (ctx.opt._OUTPUT_extended)
-        OutputField(); //! Output the statistics
+        OutputField(ctx); //! Output the statistics
 }
 
 // #################################
@@ -102,7 +102,7 @@ void UpdateSeeds(Context &ctx)
             {
                 if (T[site].t_dbh >= T[site].t_dbhmature)
                     trees_mature++;
-                T[site].DisperseSeed();
+                T[site].DisperseSeed(ctx);
             }
         }
 
@@ -202,7 +202,7 @@ void UpdateField(Context &ctx)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(); // Each tree contribues to ctx.field.LAI3D
+        T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
 
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
@@ -510,7 +510,7 @@ void UpdateField(Context &ctx)
 // #############################
 //  Global function: update ctx.species.SPECIES_SEEDS field
 // #############################
-void FillSeed(int col, int row, int spp)
+void FillSeed(Context &ctx, int col, int row, int spp)
 {
     if ((col >= 0) && (col < ctx.grid.cols))
     {
@@ -560,11 +560,11 @@ void RecruitTree(Context &ctx)
 #ifdef WATER
                 if (ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
-                    T[site].Birth(spp, site); // in this version, the light environment is checked within Birth() function
+                    T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
                 }
 
 #else
-                T[site].Birth(spp, site); // in this version, the light environment is checked within Birth() function
+                T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
 
 #endif
 
@@ -574,7 +574,7 @@ void RecruitTree(Context &ctx)
 #ifdef WATER
                 if (flux > (S[spp].s_LCP) && ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
                 {
-                    T[site].Birth(spp, site);
+                    T[site].Birth(ctx, spp, site);
                     ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
                 // in addition to a condition of light availability- hence light demanding species may not be able to grow in deep sahde conditions in understorey -, a condition on water availability is added - hence drought-intolerant species may not be recruited in water-stressd conditions
@@ -583,7 +583,7 @@ void RecruitTree(Context &ctx)
                 // here, light is the sole environmental resources tested as a limiting factor for germination, but we should think about adding nutrients (N,P) and water conditions...
                 if (flux > (S[spp].s_LCP))
                 {
-                    T[site].Birth(spp, site);
+                    T[site].Birth(ctx, spp, site);
                     ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
 #endif // WATER
@@ -613,7 +613,7 @@ void TriggerTreefall(Context &ctx)
             // above a given stress threshold the tree falls
             if (c_forceflex > T[site].t_Ct)
             {
-                T[site].Treefall(angle);
+                T[site].Treefall(ctx, angle);
             }
         }
 #ifdef MPI
@@ -665,11 +665,11 @@ void TriggerTreefallSecondary(Context &ctx)
                 if (ctx.params.p_tfsecondary > gsl_rng_uniform(ctx.rng.gslrand))
                 {                                                          // check whether tree falls or dies otherwise
                     float angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // random angle
-                    T[site].Treefall(angle);
+                    T[site].Treefall(ctx, angle);
                 }
                 else
                 {
-                    T[site].Death();
+                    T[site].Death(ctx);
                 }
             }
             else
@@ -703,7 +703,7 @@ float CalcHeightBaseline(float &ah, float &hmax, float &dbh)
     return (height);
 }
 
-float CalcCRBaseline(float &dbh)
+float CalcCRBaseline(Context &ctx, float &dbh)
 {
     // crown radius allometry
     float CR;
@@ -719,7 +719,7 @@ float CalcCRBaseline(float &dbh)
     return (CR);
 }
 
-float CalcCDBaseline(float &height)
+float CalcCDBaseline(Context &ctx, float &height)
 {
     // crown depth allometry
     // since v.2.5, simplification of the computation of the crown depth, in accordance with the Canopy Constructor algorithm

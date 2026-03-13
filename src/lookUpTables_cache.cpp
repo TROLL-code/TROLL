@@ -9,7 +9,7 @@ static const char *LUT_CACHE_FILE = "./.troll_cache/lut.bin";
 
 // --- Save LUTs to file -------------------------------------------------------
 
-bool SaveLookUpTablesToCache()
+bool SaveLookUpTablesToCache(Context &ctx)
 {
 
     // Create the directory if it doesn't exist
@@ -71,7 +71,7 @@ bool SaveLookUpTablesToCache()
 
 // --- Load LUTs from file -----------------------------------------------------
 
-bool LoadLookUpTablesFromCache()
+bool LoadLookUpTablesFromCache(Context &ctx)
 {
     std::ifstream in(LUT_CACHE_FILE, std::ios::binary);
     if (!in)

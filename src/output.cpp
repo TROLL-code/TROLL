@@ -6,15 +6,15 @@
 //  Global function: calculation of the global averages every ctx.time.timestep
 // ##############################################
 
-void Average(void)
+void Average(Context &ctx)
 {
 
 #ifdef TRACK_INDIVIDUALS
-    TrackingData_andOutput();
+    TrackingData_andOutput(ctx);
 #endif
 
 #ifdef Output_ABC
-    UpdateMovingAveragesABC();
+    UpdateMovingAveragesABC(ctx);
 #endif
 
     int site, spp;
@@ -35,7 +35,7 @@ void Average(void)
             S[spp].s_sum10 = S[spp].s_sum30 = S[spp].s_ba = S[spp].s_ba10 = S[spp].s_agb = S[spp].s_gpp = S[spp].s_npp = S[spp].s_rday = S[spp].s_rnight = S[spp].s_rstem = S[spp].s_litterfall = 0;
 
         for (site = 0; site < ctx.grid.sites; site++)
-            T[site].Average();
+            T[site].Average(ctx);
 
         for (spp = 1; spp <= ctx.grid.nbspp; spp++)
         {
@@ -415,7 +415,7 @@ void Average(void)
 // ##############################################
 //  Global function: output of the field variables every ctx.time.timestep
 // ##############################################
-void OutputField()
+void OutputField(Context &ctx)
 {
     int site, h;
     if ((ctx.time.nbout) && ((ctx.time.iter % ctx.time.freqout) == ctx.time.freqout - 1))
@@ -425,7 +425,7 @@ void OutputField()
         for (d = 0; d < ctx.grid.dbhmaxincm; d++)
             ctx.diag.nbdbh[d] = 0;
         for (site = 0; site < ctx.grid.sites; site++)
-            T[site].histdbh();
+            T[site].histdbh(ctx);
 
         for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
@@ -458,7 +458,7 @@ void OutputField()
 //  Global function: output snapshots of the scene at one point in time
 // ##############################################
 //! - This can be used to take snapshots of the forest in more detail and track its development over time.
-void OutputSnapshot(fstream &output, bool header, float dbh_limit)
+void OutputSnapshot(Context &ctx, fstream &output, bool header, float dbh_limit)
 {
     cout << "Writing snapshot of forest to file." << endl;
     if (header == 1)
@@ -498,7 +498,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
 
     for (int site = 0; site < ctx.grid.sites; site++)
     { // Each tree contribues to ctx.field.LAI3D
-        T[site].CalcLAI();
+        T[site].CalcLAI(ctx);
     }
 
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
@@ -558,7 +558,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
 #endif
 
                 // we add a few tree-based variables that are derived or environment-related, but not directly kept track of
-                float AGB = T[site].CalcAGB();
+                float AGB = T[site].CalcAGB(ctx);
 
                 output << "\t" << AGB << "\t" << S[T[site].t_sp_lab].s_name << endl;
             }
@@ -570,7 +570,7 @@ void OutputSnapshot(fstream &output, bool header, float dbh_limit)
 // ##########################
 // ## Make a spikefree CHM ##
 // ##########################
-void MakeCHMspikefree(vector<int> &chm_spikefree)
+void MakeCHMspikefree(Context &ctx, vector<int> &chm_spikefree)
 {
     chm_spikefree.clear();
     chm_spikefree.reserve(ctx.grid.sites);
@@ -594,7 +594,7 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
                 int shell_fromtop = 0;              // toplayer
                 float noinput = 0.0;
 
-                LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_spikefree, KeepFloatAsIs, UpdateCHMvector);
+                LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_spikefree, KeepFloatAsIs, UpdateCHMvector);
 #else
                 int crown_top = int(T[s].t_height);
                 int crown_intarea = GetCrownIntarea(T[s].t_CR);
@@ -626,12 +626,12 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
 // ################################
 // ### Output for visualization ###
 // ################################
-void OutputVisual()
+void OutputVisual(Context &ctx)
 {
     // first simple chm output
 #ifdef CHM_SPIKEFREE
     vector<int> chm_spikefree;
-    MakeCHMspikefree(chm_spikefree);
+    MakeCHMspikefree(ctx, chm_spikefree);
 
     for (int col = ctx.crown.mincol_visual; col < ctx.crown.maxcol_visual; col++)
     {
@@ -707,7 +707,7 @@ void OutputVisual()
 
                 for (int shell_fromtop = 0; shell_fromtop < max_shells; shell_fromtop++)
                 {
-                    LoopLayerUpdateCrownStatistic_template(ctx, row, col, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, row_slice, output_statistics, KeepIntAsIs, [](int h, int s, int rs, vector<float> &os){ OutputCrownSliced(ctx, h, s, rs, os); });
+                    LoopLayerUpdateCrownStatistic_template(ctx, row, col, height, CR, CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, row_slice, output_statistics, KeepIntAsIs, [&ctx](int h, int s, int rs, vector<float> &os){ OutputCrownSliced(ctx, h, s, rs, os); });
                 }
 #else
                 int crown_intarea = GetCrownIntarea(CR);
@@ -735,11 +735,11 @@ void OutputVisual()
 // ##################
 // ### Output CHM ###
 // ##################
-void OutputCHM(fstream &output_CHM)
+void OutputCHM(Context &ctx, fstream &output_CHM)
 {
 #ifdef CHM_SPIKEFREE
     vector<int> chm_spikefree;
-    MakeCHMspikefree(chm_spikefree);
+    MakeCHMspikefree(ctx, chm_spikefree);
 
     output_CHM << "site" << "\t" << "row" << "\t" << "col" << "\t" << "height" << "\t" << "height_spikefree" << "\t" << "LAI" << endl;
     for (int s = 0; s < ctx.grid.sites; s++)
@@ -769,7 +769,7 @@ void OutputCHM(fstream &output_CHM)
 // ##############################################
 //  Global function: writes the whole 3D LAI voxel field to file
 // ##############################################
-void OutputLAI(fstream &output_transmLAI3D)
+void OutputLAI(Context &ctx, fstream &output_transmLAI3D)
 {
     output_transmLAI3D << "s\trow\tcol\th\tLAI3D" << endl;
     for (int s = 0; s < ctx.grid.sites; s++)
@@ -789,7 +789,7 @@ void OutputLAI(fstream &output_transmLAI3D)
 //! - This approach makes lots of simplifying assumptions, among which are: no flightline, no angles, no beam diameter/divergence, Lambert-Beer extinction, including assumptions about the conversion between transmittance probability and energy extinction. Importantly, a TROLL forest contains no woody material and does not represent topography at the moment, all of which may influence sampling densities as well.
 //! - One further question concerns the probability of obtaining a ground return: there is a long discussion in the literature about backscatter ratios between vegetation and ground. However, this seems to be neither a constant ratio nor seems there to be agreement on how it varies, likely due to dependence on footprint size and composition of reflecting surfaces. Cf., for example, Ni-Meister et al. 2001, IEEE Transactions: they use a ratio of mostly 1.0 (the implicit assumption in this simulation as well), but state that it should vary from site to site. Knapp et al. 2021, Remote Sensing, on the other hand: "The reflectance of the forest ground voxels was down-weighted by dividing by 2.5 in order to account for the lower reflectivity of the ground vs. vegetation." This specifically concerns GEDI waveform simulations, so large-footprint lasers, but the source publication does not seem to give a direct reference for the value. Furthermore, it would imply that the ratio of ground to vegetation reflectance is 0.4 for large-footprint full-waveform lidar, which seems to be in stark contrast to Chen et al. 2014, Remote Sensing of Environment, who looked at footprints of up to 8m and found a constant ratio ground/vegetation of 1.7 (they measured vegetation/ground ratio as ~0.57, so 1.7 = 1.0/0.57). However, their Figure 11 seems to indicate an inverse relationship for small footprints (~0.4m) with a ground to vegetation backscatter ratio of ca. 0.8. In the future, it would be worth running TROLL voxel output through an explicit raytracing simulator, with a much more detailed parameterization of surfaces (e.g. DART or Helios++, https://github.com/3dgeo-heidelberg/helios) and compare our simplified simulations to its outcomes/adjust accordingly.
 
-void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, float mean_beam, float sd_beam, float klaser, float transmittance_laser)
+void GenerateVoxelreturnsALS(Context &ctx, vector<int> &beams, vector<float> &beams_returns, float mean_beam, float sd_beam, float klaser, float transmittance_laser)
 {
 
     int beams_expected = int(ctx.grid.sites * mean_beam * 1.01); // reserve a bit more
@@ -1156,7 +1156,7 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
 // ##############################################
 //  Global function: tree level tracking of key variables
 // ##############################################
-void TrackingData_andOutput()
+void TrackingData_andOutput(Context &ctx)
 {
     for (int site = 0; site < ctx.grid.sites; site++)
     {
@@ -1182,10 +1182,10 @@ void TrackingData_andOutput()
                 T[site].t_GPPsquared_cum += T[site].t_GPP * T[site].t_GPP;
                 T[site].t_NPPsquared_cum += T[site].t_NPP * T[site].t_NPP;
 
-                float agb = 1000.0 * T[site].CalcAGB();
+                float agb = 1000.0 * T[site].CalcAGB(ctx);
 
                 // write to output every year and then reset to zero
-                int timeofyear = GetTimeofyear();
+                int timeofyear = GetTimeofyear(ctx);
                 if (timeofyear == timeofyear_born)
                 {
                     // write to output
@@ -1222,7 +1222,7 @@ void TrackingData_andOutput()
 // ##############################################
 //! - Statistics averaged over one year for ten years and then used for the point estimates in the OutputABC(...) routine
 //! - !!!: TODO needs to be checked for different timesteps than 1 month
-void UpdateMovingAveragesABC()
+void UpdateMovingAveragesABC(Context &ctx)
 {
 
     int nbtrees_abc = 0;
@@ -1284,7 +1284,7 @@ void UpdateMovingAveragesABC()
 // ##############################################
 //  Global ABC function: update DBH function for ABC routines
 // ##############################################
-void UpdateDBHtrackingABC()
+void UpdateDBHtrackingABC(Context &ctx)
 {
     for (int r = row_start; r < row_end; r++)
     {
@@ -3091,7 +3091,7 @@ void MPI_ShareSeed(unsigned char **c, int n)
 // ##############################################
 //  Global MPI function: Communication of fields
 // ##############################################
-void MPI_ShareField(unsigned short **cl, unsigned short ***cp, int n)
+void MPI_ShareField(Context &ctx, unsigned short **cl, unsigned short ***cp, int n)
 {
 
     MPI_Status status;
@@ -3137,7 +3137,7 @@ void MPI_ShareTreefall(unsigned short **c, int n)
 #endif
 
 //! Close outputs
-void CloseOutputs()
+void CloseOutputs(Context &ctx)
 {
     ctx.out.output_info.close();
     ctx.out.output_info.clear();
@@ -3173,12 +3173,10 @@ void CloseOutputs()
     }
 #endif
 #ifdef WATER
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 40; i++)
     {
         ctx.out.output[i].close();
         ctx.out.output[i].clear();
-        // output_water[i].close();
-        // output_water[i].clear();
     }
 #endif
 #ifdef TRACK_INDIVIDUALS
