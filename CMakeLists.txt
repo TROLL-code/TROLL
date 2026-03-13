@@ -21,6 +21,7 @@ add_compile_options(-w)
 add_executable(${PROJECT_NAME}
     src/troll.cpp
     src/species.cpp
+    src/crown.cpp
     src/lookUpTables_cache.cpp
     src/params/param_registry.cpp
 )

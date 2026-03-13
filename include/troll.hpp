@@ -72,8 +72,7 @@
 
 using namespace std;
 
-// FORWARD DECLARATIONS
-struct Context;
+#include "context.hpp"
 
 // Global Context instance — defined in troll.cpp
 extern Context ctx;
@@ -261,12 +260,94 @@ void GetDensityUniform(float LAI, float CD, float &dens_layer);                 
 int GetCrownIntarea(float radius);                                                                  //!< Global function: converts floating point crown area into integer value, imposing lower and upper limits
 float GetRadiusSlope(float CR, float crown_extent, float crown_position);                           //!< Global function: linear decrease of crown radius
 float GetRadiusCylinder(float CR, float crown_extent, float crown_position);                        //!< Global function: not currently used, but returns the input radius
-template <typename I, typename O, typename M, typename F>
-void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, float height, float CR, float CD, float fraction_filled_target, int shell_fromtop, float GetRadiusLayer(float, float, float), I CrownStatistic_input, O &CrownStatistic_output, M ModifyCrownStatistic_input, F UpdateCrownStatistic_output);
-//!< Global function: Template function to loop across crown layer and update
 template <typename I, typename O, typename F>
-void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int pos_start, int pos_end, float fraction_filled_target, float &fraction_filled_actual, int height_layer, I CrownStatistic_input, O &CrownStatistic_output, F UpdateCrownStatistic);
+void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int pos_start, int pos_end, float fraction_filled_target, float &fraction_filled_actual, int height_layer, I CrownStatistic_input, O &CrownStatistic_output, F UpdateCrownStatistic)
+{
+    for (int i = pos_start; i < pos_end; i++)
+    {
+        if (fraction_filled_actual > fraction_filled_target)
+        {
+            fraction_filled_actual = (fraction_filled_actual * float(i)) / (float(i) + 1.0);
+        }
+        else
+        {
+            fraction_filled_actual = (fraction_filled_actual * float(i) + 1.0) / (float(i) + 1.0);
+
+            int site_relative = ctx.lookup.LookUp_Crown_site[i];
+            int row, col;
+            row = row_center + site_relative / 51 - 25;
+            col = col_center + site_relative % 51 - 25;
+
+            if (row >= 0 && row < ctx.grid.rows && col >= 0 && col < ctx.grid.cols)
+            {
+                int site = col + ctx.grid.cols * row;
+                UpdateCrownStatistic(height_layer, site, CrownStatistic_input, CrownStatistic_output);
+            }
+        }
+    }
+}
 //!< Global function: Template function called by LoopLayerUpdateCrownStatistic_template
+
+template <typename I, typename O, typename M, typename F>
+void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, float height, float CR, float CD, float fraction_filled_target, int shell_fromtop, float GetRadiusLayer(float, float, float), I CrownStatistic_input, O &CrownStatistic_output, M ModifyCrownStatistic_input, F UpdateCrownStatistic_output)
+{
+    int crown_top = int(height);
+
+    // we start out with 0 actually filled voxels. As a result, the first voxel will always be filled
+    float fraction_filled_actual = 0.0;
+    if (CD <= 3.0)
+    {
+        I CrownStatistic_input_modified;
+        ModifyCrownStatistic_input(CrownStatistic_input, CrownStatistic_input_modified, CD, height, shell_fromtop);
+
+        int crown_intarea_previous = 0;
+        int crown_intarea = GetCrownIntarea(CR);
+        int layer_cylinder = crown_top - shell_fromtop;
+        CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, layer_cylinder, CrownStatistic_input_modified, CrownStatistic_output, UpdateCrownStatistic_output);
+    }
+    else
+    {
+        // This function computes the extent of the crown at every height ctx.diag.layer, given a specific function
+        // it separates out the innermost sector (a slowly increasing cylinder), and the surrounding parts of the crown
+        // first the metrics with respect to the internal crown structure (i.e. z coordinate with respect to crown base)
+        float crownshell_base = height - CD + 2.0;                   // lower reference point for the crown slope function is two layers up from the crown base
+        float crownshell_extent = height - crownshell_base;          // this is the extent from the "base ctx.diag.layer" to the top
+        float crownshell_extent_toplayer = floor(crownshell_extent); // this is the extent to the lower limit of the toplayer
+        // then we translate the crown coordinates into discretised variables with respect to the absolute location in the voxel field, as needed for location in the voxel field, with layers defined from top to bottom
+        int height_innermost = crown_top - shell_fromtop;
+        int height_toplayer = int(crownshell_base + crownshell_extent_toplayer) - shell_fromtop;
+        int height_baselayer = int(crownshell_base + 1.0) - shell_fromtop;
+
+        // now calculate the two modifications of the input statistic
+        I CrownStatistic_input_innermost;
+        I CrownStatistic_input_outer;
+
+        ModifyCrownStatistic_input(CrownStatistic_input, CrownStatistic_input_innermost, CD, height, shell_fromtop);
+        ModifyCrownStatistic_input(CrownStatistic_input, CrownStatistic_input_outer, CD, crownshell_base, shell_fromtop);
+
+        // now do calculations
+        // first the inner crown shell section that grows dynamically
+        int crown_intarea_previous = 0;
+
+        float radius_innermost = GetRadiusLayer(CR, crownshell_extent, crownshell_extent_toplayer);
+        int crown_intarea_innermost = GetCrownIntarea(radius_innermost);
+        CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea_innermost, fraction_filled_target, fraction_filled_actual, height_innermost, CrownStatistic_input_innermost, CrownStatistic_output, UpdateCrownStatistic_output);
+        crown_intarea_previous = crown_intarea_innermost;
+
+        // now loop through the outer crown shell cylinders
+        for (int h_outer = height_toplayer; h_outer >= height_baselayer; h_outer--)
+        {
+            // calculating the radius of the current ctx.diag.layer depending on the respective slopes, to be replaced by function
+            // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest ctx.diag.layer, i.e. h == height_baselayer, radius = t_CR
+            int extent_layerouter = h_outer - height_baselayer;
+            float radius_height = GetRadiusLayer(CR, crownshell_extent, extent_layerouter);
+            int crown_intarea = GetCrownIntarea(radius_height);
+            CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, h_outer, CrownStatistic_input_outer, CrownStatistic_output, UpdateCrownStatistic_output);
+            crown_intarea_previous = crown_intarea;
+        }
+    }
+}
+//!< Global function: Template function to loop across crown layer and update
 #endif
 
 float CalcVcmaxm(float lma, float nmass, float pmass);             //!< Returns Vcmaxm, in micromol C g-1 s-1
