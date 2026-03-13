@@ -137,12 +137,12 @@ int main(int argc, char *argv[])
 
     if (ctx.opt._OUTPUT_pointcloud)
     {
-        ReadInputPointcloud(); // parameters for point cloud generation, v.3.1.6
+        ReadInputPointcloud(ctx); // parameters for point cloud generation, v.3.1.6
     }
 
     if (ctx.opt._FromInventory)
     {
-        ReadInputInventory(); // Initial configuration of the forest, read from data
+        ReadInputInventory(ctx); // Initial configuration of the forest, read from data
     }
 
     cout << "klight is: " << ctx.params.klight << endl;

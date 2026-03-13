@@ -64,7 +64,7 @@ void AssignSpeciesParam(Species &S, const std::string &name, const std::string &
 }
 
 // added v.3.1.6
-void AssignValuePointcloud(string parameter_name, string parameter_value)
+void AssignValuePointcloud(Context &ctx, string parameter_name, string parameter_value)
 {
     // we set parameters to values that have been read, or to their defaults, if outside of range or not the right type
     bool quiet = 1; //! only applies to successful initialization, warnings are always given
@@ -218,7 +218,7 @@ void ReadInputGeneral(Context &ctx)
 }
 
 //! Global function: This function reads inputs from the species input file
-void ReadInputSpecies()
+void ReadInputSpecies(Context &ctx)
 {
     cout << endl
          << "Reading in file: " << ctx.fileio.inputfile_species << endl;
@@ -332,7 +332,7 @@ void ReadInputSpecies()
 #ifdef FULL_CLIMATE
 
 //! Global function: This function reads inputs from the environmental daily variation input file
-void ReadInputDailyvar()
+void ReadInputDailyvar(Context &ctx)
 {
     // currently very simple reading in, only basic error checking
     cout << endl
@@ -466,7 +466,7 @@ void ReadInputDailyvar()
 
 //! Global function: This function reads inputs from the environmental variation input file
 //! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
-void ReadInputClimate()
+void ReadInputClimate(Context &ctx)
 {
     cout << endl
          << "Reading in file: " << ctx.fileio.inputfile_climate << endl;
@@ -525,7 +525,7 @@ void ReadInputClimate()
 #else // FULL_CLIMATE
 
 //! Global function: This function reads inputs from the environmental daily variation input file
-void ReadInputDailyvar()
+void ReadInputDailyvar(Context &ctx)
 {
     // currently very simple reading in, only basic error checking
     cout << endl
@@ -586,7 +586,7 @@ void ReadInputDailyvar()
 
 //! Global function: This function reads inputs from the environmental variation input file
 //! - v.3.0 of the code suppose that environment is periodic (a period = a year), if one want to make climate vary, with interannual variation and climate change along the simulation, one just need to provide the full climate input of the whole simulation (ie number of columns=ctx.time.iter and not ctx.time.iterperyear) and change ctx.time.iterperyear by ctx.time.nbiter here.
-void ReadInputClimate()
+void ReadInputClimate(Context &ctx)
 {
     cout << endl
          << "Reading in file: " << ctx.fileio.inputfile_climate << endl;
@@ -670,7 +670,7 @@ void ReadInputClimate()
 //! Global function: This function reads inputs from the soil input file
 //! - in v.3.0, all soil parameters (ctx.soil.Sat_SWC, ctx.soil.Res_SWC) are computed from soil texture data (%clay, %silt, %sand) provided in input for each ctx.diag.layer. If additional information is available from the field (soil pH, organic content, dry bulk density, cation exchange capacity), this could be also provided in input and used to refine the computation of these soil parameters (see Table 2 in Marthews et al. 2014 Geoscientific Model Development and Hodnett & Tomasella 2002 Geoderma -- for tropical soils). Alternatively, if no local field soil data is available, these soil parameters (ctx.soil.Sat_SWC, ctx.soil.Res_SWC) should be drawn from global maps and databases --see Marthews et al. 2014, and directly provided in input. ==> ccl: to standardize the input file, the soil parameters (ctx.soil.Sat_SWC, ctx.soil.Res_SWC) should probably be provided in input, and the computation of those properties from the available local data (here %clay, %silt, %sand) made using a new function of RconTROLL (and not here)
 //! - ctx.soil.Sat_SWC and ctx.soil.Res_SWC are here computed according Tomasella & Hodnett 1998 from soil texture information (see Table 2 in Marthews et al. 2014)
-void ReadInputSoil()
+void ReadInputSoil(Context &ctx)
 {
     cout << endl
          << "Reading in file: " << ctx.fileio.inputfile_soil << endl;

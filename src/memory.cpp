@@ -336,17 +336,17 @@ void Initialise(Context &ctx)
 
     ctx.diag.nblivetrees = 0;
 
-    ReadInputSpecies();
+    ReadInputSpecies(ctx);
 #ifdef FULL_CLIMATE
-    ReadInputClimate();
-    ReadInputDailyvar();
+    ReadInputClimate(ctx);
+    ReadInputDailyvar(ctx);
 #else
-    ReadInputDailyvar();
-    ReadInputClimate();
+    ReadInputDailyvar(ctx);
+    ReadInputClimate(ctx);
 #endif
 
 #ifdef WATER
-    ReadInputSoil();
+    ReadInputSoil(ctx);
 #endif
 
     //** Initialization of trees **
@@ -462,7 +462,7 @@ void InitialiseABC()
 // ######################################
 //  added v.3.1.6
 
-void ReadInputPointcloud()
+void ReadInputPointcloud(Context &ctx)
 {
     cout << endl
          << "Reading in file: " << ctx.fileio.inputfile_pointcloud << endl;
@@ -492,7 +492,7 @@ void ReadInputPointcloud()
         // now we assign values
         for (int i = 0; i < nb_parameters; i++)
         {
-            AssignValuePointcloud(parameter_names[i], parameter_values[i]);
+            AssignValuePointcloud(ctx, parameter_names[i], parameter_values[i]);
         }
     }
 }
@@ -502,7 +502,7 @@ void ReadInputPointcloud()
 // ######################################
 
 // completely rewritten in v.3.1
-void ReadInputInventory()
+void ReadInputInventory(Context &ctx)
 {
 
     cout << endl

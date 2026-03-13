@@ -336,19 +336,19 @@ float QUAD(float A, float B, float C, int ROOT); //!< Returns solution of quadra
 
 // GLOBAL FUNCTIONS
 void AssignSpeciesParam(Species &S, const std::string &name, const std::string &value); //!< Global function: assign a species parameter by name
-void AssignValuePointcloud(std::string parameter_name, std::string parameter_value);    //!< Global function: assign a pointcloud parameter by name
+void AssignValuePointcloud(Context &ctx, std::string parameter_name, std::string parameter_value); //!< Global function: assign a pointcloud parameter by name
 void ReadInputGeneral(Context &ctx);                                //!< Global function: read in global parameter sheet
-void ReadInputSpecies(void);                                        //!< Global function: read in species parameter sheet
-void ReadInputDailyvar(void);                                       //!< Global function: read in daily climate variation
-void ReadInputClimate(void);                                        //!< Global function: read in climate data
-void ReadInputSoil(void);                                           //!< Global function: read in soil data
+void ReadInputSpecies(Context &ctx);                                //!< Global function: read in species parameter sheet
+void ReadInputDailyvar(Context &ctx);                               //!< Global function: read in daily climate variation
+void ReadInputClimate(Context &ctx);                                //!< Global function: read in climate data
+void ReadInputSoil(Context &ctx);                                   //!< Global function: read in soil data
 void Initialise(Context &ctx);                                      //!< Global function: initialisation with bare ground conditions
-void InitialiseIntraspecific(Context &ctx);                                 //!< Global function: initialise intraspecific variables
-void InitialiseLookUpLAImax(Context &ctx);                                  //!< Global function: initialise lookup table for LAImax
-void InitialiseLookUpTables(Context &ctx);                                  //!< Global function: initialise lookup tables
+void InitialiseIntraspecific(Context &ctx);                         //!< Global function: initialise intraspecific variables
+void InitialiseLookUpLAImax(Context &ctx);                          //!< Global function: initialise lookup table for LAImax
+void InitialiseLookUpTables(Context &ctx);                          //!< Global function: initialise lookup tables
 void InitialiseOutputStreams(void);                                 //!< Global function: initialisation of output streams
-void ReadInputInventory(void);                                      //!< Global function: updated in v.3.1: initialisation from inventories
-void ReadInputPointcloud(void);                                     //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
+void ReadInputInventory(Context &ctx);                              //!< Global function: updated in v.3.1: initialisation from inventories
+void ReadInputPointcloud(Context &ctx);                             //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
 void AllocMem(Context &ctx);                                        //!< Global function: Field dynamic memory allocation
 void Evolution(Context &ctx);                                       //!< Global function: Evolution at each timestep
 void UpdateSeeds(void);                                             //!< Global function: Compute field Seed
