@@ -357,7 +357,13 @@ float QUAD(float A, float B, float C, int ROOT); //!< Returns solution of quadra
 #endif
 
 // GLOBAL FUNCTIONS
+void AssignSpeciesParam(Species &S, const std::string &name, const std::string &value); //!< Global function: assign a species parameter by name
+void AssignValuePointcloud(std::string parameter_name, std::string parameter_value);    //!< Global function: assign a pointcloud parameter by name
 void ReadInputGeneral(Context &ctx);                                //!< Global function: read in global parameter sheet
+void ReadInputSpecies(void);                                        //!< Global function: read in species parameter sheet
+void ReadInputDailyvar(void);                                       //!< Global function: read in daily climate variation
+void ReadInputClimate(void);                                        //!< Global function: read in climate data
+void ReadInputSoil(void);                                           //!< Global function: read in soil data
 void Initialise(Context &ctx);                                      //!< Global function: initialisation with bare ground conditions
 void InitialiseIntraspecific(void);                                 //!< Global function: initialise intraspecific variables
 void InitialiseLookUpLAImax(void);                                  //!< Global function: initialise lookup table for LAImax
