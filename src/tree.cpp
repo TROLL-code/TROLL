@@ -1379,7 +1379,7 @@ float Tree::DeathRate(float dbh, float carbon_starv, float phi_root)
     if (phi_root < (t_phi_lethal))
         dr += 1.0 / ctx.time.timestep;
     if (ctx.time.iter == int(ctx.time.nbiter - 1))
-        output[26] << t_wsg << "\t" << basal << "\t" << dbh << "\t" << dr << "\n";
+        ctx.out.output[26] << t_wsg << "\t" << basal << "\t" << dbh << "\t" << dr << "\n";
 
     /*if (ctx.time.iter>=622 && dr*ctx.time.timestep>=0.8) {
         cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*ctx.time.timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; S[t_sp_lab].s_phi_lethal=" << S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
@@ -2485,24 +2485,24 @@ void Tree::Growth()
 
 #ifdef WATER
     if (ctx.time.iter == (ctx.time.nbiter - 90))
-        OutputTreeStandard(output[28]);
+        OutputTreeStandard(ctx.out.output[28]);
     if (ctx.time.iter == (ctx.time.nbiter - 45))
-        OutputTreeStandard(output[29]);
+        OutputTreeStandard(ctx.out.output[29]);
     if (ctx.time.iter == (ctx.time.nbiter - 1))
-        OutputTreeStandard(output[30]);
+        OutputTreeStandard(ctx.out.output[30]);
 
     if (t_site == 4)
-        OutputTreeStandard(output[12]);
+        OutputTreeStandard(ctx.out.output[12]);
     if (t_site == 10380)
-        OutputTreeStandard(output[13]);
+        OutputTreeStandard(ctx.out.output[13]);
     if (t_site == 100950)
-        OutputTreeStandard(output[14]);
+        OutputTreeStandard(ctx.out.output[14]);
     if (t_site == 12090)
-        OutputTreeStandard(output[15]);
+        OutputTreeStandard(ctx.out.output[15]);
     if (t_site == 120090)
-        OutputTreeStandard(output[16]);
+        OutputTreeStandard(ctx.out.output[16]);
     if (t_site == 150667)
-        OutputTreeStandard(output[17]);
+        OutputTreeStandard(ctx.out.output[17]);
 #endif
 }
 
@@ -2962,10 +2962,10 @@ void Tree::Death()
         float agb = 1000.0 * CalcAGB();
         if (t_dbh >= 0.1)
         {
-            output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t" << t_height - t_height_tracked << "\t" << t_CR << "\t" << t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear << "\t" << t_carbon_storage_avgyear << endl;
+            ctx.out.output_track[1] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced_sumyear << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation_year << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_dbh - t_dbh_tracked << "\t" << t_height << "\t" << t_height - t_height_tracked << "\t" << t_CR << "\t" << t_CR - t_CR_tracked << "\t" << agb << "\t" << agb - t_agb_tracked << "\t" << t_GPP_sumyear << "\t" << t_GPPsquared_sumyear << "\t" << t_NPP_sumyear << "\t" << t_NPPsquared_sumyear << "\t" << t_Rday_sumyear << "\t" << t_Rnight_sumyear << "\t" << t_Rstem_sumyear << "\t" << t_LAIabove_effavgyear << "\t" << t_carbon_storage_avgyear << endl;
         }
 
-        output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum << "\t" << t_LAIeffsquared_cum << endl;
+        ctx.out.output_track[2] << t_site << "\t" << t_timeofyear_born << "\t" << ctx.time.iter << "\t" << t_age << "\t" << t_seedsproduced << "\t" << t_time_carbonstarvation << "\t" << t_dbh << "\t" << t_height << "\t" << t_CR << "\t" << agb << "\t" << t_GPPcum << "\t" << t_NPPcum << "\t" << t_LAIcum << "\t" << t_LAIeffcum << "\t" << t_GPPsquared_cum << "\t" << t_NPPsquared_cum << "\t" << t_LAIsquared_cum << "\t" << t_LAIeffsquared_cum << endl;
     }
 #endif
 
@@ -2975,7 +2975,7 @@ void Tree::Death()
         if (t_dbh * ctx.grid.LH >= 0.01 && t_inInventory == 1)
         {
             float agb = 0.5 * CalcAGB(); // in kg C
-            output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+            ctx.out.output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             t_inInventory = 0;
         }
     }
@@ -3009,11 +3009,11 @@ void Tree::Death()
     if (ctx.opt._OUTPUT_extended)
     {
         if (ctx.time.iter == 2)
-            output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
+            ctx.out.output[23] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
         if (ctx.time.iter == int(ctx.time.nbiter / 2))
-            output[24] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
+            ctx.out.output[24] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
         if (ctx.time.iter == int(ctx.time.nbiter - 1))
-            output[25] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
+            ctx.out.output[25] << "N\t" << t_sp_lab << "\t" << t_dbh << "\t" << t_age << "\t" << t_height << "\n";
     }
 
     t_sp_lab = 0;
@@ -3229,7 +3229,7 @@ void Tree::Average()
             if (t_dbh * ctx.grid.LH >= 0.01)
             {
                 t_inInventory = 1;
-                output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+                ctx.out.output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             }
         }
 #endif
@@ -3346,7 +3346,7 @@ float Tree::StartTracking()
         t_CR_tracked = t_CR;
         t_agb_tracked = 1000.0 * CalcAGB();
 
-        output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site % ctx.grid.cols << "\t" << t_site / ctx.grid.cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
+        ctx.out.output_track[0] << t_site << "\t" << t_timeofyear_born << "\t" << t_site % ctx.grid.cols << "\t" << t_site / ctx.grid.cols << "\t" << t_s->s_name << "\t" << t_dbh << "\t" << t_CR << "\t" << t_height << "\t" << t_agb_tracked << "\t" << t_mult_CR << "\t" << t_mult_height << "\t" << t_wsg << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_LMA << "\t" << t_dev_wsg << "\t" << t_mult_N << "\t" << t_mult_P << "\t" << t_mult_LMA << "\t" << t_Vcmax << "\t" << t_Jmax << "\t" << t_Rdark << "\t" << t_LAImax << "\t" << t_leaflifespan << endl;
     }
 }
 #endif

@@ -12,25 +12,7 @@ int mpi_rank = 0;
 int mpi_size = 0;
 int easympi_rank = 0;
 
-// Output file streams
-fstream output_info;
-fstream output_basic[4];
-fstream output_extended[9];
-fstream output_visual[2];
-fstream output_pointcloud;
-#ifdef MIP_Lichstein
-fstream output_MIP_eco;
-fstream output_MIP_ind;
-#endif
-#ifdef Output_ABC
-fstream output_abc[11];
-#endif
-#ifdef WATER
-fstream output[40];
-#endif
-#ifdef TRACK_INDIVIDUALS
-fstream output_track[3];
-#endif
+// Output file streams → moved to ctx.out (OutputConfig in context.hpp)
 
 // Species constructor and Species::Init() → moved to src/species.cpp
 
@@ -140,8 +122,8 @@ int main(int argc, char *argv[])
 
     cout << "On proc #" << easympi_rank << " seed: " << seed << endl;
     sprintf(ctx.fileio.outputinfo, "%s_%i_info.txt", ctx.buffers.buf, easympi_rank);
-    output_info.open(ctx.fileio.outputinfo, ios::out);
-    if (!output_info)
+    ctx.out.output_info.open(ctx.fileio.outputinfo, ios::out);
+    if (!ctx.out.output_info)
         cerr << "ERROR with info file" << endl;
 
     Initialise(ctx); // Read global parameters
@@ -200,25 +182,25 @@ int main(int argc, char *argv[])
     //******************************
     if (!mpi_rank)
     {
-        output_info << "\nTROLL simulator\n\n";
-        output_info << "\n   2D discrete network: horizontal step = " << ctx.grid.LH
+        ctx.out.output_info << "\nTROLL simulator\n\n";
+        ctx.out.output_info << "\n   2D discrete network: horizontal step = " << ctx.grid.LH
                     << " m, one tree per " << ctx.grid.LH * ctx.grid.LH << " m^2 \n\n";
-        output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
-        output_info << "\n            + one species label \n\n";
-        output_info << " Number of sites      : " << ctx.grid.rows << "x" << ctx.grid.cols << "\n";
-        output_info << " Number of iterations : " << ctx.time.nbiter << "\n";
-        output_info << " Duration of timestep : " << ctx.time.timestep << " years\n";
-        output_info << " Number of Species    : " << ctx.grid.nbspp << "\n\n";
-        output_info.flush();
+        ctx.out.output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
+        ctx.out.output_info << "\n            + one species label \n\n";
+        ctx.out.output_info << " Number of sites      : " << ctx.grid.rows << "x" << ctx.grid.cols << "\n";
+        ctx.out.output_info << " Number of iterations : " << ctx.time.nbiter << "\n";
+        ctx.out.output_info << " Duration of timestep : " << ctx.time.timestep << " years\n";
+        ctx.out.output_info << " Number of Species    : " << ctx.grid.nbspp << "\n\n";
+        ctx.out.output_info.flush();
     }
 
     // initial pattern, should be empty, unless an inventory has been provided
     if (ctx.opt._OUTPUT_extended & !ctx.opt._OUTPUT_inventory)
-        OutputSnapshot(output_basic[1], 1, 0.01); // Initial Pattern, for trees > 0.01m DBH
+        OutputSnapshot(ctx.out.output_basic[1], 1, 0.01); // Initial Pattern, for trees > 0.01m DBH
     else if (ctx.opt._OUTPUT_inventory)
-        OutputSnapshot(output_basic[1], 1, 0.001);
+        OutputSnapshot(ctx.out.output_basic[1], 1, 0.001);
     else
-        OutputSnapshot(output_basic[1], 1, 0.1); // Initial Pattern, for trees > 0.1m DBH
+        OutputSnapshot(ctx.out.output_basic[1], 1, 0.1); // Initial Pattern, for trees > 0.1m DBH
 
     double start_time, stop_time, duration = 0.0; // for simulation duration
     stop_time = clock();
@@ -238,7 +220,7 @@ int main(int argc, char *argv[])
         }
 
         /*if(ctx.opt._OUTPUT_pointcloud > 0 && ctx.time.iter == ctx.pc.iter_pointcloud_generation){
-            ExportPointcloud(ctx.pc.mean_beam_pc, ctx.pc.sd_beam_pc, ctx.pc.klaser_pc, ctx.pc.transmittance_laser, output_pointcloud); // v.3.1.6
+            ExportPointcloud(ctx.pc.mean_beam_pc, ctx.pc.sd_beam_pc, ctx.pc.klaser_pc, ctx.pc.transmittance_laser, ctx.out.output_pointcloud); // v.3.1.6
         }*/
 
 #ifdef Output_ABC
@@ -265,31 +247,31 @@ int main(int argc, char *argv[])
     // final pattern
     if (ctx.opt._OUTPUT_extended & !ctx.opt._OUTPUT_inventory)
     {
-        OutputSnapshot(output_basic[2], 1, 0.01); // Final Pattern, for trees > 0.01m DBH
+        OutputSnapshot(ctx.out.output_basic[2], 1, 0.01); // Final Pattern, for trees > 0.01m DBH
     }
     else if (ctx.opt._OUTPUT_inventory)
     {
-        OutputSnapshot(output_basic[2], 1, 0.001);
+        OutputSnapshot(ctx.out.output_basic[2], 1, 0.001);
     }
     else
     {
-        OutputSnapshot(output_basic[2], 1, 0.1); // Final Pattern, for trees > 0.1m DBH
+        OutputSnapshot(ctx.out.output_basic[2], 1, 0.1); // Final Pattern, for trees > 0.1m DBH
     }
     if (ctx.opt._OUTPUT_extended)
     {
-        OutputLAI(output_extended[7]);
-        OutputCHM(output_extended[8]);
+        OutputLAI(ctx.out.output_extended[7]);
+        OutputCHM(ctx.out.output_extended[8]);
     }
     if (ctx.opt._OUTPUT_inventory)
     {
         for (int d = 0; d < ctx.grid.nbdcells; d = d + 1)
         {
-            output_basic[3] << d;
+            ctx.out.output_basic[3] << d;
             for (int l = 0; l < ctx.soil.nblayers_soil; l = l + 1)
             {
-                output_basic[3] << "\t" << ctx.soil.SWC3D[l][d];
+                ctx.out.output_basic[3] << "\t" << ctx.soil.SWC3D[l][d];
             }
-            output_basic[3] << endl;
+            ctx.out.output_basic[3] << endl;
         }
     }
 
@@ -304,11 +286,11 @@ int main(int argc, char *argv[])
     {
         cout << "\n";
 #ifdef MPI
-        output_info << "Number of processors : " << mpi_size << "\n";
+        ctx.out.output_info << "Number of processors : " << mpi_size << "\n";
 #endif
-        output_info << "Average computation time : " << durf / float(mpi_size) << " seconds.\n";
-        output_info << "End of simulation.\n";
-        output_info.flush();
+        ctx.out.output_info << "Average computation time : " << durf / float(mpi_size) << " seconds.\n";
+        ctx.out.output_info << "End of simulation.\n";
+        ctx.out.output_info.flush();
         cout << "\nNumber of processors : " << mpi_size << "\n";
         cout << "Average computation time : " << durf / float(mpi_size) << " seconds.\n";
         cout << "End of simulation.\n";

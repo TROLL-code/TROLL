@@ -78,29 +78,7 @@ using namespace std;
 extern Context ctx;
 
 // FileIO and InputBuffers migrated to ctx.fileio / ctx.buffers
-
-// FILE OUTPUT STREAMS. Updated in v.3.1 to reduce number of streams and increase clarity
-extern fstream output_info;        //!< Global variable:  basic simulation information
-extern fstream output_basic[4];    //!< Global variable:  default output streams, always used
-extern fstream output_extended[9]; //!< Global variable:  extended TROLL outputs, preserved from previous versions, might need further clean-up
-extern fstream output_visual[2];   //!< Global variable: outputs for visualization/gif creation, new in v.3.1.2
-extern fstream output_pointcloud;  //!< Global variable: optional las file output, new in v.3.1.6
-#ifdef MIP_Lichstein
-extern fstream output_MIP_eco;
-extern fstream output_MIP_ind;
-#endif
-
-#ifdef Output_ABC
-extern fstream output_abc[11]; //!< Global variable: output streams for Approximate Bayesian Computation
-#endif
-
-#ifdef WATER
-extern fstream output[40]; //!< Global variable: output files
-#endif
-
-#ifdef TRACK_INDIVIDUALS
-extern fstream output_track[3]; //!< Global variable: output streams for tracking of trees
-#endif
+// FILE OUTPUT STREAMS migrated to ctx.out (OutputConfig in context.hpp)
 
 // USER CONTROLS migrated to ctx.opt:
 // _NONRANDOM, _GPPcrown, _BASICTREEFALL, _SEEDTRADEOFF, _NDD, _CROWN_MM,

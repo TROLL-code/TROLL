@@ -1,6 +1,7 @@
 #ifndef TROLL_CONTEXT_HPP
 #define TROLL_CONTEXT_HPP
 
+#include <fstream>
 #include <vector>
 #include <string>
 #include <gsl/gsl_rng.h>
@@ -40,12 +41,24 @@ struct InputBuffers
 
 struct OutputConfig
 {
-    int output_info;
-    int output_basic[4];
-    int output_extended[9];
-    int output_visual[2];
-    int output_pointcloud;
-    int output[40];
+    std::fstream output_info;
+    std::fstream output_basic[4];
+    std::fstream output_extended[9];
+    std::fstream output_visual[2];
+    std::fstream output_pointcloud;
+#ifdef MIP_Lichstein
+    std::fstream output_MIP_eco;
+    std::fstream output_MIP_ind;
+#endif
+#ifdef Output_ABC
+    std::fstream output_abc[11];
+#endif
+#ifdef WATER
+    std::fstream output[40];
+#endif
+#ifdef TRACK_INDIVIDUALS
+    std::fstream output_track[3];
+#endif
 };
 
 struct ModelOptions
@@ -368,7 +381,6 @@ struct Context
 {
     FileIO fileio;
     InputBuffers buffers;
-    OutputConfig out;
     ModelOptions opt;
     Grid grid;
     TimeState time;
@@ -383,6 +395,7 @@ struct Context
     CrownGeometry crown;
     SimParams params;
     SimFields field;
+    OutputConfig out;   // last: large fstream objects, accessed rarely
 };
 
 #endif

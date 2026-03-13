@@ -66,16 +66,16 @@ void Average(void)
             litterfall += S[spp].s_litterfall;
 
             // if(ctx.opt._OUTPUT_extended){
-            output_extended[0] << ctx.time.iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
+            ctx.out.output_extended[0] << ctx.time.iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
             //}
         }
 
-        output_basic[0] << ctx.time.iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
+        ctx.out.output_basic[0] << ctx.time.iter << "\t" << sum1 << "\t" << sum10 << "\t" << sum30 << "\t" << ba << "\t" << ba10 << "\t" << agb << "\t" << gpp << "\t" << npp << "\t" << rday << "\t" << rnight << "\t" << rstem << "\t" << litterfall << endl;
 
 #ifdef MIP_Lichstein
         if ((!ctx.opt._FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || ctx.opt._FromInventory)
         {
-            output_MIP_eco << ctx.time.iter << "\t" << ctx.time.iter << "\t" << ctx.time.iter << "\t" << gpp * 100 << "\t" << npp * 100 << "\t";
+            ctx.out.output_MIP_eco << ctx.time.iter << "\t" << ctx.time.iter << "\t" << ctx.time.iter << "\t" << gpp * 100 << "\t" << npp * 100 << "\t";
         }
 #endif
 
@@ -101,12 +101,12 @@ void Average(void)
             tototest /= float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH); // Average light flux (PPFD) on the ground
             tototest2 /= float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH);
             if (ctx.time.iter)
-                output_extended[1] << ctx.time.iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
+                ctx.out.output_extended[1] << ctx.time.iter << "\tMean PPFDground\t" << tototest << "\t" << sqrt(tototest2 - tototest * tototest) << "\n";
 
             if (ctx.opt._BASICTREEFALL)
-                output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << "\t" << ctx.diag.nbTreefall1 * inbhectares << "\t" << ctx.diag.nbTreefall10 * inbhectares << endl;
+                ctx.out.output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << "\t" << ctx.diag.nbTreefall1 * inbhectares << "\t" << ctx.diag.nbTreefall10 * inbhectares << endl;
             else
-                output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << endl;
+                ctx.out.output_extended[2] << ctx.time.iter << "\t" << ctx.diag.nbdead_n1 * inbhectares << "\t" << ctx.diag.nbdead_n10 * inbhectares << endl;
         }
     }
 
@@ -198,8 +198,8 @@ void Average(void)
     lai *= icells;
     ctx.soil.transpiration_1016 *= isites;
 
-    output[11] << ctx.time.iter << "\t" << ctx.climate.precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
-    output[21] << ctx.time.iter << "\t" << lai << endl;
+    ctx.out.output[11] << ctx.time.iter << "\t" << ctx.climate.precip << "\t" << interception << "\t" << throughfall << "\t" << runoff << "\t" << leak << "\t" << evapo << "\t";
+    ctx.out.output[21] << ctx.time.iter << "\t" << lai << endl;
 
 #ifdef MIP_Lichstein
     float transpitot = 0.0;
@@ -213,7 +213,7 @@ void Average(void)
             transpi += ctx.soil.Transpiration[l][d]; // in m3
         }
         transpi *= isites; // in ctx.params.m
-        output[11] << transpi << "\t";
+        ctx.out.output[11] << transpi << "\t";
         cout << transpi * 1000 << " | "; // in mm
 
 #ifdef MIP_Lichstein
@@ -221,14 +221,14 @@ void Average(void)
 #endif
     }
 
-    output[11] << ctx.soil.transpiration_1016 << "\t";
+    ctx.out.output[11] << ctx.soil.transpiration_1016 << "\t";
 
     cout << ctx.soil.transpiration_1016 * 1000 << " | " << endl;
 
 #ifdef MIP_Lichstein
     if ((!ctx.opt._FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || ctx.opt._FromInventory)
     {
-        output_MIP_eco << (transpitot + evapo) * 1000 << "\t" << lai << "\t" << litterfall * 0.5 * 100 << "\t";
+        ctx.out.output_MIP_eco << (transpitot + evapo) * 1000 << "\t" << lai << "\t" << litterfall * 0.5 * 100 << "\t";
     }
 
     float SW1 = 0.0, SW2 = 0.0, SW3 = 0.0, SW4 = -9999; // Guyaflux
@@ -247,7 +247,7 @@ void Average(void)
         float layer_depth_current = ctx.soil.layer_depth[l];
         float layer_thickness = layer_depth_current - layer_depth_previous;
         soilWC *= isites / layer_thickness; // in m3/m3
-        output[11] << soilWC << "\t";
+        ctx.out.output[11] << soilWC << "\t";
 
 #ifdef MIP_Lichstein
         if (l == 0 || l == 1)
@@ -294,10 +294,10 @@ void Average(void)
             soilPhi += ctx.soil.soil_phi3D[l][d]; // in MPa
         }
         soilPhi *= icells; // in MPa
-        output[11] << soilPhi << "\t";
+        ctx.out.output[11] << soilPhi << "\t";
     }
 
-    output[11] << "\n";
+    ctx.out.output[11] << "\n";
 
 #ifdef MIP_Lichstein
     SW1 /= LT1;
@@ -307,7 +307,7 @@ void Average(void)
 
     if ((!ctx.opt._FromInventory && ctx.time.iter >= (ctx.time.nbiter - 100 * ctx.time.iterperyear)) || ctx.opt._FromInventory)
     {
-        output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
+        ctx.out.output_MIP_eco << SW1 << "\t" << SW2 << "\t" << SW3 << "\t" << SW4 << endl;
     }
 #endif
 
@@ -334,19 +334,19 @@ void Average(void)
             o_wfluxes = 20;
         }
 
-        output[o_wfluxes] << "LAI" << "\t";
+        ctx.out.output[o_wfluxes] << "LAI" << "\t";
         for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
-            output[o_wfluxes] << ctx.soil.LAI_DCELL[0][d] << "\t";
+            ctx.out.output[o_wfluxes] << ctx.soil.LAI_DCELL[0][d] << "\t";
         }
-        output[o_wfluxes] << endl;
+        ctx.out.output[o_wfluxes] << endl;
 
-        output[o_wfluxes] << "Evaporation" << "\t";
+        ctx.out.output[o_wfluxes] << "Evaporation" << "\t";
         for (int d = 0; d < ctx.grid.nbdcells; d++)
         {
-            output[o_wfluxes] << ctx.soil.Evaporation[d] * ctx.grid.i_sites_per_dcell << "\t"; // in ctx.params.m
+            ctx.out.output[o_wfluxes] << ctx.soil.Evaporation[d] * ctx.grid.i_sites_per_dcell << "\t"; // in ctx.params.m
         }
-        output[o_wfluxes] << endl;
+        ctx.out.output[o_wfluxes] << endl;
 
         layer_depth_previous = 0.0;
         for (int l = 0; l < ctx.soil.nblayers_soil; l++)
@@ -354,46 +354,46 @@ void Average(void)
             float layer_depth_current = ctx.soil.layer_depth[l];
             float layer_thickness = layer_depth_current - layer_depth_previous;
             float norm = ctx.grid.i_sites_per_dcell / layer_thickness;
-            output[o_swc] << l << "\t";
-            output[o_swp] << l << "\t";
-            output[o_wfluxes] << "Transpiration_" << l << "\t";
+            ctx.out.output[o_swc] << l << "\t";
+            ctx.out.output[o_swp] << l << "\t";
+            ctx.out.output[o_wfluxes] << "Transpiration_" << l << "\t";
             for (int d = 0; d < ctx.grid.nbdcells; d++)
             {
-                output[o_swc] << ctx.soil.SWC3D[l][d] * norm << "\t"; // in m3/m3
-                output[o_swp] << ctx.soil.soil_phi3D[l][d] << "\t";
-                output[o_wfluxes] << ctx.soil.Transpiration[l][d] * ctx.grid.i_sites_per_dcell << "\t";
+                ctx.out.output[o_swc] << ctx.soil.SWC3D[l][d] * norm << "\t"; // in m3/m3
+                ctx.out.output[o_swp] << ctx.soil.soil_phi3D[l][d] << "\t";
+                ctx.out.output[o_wfluxes] << ctx.soil.Transpiration[l][d] * ctx.grid.i_sites_per_dcell << "\t";
             }
             layer_depth_previous = layer_depth_current;
-            output[o_swc] << endl;
-            output[o_swp] << endl;
-            output[o_wfluxes] << endl;
+            ctx.out.output[o_swc] << endl;
+            ctx.out.output[o_swp] << endl;
+            ctx.out.output[o_wfluxes] << endl;
         }
     }
 
-    output[22] << ctx.time.iter << "\t";
-    output[23] << ctx.time.iter << "\t";
-    output[24] << ctx.time.iter << "\t";
+    ctx.out.output[22] << ctx.time.iter << "\t";
+    ctx.out.output[23] << ctx.time.iter << "\t";
+    ctx.out.output[24] << ctx.time.iter << "\t";
     for (int l = 0; l < ctx.grid.HEIGHT + 1; l++)
     {
         ctx.soil.LAI_young[l] *= isites;
         ctx.soil.LAI_mature[l] *= isites;
         ctx.soil.LAI_old[l] *= isites;
-        output[22] << ctx.soil.LAI_young[l] << "\t";
-        output[23] << ctx.soil.LAI_mature[l] << "\t";
-        output[24] << ctx.soil.LAI_old[l] << "\t";
+        ctx.out.output[22] << ctx.soil.LAI_young[l] << "\t";
+        ctx.out.output[23] << ctx.soil.LAI_mature[l] << "\t";
+        ctx.out.output[24] << ctx.soil.LAI_old[l] << "\t";
         ctx.soil.LAI_young[l] = 0.0;
         ctx.soil.LAI_mature[l] = 0.0;
         ctx.soil.LAI_old[l] = 0.0;
     }
-    output[22] << endl;
-    output[23] << endl;
-    output[24] << endl;
+    ctx.out.output[22] << endl;
+    ctx.out.output[23] << endl;
+    ctx.out.output[24] << endl;
 
     ctx.soil.abund_phi_root *= inbhectares / sum1;
     ctx.soil.abund10_phi_root *= inbhectares / sum10;
     ctx.soil.agb_phi_root *= inbhectares / agb;
 
-    output[31] << ctx.time.iter << "\t" << ctx.soil.abund_phi_root << "\t" << ctx.soil.abund10_phi_root << "\t" << ctx.soil.agb_phi_root << endl;
+    ctx.out.output[31] << ctx.time.iter << "\t" << ctx.soil.abund_phi_root << "\t" << ctx.soil.abund10_phi_root << "\t" << ctx.soil.agb_phi_root << endl;
 
 #endif
 
@@ -441,15 +441,15 @@ void OutputField()
 #endif
         if (!mpi_rank)
         {
-            // output of the dbh histograms (output[31])
+            // output of the dbh histograms (ctx.out.output[31])
             for (d = 1; d < ctx.grid.dbhmaxincm; d++)
-                output[31] << d << "\t" << ctx.diag.nbdbh[d] << "\n";
-            output[31] << "\n";
-            // output of the mean LAI per height class (output[32])
+                ctx.out.output[31] << d << "\t" << ctx.diag.nbdbh[d] << "\n";
+            ctx.out.output[31] << "\n";
+            // output of the mean LAI per height class (ctx.out.output[32])
             float norm = 1.0 / float(ctx.grid.sites * ctx.grid.LH * ctx.grid.LH * mpi_size);
             for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
-                output[32] << ctx.time.iter << "\t" << h * ctx.grid.LV << "\t" << ctx.diag.layer[h] * norm << "\n";
-            output[32] << "\n";
+                ctx.out.output[32] << ctx.time.iter << "\t" << h * ctx.grid.LV << "\t" << ctx.diag.layer[h] * norm << "\n";
+            ctx.out.output[32] << "\n";
         }
     }
 }
@@ -644,7 +644,7 @@ void OutputVisual()
                 if (ctx.field.LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
+            ctx.out.output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << chm_spikefree[site] << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #else
@@ -659,7 +659,7 @@ void OutputVisual()
                 if (ctx.field.LAI3D[h][site + ctx.grid.SBORD] > 0.0)
                     height_canopy = max(h, height_canopy);
             }
-            output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
+            ctx.out.output_visual[0] << ctx.time.iter << "\t" << row << "\t" << col << "\t" << height_canopy + 1 << "\t" << ctx.field.LAI3D[0][site + ctx.grid.SBORD] << endl;
         }
     }
 #endif
@@ -896,45 +896,45 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
 //    val = dst.val;
 //}
 
-/* void ExportPointcloudHeader(vector<int> &beams, fstream& output_pointcloud){
+/* void ExportPointcloudHeader(vector<int> &beams, fstream& ctx.out.output_pointcloud){
     // las files are defined as little endian
     // for the moment, we assume a little endian system and that chars actually have 8 bits (1 byte)
     // all names are just LAS definition names with underscores
     // future versions should upgrade format to 1.4, and include ways to parameterize coordinate reference system, etc.
 
     char file_signature[5] = "LASF";
-    output_pointcloud.write(file_signature, sizeof(file_signature) - 1); // remove terminating NULL in char
+    ctx.out.output_pointcloud.write(file_signature, sizeof(file_signature) - 1); // remove terminating NULL in char
 
     uint16_t file_source_id = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&file_source_id), sizeof(file_source_id));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&file_source_id), sizeof(file_source_id));
 
     uint16_t global_encoding = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&global_encoding), sizeof(global_encoding));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&global_encoding), sizeof(global_encoding));
 
     uint32_t project_id_guid_data_1 = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_1), sizeof(project_id_guid_data_1));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_1), sizeof(project_id_guid_data_1));
 
     uint16_t project_id_guid_data_2 = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_2), sizeof(project_id_guid_data_2));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_2), sizeof(project_id_guid_data_2));
 
     uint16_t project_id_guid_data_3 = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_3), sizeof(project_id_guid_data_3));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_3), sizeof(project_id_guid_data_3));
 
     unsigned char project_id_guid_data_4[9] = "";
-    output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_4), sizeof(project_id_guid_data_4) - 1);
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&project_id_guid_data_4), sizeof(project_id_guid_data_4) - 1);
 
     unsigned char version_major = 1;    // this is slightly weird: why were these not simply defined as uint8_t in LAS specification? Or is "unsigned char" short for uint8_t? Because there is also an ascii char reserved for numbers (e.g. "1" corresponds to char = 49)
-    output_pointcloud.write(reinterpret_cast<const char *>(&version_major), sizeof(version_major));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&version_major), sizeof(version_major));
 
     unsigned char version_minor = 2;    // this is slightly weird: why were these not simply defined as uint8_t in LAS specification? Or is "unsigned char" short for uint8_t? Because there is also an ascii char reserved for numbers (e.g. "1" corresponds to char = 49)
-    output_pointcloud.write(reinterpret_cast<const char *>(&version_minor), sizeof(version_minor));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&version_minor), sizeof(version_minor));
 
     char system_identifier[33];
     sprintf(system_identifier,"ALS simulator");
-    output_pointcloud.write(system_identifier, sizeof(system_identifier) - 1); // remove terminating NULL in char
+    ctx.out.output_pointcloud.write(system_identifier, sizeof(system_identifier) - 1); // remove terminating NULL in char
 
     char generating_software[33] = "TROLL v.3.1.6+ forest simulator";
-    output_pointcloud.write(generating_software, sizeof(generating_software) - 1); // remove terminating NULL in char
+    ctx.out.output_pointcloud.write(generating_software, sizeof(generating_software) - 1); // remove terminating NULL in char
 
     // get current day and year, cf. https://www.tutorialspoint.com/cplusplus/cpp_date_time.htm
     time_t now = time(0);
@@ -943,24 +943,24 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
     uint16_t file_creation_day_of_year = ltm->tm_yday;
     uint16_t file_creation_year = 1900 + ltm->tm_year;
 
-    output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_day_of_year), sizeof(file_creation_day_of_year));
-    output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_year), sizeof(file_creation_year));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_day_of_year), sizeof(file_creation_day_of_year));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&file_creation_year), sizeof(file_creation_year));
 
     uint16_t header_size = 227;
-    output_pointcloud.write(reinterpret_cast<const char *>(&header_size), sizeof(header_size));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&header_size), sizeof(header_size));
 
     uint32_t offset_to_point_data = 227;
-    output_pointcloud.write(reinterpret_cast<const char *>(&offset_to_point_data), sizeof(offset_to_point_data));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&offset_to_point_data), sizeof(offset_to_point_data));
 
     uint32_t number_of_variable_length_records = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&number_of_variable_length_records), sizeof(number_of_variable_length_records));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&number_of_variable_length_records), sizeof(number_of_variable_length_records));
 
     unsigned char point_data_format_ID = 0; // no GPS time needed
-    output_pointcloud.write(reinterpret_cast<const char *>(&point_data_format_ID), sizeof(point_data_format_ID));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&point_data_format_ID), sizeof(point_data_format_ID));
 
     // each record in format 0 has 20 bytes (12 for coordinates, 2 for intensity, 6 for other information)
     uint16_t point_data_record_length = 20;
-    output_pointcloud.write(reinterpret_cast<const char *>(&point_data_record_length), sizeof(point_data_record_length));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&point_data_record_length), sizeof(point_data_record_length));
 
     // calculate the number of returns per return number
     int nb_perreturn[5] = {0};
@@ -978,44 +978,44 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
     cout << "Sampled " << nb_beams << " pulses, creating " << nb_returns << " returns." << endl;
 
     uint32_t number_of_point_records = nb_returns;
-    output_pointcloud.write(reinterpret_cast<const char *>(&number_of_point_records), sizeof(number_of_point_records));
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&number_of_point_records), sizeof(number_of_point_records));
 
     for(int i = 0; i < 5; i++){
         uint32_t number_of_points_by_return = nb_perreturn[i];
-        output_pointcloud.write(reinterpret_cast<const char *>(&number_of_points_by_return), sizeof(number_of_points_by_return));
+        ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&number_of_points_by_return), sizeof(number_of_points_by_return));
     }
 
     // there is no fixed-width type for floating-point numbers, so we assume that the 8 byte required by the las specification are fulfilled
     for(int i = 0; i < 3; i++){
         double xyz_scale_factor = 0.01;
-        output_pointcloud.write(reinterpret_cast<const char *>(&xyz_scale_factor), 8); // hardcoded 8 bytes
+        ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&xyz_scale_factor), 8); // hardcoded 8 bytes
     }
 
     for(int i = 0; i < 3; i++){
         double xyz_offset = 0.0;
-        output_pointcloud.write(reinterpret_cast<const char *>(&xyz_offset), 8); // hardcoded 8 bytes
+        ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&xyz_offset), 8); // hardcoded 8 bytes
     }
 
     double max_x = ctx.grid.cols;
-    output_pointcloud.write(reinterpret_cast<const char *>(&max_x), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&max_x), 8); // hardcoded 8 bytes
 
     double min_x = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&min_x), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&min_x), 8); // hardcoded 8 bytes
 
     double max_y = ctx.grid.rows;
-    output_pointcloud.write(reinterpret_cast<const char *>(&max_y), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&max_y), 8); // hardcoded 8 bytes
 
     double min_y = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&min_y), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&min_y), 8); // hardcoded 8 bytes
 
     double max_z = ctx.grid.HEIGHT;
-    output_pointcloud.write(reinterpret_cast<const char *>(&max_z), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&max_z), 8); // hardcoded 8 bytes
 
     double min_z = 0;
-    output_pointcloud.write(reinterpret_cast<const char *>(&min_z), 8); // hardcoded 8 bytes
+    ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&min_z), 8); // hardcoded 8 bytes
 }
 
- void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float ctx.pc.transmittance_laser, fstream& output_pointcloud){
+ void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float ctx.pc.transmittance_laser, fstream& ctx.out.output_pointcloud){
     cout << "Point cloud generation." << endl;
 
     vector<int> beams;
@@ -1024,7 +1024,7 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
     // three options
     GenerateVoxelreturnsALS(beams, beams_returns, mean_beam, sd_beam, klaser, ctx.pc.transmittance_laser);
 
-    ExportPointcloudHeader(beams, output_pointcloud);
+    ExportPointcloudHeader(beams, ctx.out.output_pointcloud);
 
     // now write point cloud records to file
     int nb_beams = int(beams.size()/2);
@@ -1045,12 +1045,12 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
             int32_t z_hit = round(beams_returns[index_return] * 100.0);
             index_return++;
 
-            output_pointcloud.write(reinterpret_cast<const char *>(&x_hit), sizeof(x_hit));
-            output_pointcloud.write(reinterpret_cast<const char *>(&y_hit), sizeof(y_hit));
-            output_pointcloud.write(reinterpret_cast<const char *>(&z_hit), sizeof(z_hit));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&x_hit), sizeof(x_hit));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&y_hit), sizeof(y_hit));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&z_hit), sizeof(z_hit));
 
             uint16_t intensity = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&intensity), sizeof(intensity));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&intensity), sizeof(intensity));
 
             // the LAS-format makes use of sub-byte level information for return number / number of returns / scan direction / edge of flight line
             // all are together in one single byte, stored in, respectively, 3 bits, 3 bits, 1 bit, 1 bit
@@ -1134,19 +1134,19 @@ void GenerateVoxelreturnsALS(vector<int> &beams, vector<float> &beams_returns, f
             for(int i = 0; i < 8; i++){
                 return_info += information_bitlevel[i] * pow(2,7-i);
             }
-            output_pointcloud.write(reinterpret_cast<const char *>(&return_info), sizeof(return_info));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&return_info), sizeof(return_info));
 
             unsigned char classification = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&classification), sizeof(classification));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&classification), sizeof(classification));
 
             char scan_angle_rank = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&scan_angle_rank), sizeof(scan_angle_rank));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&scan_angle_rank), sizeof(scan_angle_rank));
 
             unsigned char user_data = 0;
-            output_pointcloud.write(reinterpret_cast<const char *>(&user_data), sizeof(user_data));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&user_data), sizeof(user_data));
 
             uint16_t point_source_id = 1;
-            output_pointcloud.write(reinterpret_cast<const char *>(&point_source_id), sizeof(point_source_id));
+            ctx.out.output_pointcloud.write(reinterpret_cast<const char *>(&point_source_id), sizeof(point_source_id));
 
         }
     }
@@ -1191,7 +1191,7 @@ void TrackingData_andOutput()
                     // write to output
                     if (T[site].t_dbh >= 0.1)
                     {
-                        output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << ctx.time.iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t" << T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t" << T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear << "\t" << T[site].t_carbon_storage_avgyear << endl;
+                        ctx.out.output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << ctx.time.iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t" << T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t" << T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear << "\t" << T[site].t_carbon_storage_avgyear << endl;
                     }
                     // reset
                     T[site].t_time_carbonstarvation_year = 0;
@@ -1507,15 +1507,15 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
 void OutputABC()
 {
     cout << " ABC: Conservation of Traits " << endl;
-    OutputABCConservationTraits(output[11]);
+    OutputABCConservationTraits(ctx.out.output[11]);
     cout << " ABC: Ground data " << endl;
-    OutputABC_ground(output[12]);
+    OutputABC_ground(ctx.out.output[12]);
     cout << " ABC: CHM simulation " << endl;
-    OutputABC_CHM(output[13], output[14], output[19]);
+    OutputABC_CHM(ctx.out.output[13], ctx.out.output[14], ctx.out.output[19]);
     cout << " ABC: Transmittance simulation " << endl;
-    OutputABC_transmittance(output[15], output[16]);
+    OutputABC_transmittance(ctx.out.output[15], ctx.out.output[16]);
     cout << " ABC: Species outputs " << endl;
-    OutputABC_species(output[23], output[24], output[25], output[26], output[27]);
+    OutputABC_species(ctx.out.output[23], ctx.out.output[24], ctx.out.output[25], ctx.out.output[26], ctx.out.output[27]);
 }
 
 // ##############################################
@@ -3139,28 +3139,28 @@ void MPI_ShareTreefall(unsigned short **c, int n)
 //! Close outputs
 void CloseOutputs()
 {
-    output_info.close();
-    output_info.clear();
+    ctx.out.output_info.close();
+    ctx.out.output_info.clear();
 
     for (int i = 0; i < 4; i++)
     {
-        output_basic[i].close();
-        output_basic[i].clear();
+        ctx.out.output_basic[i].close();
+        ctx.out.output_basic[i].clear();
     }
 
     if (ctx.opt._OUTPUT_extended == 1)
     {
         for (int i = 0; i < 9; i++)
         {
-            output_extended[i].close();
-            output_extended[i].clear();
+            ctx.out.output_extended[i].close();
+            ctx.out.output_extended[i].clear();
         }
         if (ctx.crown.extent_visual > 0)
         {
             for (int i = 0; i < 2; i++)
             {
-                output_visual[i].close();
-                output_visual[i].clear();
+                ctx.out.output_visual[i].close();
+                ctx.out.output_visual[i].clear();
             }
         }
     }
@@ -3168,15 +3168,15 @@ void CloseOutputs()
 #ifdef Output_ABC
     for (int i = 0; i < 11; i++)
     {
-        output_abc[i].close();
-        output_abc[i].clear();
+        ctx.out.output_abc[i].close();
+        ctx.out.output_abc[i].clear();
     }
 #endif
 #ifdef WATER
     for (int i = 0; i < 10; i++)
     {
-        output[i].close();
-        output[i].clear();
+        ctx.out.output[i].close();
+        ctx.out.output[i].clear();
         // output_water[i].close();
         // output_water[i].clear();
     }
@@ -3184,8 +3184,8 @@ void CloseOutputs()
 #ifdef TRACK_INDIVIDUALS
     for (int i = 0; i < 3; i++)
     {
-        output_track[i].close();
-        output_track[i].clear();
+        ctx.out.output_track[i].close();
+        ctx.out.output_track[i].clear();
     }
 #endif
 }
