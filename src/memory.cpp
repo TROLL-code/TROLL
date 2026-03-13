@@ -4,7 +4,7 @@
 
 //! Global function: initialise intraspecific variables
 //! Global function: initialise output streams
-void InitialiseOutputStreams()
+void InitialiseOutputStreams(Context &ctx)
 {
     char nnn[200];
     if (!mpi_rank)
@@ -388,7 +388,7 @@ void Initialise(Context &ctx)
 //  Global ABC function: initialise ABC conditions
 // ######################################
 //! - determine area to be taken into consideration for ABC and margin not to be taken into consideration (artefacts along border)
-void InitialiseABC()
+void InitialiseABC(Context &ctx)
 {
     margin = 0;
     row_start = margin;
@@ -1106,7 +1106,7 @@ void AllocMem(Context &ctx)
 }
 
 //!  Free dynamic memory
-void FreeMem()
+void FreeMem(Context &ctx)
 {
     delete[] ctx.diag.nbdbh;
     delete[] ctx.diag.layer;

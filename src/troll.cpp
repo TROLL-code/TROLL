@@ -128,11 +128,11 @@ int main(int argc, char *argv[])
 
     Initialise(ctx); // Read global parameters
 
-    InitialiseOutputStreams(); // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
+    InitialiseOutputStreams(ctx); // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
     AllocMem(ctx);             // Memory allocation
 
 #ifdef Output_ABC
-    InitialiseABC();
+    InitialiseABC(ctx);
 #endif
 
     if (ctx.opt._OUTPUT_pointcloud)
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
     }
 
     CloseOutputs(); // new in v.3.1: Close and clear outputs, maybe not necessary as main function terminates shortly after, but maybe it ensures a cleaner communication with file system/within Rcpp
-    FreeMem();      // Free dynamic memory  //! added in oct2013
+    FreeMem(ctx);   // Free dynamic memory  //! added in oct2013
 #ifdef easyMPI
     MPI::Finalize();
 #endif

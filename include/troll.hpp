@@ -346,7 +346,7 @@ void Initialise(Context &ctx);                                      //!< Global 
 void InitialiseIntraspecific(Context &ctx);                         //!< Global function: initialise intraspecific variables
 void InitialiseLookUpLAImax(Context &ctx);                          //!< Global function: initialise lookup table for LAImax
 void InitialiseLookUpTables(Context &ctx);                          //!< Global function: initialise lookup tables
-void InitialiseOutputStreams(void);                                 //!< Global function: initialisation of output streams
+void InitialiseOutputStreams(Context &ctx);                         //!< Global function: initialisation of output streams
 void ReadInputInventory(Context &ctx);                              //!< Global function: updated in v.3.1: initialisation from inventories
 void ReadInputPointcloud(Context &ctx);                             //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
 void AllocMem(Context &ctx);                                        //!< Global function: Field dynamic memory allocation
@@ -364,7 +364,7 @@ void OutputLAI(fstream &output_transmLAI3D);                        //!< Global 
 void OutputCHM(fstream &output_CHM);                                //!< Global function: Outputs CHM
 void OutputVisual();                                                //!< Global function: Output function for visualization purposes
 void CloseOutputs();
-void FreeMem(void);
+void FreeMem(Context &ctx);
 
 void ExportPointcloud(float mean_beam, float sd_beam, float klaser, float transmittance_laser, fstream &output_pointcloud); //!< Global function: point cloud output, v.3.1.6; kept separately from other output functions, as we write to a dedicated external file format (.las)
 
@@ -393,7 +393,7 @@ struct leafFluxes
 
 #ifdef Output_ABC
 // these are functions needed to create ABC output
-void InitialiseABC();                                                                                                                                                                                                                                                                                                                                                                                                      //!< Global ABC function: initialise ABC conditions
+void InitialiseABC(Context &ctx);                                                                                                                                                                                                                                                                                                                                                                                              //!< Global ABC function: initialise ABC conditions
 void UpdateMovingAveragesABC();                                                                                                                                                                                                                                                                                                                                                                                            //!< Global ABC function: yearly statistics
 void UpdateDBHtrackingABC();                                                                                                                                                                                                                                                                                                                                                                                               //!< Global ABC function: update DBH function for ABC routines
 void UpdateTransmittanceCHM_ABC(int mean_beam, float sd_beam, float klaser, float transmittance_laser);                                                                                                                                                                                                                                                                                                                    //!< Global function: calculating the TROLL transmittance field from simulated LiDAR
