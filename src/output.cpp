@@ -594,7 +594,7 @@ void MakeCHMspikefree(vector<int> &chm_spikefree)
                 int shell_fromtop = 0;              // toplayer
                 float noinput = 0.0;
 
-                LoopLayerUpdateCrownStatistic_template(r, c, height, CR, CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, noinput, chm_spikefree, KeepFloatAsIs, UpdateCHMvector);
+                LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_spikefree, KeepFloatAsIs, UpdateCHMvector);
 #else
                 int crown_top = int(T[s].t_height);
                 int crown_intarea = GetCrownIntarea(T[s].t_CR);
@@ -703,17 +703,17 @@ void OutputVisual()
                 int max_shells = min(crown_top - crown_base + 1, 4); // since the new crown shapes
 
                 for (int h = 0; h <= crown_top - max_shells; h++)
-                    OutputCrownSliced(h, s, row_slice, output_statistics);
+                    OutputCrownSliced(ctx, h, s, row_slice, output_statistics);
 
                 for (int shell_fromtop = 0; shell_fromtop < max_shells; shell_fromtop++)
                 {
-                    LoopLayerUpdateCrownStatistic_template(row, col, height, CR, CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, row_slice, output_statistics, KeepIntAsIs, OutputCrownSliced);
+                    LoopLayerUpdateCrownStatistic_template(ctx, row, col, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, row_slice, output_statistics, KeepIntAsIs, [](int h, int s, int rs, vector<float> &os){ OutputCrownSliced(ctx, h, s, rs, os); });
                 }
 #else
                 int crown_intarea = GetCrownIntarea(CR);
 
                 for (int h = 0; h <= crown_base; h++)
-                    OutputCrownSliced(h, s, row_slice, output_statistics);
+                    OutputCrownSliced(ctx, h, s, row_slice, output_statistics);
 
                 for (int h = crown_base; h <= crown_top; h++)
                 {
@@ -723,7 +723,7 @@ void OutputVisual()
                         int row_crown = row + site_relative / 51 - 25;
                         int col_crown = col + site_relative % 51 - 25;
                         int site_crown = col_crown + row_crown * ctx.grid.cols;
-                        OutputCrownSliced(h, s, row_slice, output_statistics);
+                        OutputCrownSliced(ctx, h, s, row_slice, output_statistics);
                     }
                 }
 #endif
@@ -1430,7 +1430,7 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
                 int shell_fromtop = 0;              // toplayer
                 float noinput = 0.0;
 
-                LoopLayerUpdateCrownStatistic_template(r, c, height, CR, CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, noinput, chm_field_current, KeepFloatAsIs, UpdateCHM);
+                LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_field_current, KeepFloatAsIs, UpdateCHM);
 #else
                 int crown_top = int(T[s].t_height);
 
@@ -2647,7 +2647,7 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
             int row_center = site / ctx.grid.cols;
             int col_center = site % ctx.grid.cols;
 
-            AddCrownVolumeLayer(row_center, col_center, T[site].t_height, T[site].t_CR, T[site].t_CD, voxcrown);
+            AddCrownVolumeLayer(ctx, row_center, col_center, T[site].t_height, T[site].t_CR, T[site].t_CD, voxcrown);
         }
     }
 

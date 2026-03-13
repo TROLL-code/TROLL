@@ -17,7 +17,7 @@ Species::Species()
 //! Initialise Species vector
 // ######################################
 
-void Species::Init()
+void Species::Init(Context &ctx)
 {
 
     // !!!: WARNING! seed volume is provided instead of seed mass

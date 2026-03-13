@@ -53,7 +53,7 @@ float CalcRdark(float LMA, float Nmass, float Pmass, float Vcmax)
 #ifdef CROWN_UMBRELLA
 
 // Global function: linear decrease of crown radius
-float GetRadiusSlope(float CR, float crown_extent, float crown_position)
+float GetRadiusSlope(Context &ctx, float CR, float crown_extent, float crown_position)
 {
     float crown_slope = CR * (1.0 - ctx.crown.shape_crown) / crown_extent;
     float radius = CR - crown_slope * float(crown_position);
@@ -202,7 +202,7 @@ void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fr
 }
 
 // Global function: update of ctx.field.LAI3D field, called by CalcLAI()
-void UpdateLAI3D(int height, int site, float dens_layer, float &LA_cumulated) // RENAMED: ctx.params.dens → dens_layer
+void UpdateLAI3D(Context &ctx, int height, int site, float dens_layer, float &LA_cumulated) // RENAMED: ctx.params.dens → dens_layer
 {
     ctx.field.LAI3D[height][site + ctx.grid.SBORD] += dens_layer;
     LA_cumulated += dens_layer;
@@ -223,7 +223,7 @@ void UpdateCHM(int height, int site, float noinput, int *chm)
 }
 #endif
 
-void OutputCrownSliced(int height, int site, int row_slice, vector<float> &output_statistics)
+void OutputCrownSliced(Context &ctx, int height, int site, int row_slice, vector<float> &output_statistics)
 {
     int row_current = site / ctx.grid.cols;
     int col_current = site % ctx.grid.cols;
@@ -239,7 +239,7 @@ void OutputCrownSliced(int height, int site, int row_slice, vector<float> &outpu
 };
 
 // Global function: PPFD retrieval for function leafarea_max()
-void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
+void GetPPFDabove(Context &ctx, int height, int site, float noinput, float (&ppfd_CA)[2])
 {
     // First get voxel field densities
     float absorb_prev = ctx.field.LAI3D[height + 1][site + ctx.grid.SBORD];
@@ -254,10 +254,10 @@ void GetPPFDabove(int height, int site, float noinput, float (&ppfd_CA)[2])
 //! - this function adds to the environmental variables provided in canopy_environment_cumulated
 //! - the PPFD, VPD, Tmp and leafarea_layer retrieval function for Fluxh()
 #ifdef WATER
-void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]) // RENAMED: ctx.params.dens → dens_layer
+void GetCanopyEnvironment(Context &ctx, int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]) // RENAMED: ctx.params.dens → dens_layer
 {
 #else
-void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]) // RENAMED: ctx.params.dens → dens_layer
+void GetCanopyEnvironment(Context &ctx, int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]) // RENAMED: ctx.params.dens → dens_layer
 {
 #endif
     // first get voxel field densities
@@ -305,7 +305,7 @@ void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy
 }
 
 // Global function: calculates packing densities
-void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR, float CD, int crownvolume[70])
+void AddCrownVolumeLayer(Context &ctx, int row_center, int col_center, float height, float CR, float CD, int crownvolume[70])
 {
     int crown_top = int(height);
     int crown_base = int(height - CD);
@@ -331,7 +331,7 @@ void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR,
 
         // now do calculations
         // first the inner crown shell section that grows dynamically
-        float radius_innermost = GetRadiusSlope(CR, crownshell_extent, crownshell_extent_toplayer);
+        float radius_innermost = GetRadiusSlope(ctx, CR, crownshell_extent, crownshell_extent_toplayer);
         int crown_intarea_innermost = GetCrownIntarea(radius_innermost);
         for (int h = height_innermost; h >= crown_base; h--)
         {
@@ -343,7 +343,7 @@ void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR,
             // calculating the radius of the current ctx.diag.layer depending on the respective slopes, to be replaced by function
             // float radius_height = CR - crown_slope * (h_outer - height_baselayer);    // for the lowest ctx.diag.layer, i.e. h == height_baselayer, radius = t_CR
             int extent_layerouter = max(h_outer - height_baselayer, 0); // we also fill up underneath the baselayer
-            float radius_height = GetRadiusSlope(CR, crownshell_extent, extent_layerouter);
+            float radius_height = GetRadiusSlope(ctx, CR, crownshell_extent, extent_layerouter);
             int crown_intarea = GetCrownIntarea(radius_height);
 
             crownvolume[h_outer] += (crown_intarea - crown_intarea_innermost);

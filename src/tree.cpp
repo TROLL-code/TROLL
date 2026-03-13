@@ -863,7 +863,7 @@ void Tree::CalcLAI()
 
         for (int shell_fromtop = 0; shell_fromtop < max_shells; shell_fromtop++)
         {
-            LoopLayerUpdateCrownStatistic_template(row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, t_LAI, LA_cumulated, LAI2dens, UpdateLAI3D);
+            LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, LA_cumulated, LAI2dens, [](int h, int s, float d, float &la){ UpdateLAI3D(ctx, h, s, d, la); });
         }
     }
 }
@@ -1213,7 +1213,7 @@ void Tree::Fluxh(int h, float &PPFD, float &VPD, float &Tmp, float &leafarea_lay
 #endif
     float fraction_filled_target = t_fraction_filled;
 
-    LoopLayerUpdateCrownStatistic_template(row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, t_LAI, canopy_environment_cumulated, LAI2dens, GetCanopyEnvironment);
+    LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, t_LAI, canopy_environment_cumulated, LAI2dens, [](int h, int s, float d, auto &ce){ GetCanopyEnvironment(ctx, h, s, d, ce); });
 
     float LA_layer = canopy_environment_cumulated[0];
     float iLA_layer;
@@ -2234,7 +2234,7 @@ void Tree::CalcLAmax(float &LAIexperienced_eff, float &LAmax)
         int shell_fromtop = 0;
         float fraction_filled_target = t_fraction_filled;
 
-        LoopLayerUpdateCrownStatistic_template(row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, GetRadiusSlope, noinput, ppfd_CA, KeepFloatAsIs, GetPPFDabove);
+        LoopLayerUpdateCrownStatistic_template(ctx, row_crowncenter, col_crowncenter, t_height, t_CR, t_CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, ppfd_CA, KeepFloatAsIs, [](int h, int s, float ni, float (&ca)[2]){ GetPPFDabove(ctx, h, s, ni, ca); });
 
         float ppfd_experienced = ppfd_CA[0];
         float crown_area_looped = ppfd_CA[1];

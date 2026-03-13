@@ -366,12 +366,12 @@ void Initialise(Context &ctx)
         }
 #endif
     }
-    InitialiseIntraspecific();
+    InitialiseIntraspecific(ctx);
 #ifdef CACHE_LUT
     if (!LoadLookUpTablesFromCache())
     {
         std::cout << "LUT cache missing → computing LUTs..." << std::endl;
-        InitialiseLookUpTables();
+        InitialiseLookUpTables(ctx);
         SaveLookUpTablesToCache();
     }
     else
@@ -379,7 +379,7 @@ void Initialise(Context &ctx)
         std::cout << "Loaded LUTs from cache." << std::endl;
     }
 #else  // CACHE_LUT
-    InitialiseLookUpTables();
+    InitialiseLookUpTables(ctx);
 #endif // CACHE_LUT
 }
 

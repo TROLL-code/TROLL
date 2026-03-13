@@ -216,19 +216,19 @@ void MPI_ShareTreefall(unsigned short **, int);                  //!< Global MPI
 // TREESHAPE CALCULATIONS
 // All these calculations are currently defined as non-member functions, but could potentially be converted to class Tree
 // See function description for more details
-void GetPPFDabove(int height, int site, float noinput, float (&PPFD)[2]); //!< Global function: PPFD retrieval for function leafarea_max()
+void GetPPFDabove(Context &ctx, int height, int site, float noinput, float (&PPFD)[2]); //!< Global function: PPFD retrieval for function leafarea_max()
 #ifdef WATER
-void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
+void GetCanopyEnvironment(Context &ctx, int height, int site, float dens_layer, float (&canopy_environment_cumulated)[6]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
 #else
-void GetCanopyEnvironment(int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
+void GetCanopyEnvironment(Context &ctx, int height, int site, float dens_layer, float (&canopy_environment_cumulated)[4]); //!< Global function: calculates the canopy environment // RENAMED: dens → dens_layer
 #endif
-void AddCrownVolumeLayer(int row_center, int col_center, float height, float CR, float CD, int crownvolume[70]); //!< Global function: calculates packing densities
-void UpdateLAI3D(int height, int site, float dens_layer, float &LA_cumulated);                                    //!< Global function: update of LAI3D field, called by CalcLAI() // RENAMED: dens → dens_layer
+void AddCrownVolumeLayer(Context &ctx, int row_center, int col_center, float height, float CR, float CD, int crownvolume[70]); //!< Global function: calculates packing densities
+void UpdateLAI3D(Context &ctx, int height, int site, float dens_layer, float &LA_cumulated);                                    //!< Global function: update of LAI3D field, called by CalcLAI() // RENAMED: dens → dens_layer
 #ifdef CHM_SPIKEFREE
 void UpdateCHMvector(int height, int site, float noinput, vector<int> &chm); //!< Global function: remove outliers in canopy height model (CHM); vector option
 void UpdateCHM(int height, int site, float noinput, int *chm);               //!< Global function: remove outliers in canopy height model (CHM)
 #endif
-void OutputCrownSliced(int height, int site, int row_slice, vector<float> &output_statistics);      //!< Global function: write a slice of a crown to file
+void OutputCrownSliced(Context &ctx, int height, int site, int row_slice, vector<float> &output_statistics);      //!< Global function: write a slice of a crown to file
 void KeepFloatAsIs(float input, float &output, float CD, float height, int layer_fromtop);          //!< Global function: dummy function when no modification is needed
 void KeepIntAsIs(int input, int &output, float CD, float height, int layer_fromtop);                //!< Global function: dummy function when no modification is needed
 void LAI2dens(float LAI, float &dens_layer, float CD, float height, int layer_fromtop);             //!< Global function: a modifying function that converts LAI to the density of a specific layer, using the GetDensity functions
@@ -236,10 +236,10 @@ void LAI2dens_cumulated(float LAI, float &dens_layer, float CD, float height, in
 void GetDensitiesGradient(float LAI, float CD, float &dens_top, float &dens_belowtop, float &dens_layer); //!< Global function: deduces within-crown densities from LAI // RENAMED: dens → dens_layer
 void GetDensityUniform(float LAI, float CD, float &dens_layer);                                           //!< Global function: deduces within-crown density from LAI // RENAMED: dens → dens_layer
 int GetCrownIntarea(float radius);                                                                  //!< Global function: converts floating point crown area into integer value, imposing lower and upper limits
-float GetRadiusSlope(float CR, float crown_extent, float crown_position);                           //!< Global function: linear decrease of crown radius
+float GetRadiusSlope(Context &ctx, float CR, float crown_extent, float crown_position);                           //!< Global function: linear decrease of crown radius
 float GetRadiusCylinder(float CR, float crown_extent, float crown_position);                        //!< Global function: not currently used, but returns the input radius
 template <typename I, typename O, typename F>
-void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int pos_start, int pos_end, float fraction_filled_target, float &fraction_filled_actual, int height_layer, I CrownStatistic_input, O &CrownStatistic_output, F UpdateCrownStatistic)
+void CircleAreaUpdateCrownStatistic_template(Context &ctx, int row_center, int col_center, int pos_start, int pos_end, float fraction_filled_target, float &fraction_filled_actual, int height_layer, I CrownStatistic_input, O &CrownStatistic_output, F UpdateCrownStatistic)
 {
     for (int i = pos_start; i < pos_end; i++)
     {
@@ -266,8 +266,8 @@ void CircleAreaUpdateCrownStatistic_template(int row_center, int col_center, int
 }
 //!< Global function: Template function called by LoopLayerUpdateCrownStatistic_template
 
-template <typename I, typename O, typename M, typename F>
-void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, float height, float CR, float CD, float fraction_filled_target, int shell_fromtop, float GetRadiusLayer(float, float, float), I CrownStatistic_input, O &CrownStatistic_output, M ModifyCrownStatistic_input, F UpdateCrownStatistic_output)
+template <typename G, typename I, typename O, typename M, typename F>
+void LoopLayerUpdateCrownStatistic_template(Context &ctx, int row_center, int col_center, float height, float CR, float CD, float fraction_filled_target, int shell_fromtop, G GetRadiusLayer, I CrownStatistic_input, O &CrownStatistic_output, M ModifyCrownStatistic_input, F UpdateCrownStatistic_output)
 {
     int crown_top = int(height);
 
@@ -281,7 +281,7 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
         int crown_intarea_previous = 0;
         int crown_intarea = GetCrownIntarea(CR);
         int layer_cylinder = crown_top - shell_fromtop;
-        CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, layer_cylinder, CrownStatistic_input_modified, CrownStatistic_output, UpdateCrownStatistic_output);
+        CircleAreaUpdateCrownStatistic_template(ctx, row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, layer_cylinder, CrownStatistic_input_modified, CrownStatistic_output, UpdateCrownStatistic_output);
     }
     else
     {
@@ -309,7 +309,7 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
 
         float radius_innermost = GetRadiusLayer(CR, crownshell_extent, crownshell_extent_toplayer);
         int crown_intarea_innermost = GetCrownIntarea(radius_innermost);
-        CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea_innermost, fraction_filled_target, fraction_filled_actual, height_innermost, CrownStatistic_input_innermost, CrownStatistic_output, UpdateCrownStatistic_output);
+        CircleAreaUpdateCrownStatistic_template(ctx, row_center, col_center, crown_intarea_previous, crown_intarea_innermost, fraction_filled_target, fraction_filled_actual, height_innermost, CrownStatistic_input_innermost, CrownStatistic_output, UpdateCrownStatistic_output);
         crown_intarea_previous = crown_intarea_innermost;
 
         // now loop through the outer crown shell cylinders
@@ -320,7 +320,7 @@ void LoopLayerUpdateCrownStatistic_template(int row_center, int col_center, floa
             int extent_layerouter = h_outer - height_baselayer;
             float radius_height = GetRadiusLayer(CR, crownshell_extent, extent_layerouter);
             int crown_intarea = GetCrownIntarea(radius_height);
-            CircleAreaUpdateCrownStatistic_template(row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, h_outer, CrownStatistic_input_outer, CrownStatistic_output, UpdateCrownStatistic_output);
+            CircleAreaUpdateCrownStatistic_template(ctx, row_center, col_center, crown_intarea_previous, crown_intarea, fraction_filled_target, fraction_filled_actual, h_outer, CrownStatistic_input_outer, CrownStatistic_output, UpdateCrownStatistic_output);
             crown_intarea_previous = crown_intarea;
         }
     }
@@ -343,9 +343,9 @@ void ReadInputDailyvar(void);                                       //!< Global 
 void ReadInputClimate(void);                                        //!< Global function: read in climate data
 void ReadInputSoil(void);                                           //!< Global function: read in soil data
 void Initialise(Context &ctx);                                      //!< Global function: initialisation with bare ground conditions
-void InitialiseIntraspecific(void);                                 //!< Global function: initialise intraspecific variables
-void InitialiseLookUpLAImax(void);                                  //!< Global function: initialise lookup table for LAImax
-void InitialiseLookUpTables(void);                                  //!< Global function: initialise lookup tables
+void InitialiseIntraspecific(Context &ctx);                                 //!< Global function: initialise intraspecific variables
+void InitialiseLookUpLAImax(Context &ctx);                                  //!< Global function: initialise lookup table for LAImax
+void InitialiseLookUpTables(Context &ctx);                                  //!< Global function: initialise lookup tables
 void InitialiseOutputStreams(void);                                 //!< Global function: initialisation of output streams
 void ReadInputInventory(void);                                      //!< Global function: updated in v.3.1: initialisation from inventories
 void ReadInputPointcloud(void);                                     //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
@@ -464,7 +464,7 @@ public:
     //! Constructor of the Species class
     Species();
 
-    void Init();
+    void Init(Context &ctx);
 };
 
 extern vector<Species> S; //!< Global vector of species — defined in troll.cpp

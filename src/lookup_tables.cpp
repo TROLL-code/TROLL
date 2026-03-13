@@ -2,7 +2,7 @@
 #include "constants.hpp"
 #include "context.hpp"
 
-void InitialiseIntraspecific()
+void InitialiseIntraspecific(Context &ctx)
 {
     float max_intraspecific_height = 0.0, min_intraspecific_height = 1000.0,
           max_intraspecific_CR = 0.0, min_intraspecific_CR = 1000.0,
@@ -129,7 +129,7 @@ void InitialiseIntraspecific()
 
 #ifdef LCP_alternative
 // v.3.1.5: create a LookUp table based on species identity and intraspecific deviation
-void InitialiseLookUpLAImax()
+void InitialiseLookUpLAImax(Context &ctx)
 {
     ctx.lookup.LookUpLAImax.reserve(10000 * ctx.grid.nbspp); // 10000 is the possible number of combinations for intraspecific variation
 
@@ -185,7 +185,7 @@ void InitialiseLookUpLAImax()
 //! -# temperature dependence on Farquhar model parameters (following von Caemmerer 2000 and Bernacchi et al. 2003 PCE)
 //! -# flux averaging with the canopy
 //! -# ctx.grid.sites within a crown in order of distance from the center
-void InitialiseLookUpTables()
+void InitialiseLookUpTables(Context &ctx)
 {
 
     ctx.lookup.nbTbins = 500;
@@ -408,7 +408,7 @@ void InitialiseLookUpTables()
     }
 
 #ifdef LCP_alternative
-    InitialiseLookUpLAImax();
+    InitialiseLookUpLAImax(ctx);
 #endif
 }
 

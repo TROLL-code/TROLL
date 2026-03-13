@@ -316,7 +316,7 @@ void ReadInputSpecies()
         for (int sp = 1; sp <= ctx.grid.nbspp; sp++)
         {
 
-            S[sp].Init();
+            S[sp].Init(ctx);
             // cout << S[sp].s_name << " LCP: " << S[sp].s_LCP << endl;
         }
         cout << "Successfully read in species file." << endl;
