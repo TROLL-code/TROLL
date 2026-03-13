@@ -351,11 +351,11 @@ void Initialise(Context &ctx)
 
     //** Initialization of trees **
     //*****************************
-    T.reserve(ctx.grid.sites);
+    ctx.T.reserve(ctx.grid.sites);
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         Tree T_site(ctx);
-        T.push_back(T_site);
+        ctx.T.push_back(T_site);
 #ifdef WATER
         // FF: not sure this check is necessary anymore (it's a check for memory allocation problems, I presume?), but I kept it just in case
         if (&T_site.t_soil_layer_weight[0] == &T_site.t_root_biomass[4])
@@ -681,7 +681,7 @@ void ReadInputInventory(Context &ctx)
                 {
                     int site = col + row * ctx.grid.cols;
                     int i = 0;
-                    while (T[site].t_age != 0.0 && i < area_max)
+                    while (ctx.T[site].t_age != 0.0 && i < area_max)
                     {
                         i++;
                         int site_relative = ctx.lookup.LookUp_Crown_site[i];
@@ -693,9 +693,9 @@ void ReadInputInventory(Context &ctx)
                         }
                     }
 
-                    if (T[site].t_age == 0.0)
+                    if (ctx.T[site].t_age == 0.0)
                     {
-                        int success = T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
+                        int success = ctx.T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
                         if (success == 1)
                         {
                             nb_individuals++;
@@ -707,14 +707,14 @@ void ReadInputInventory(Context &ctx)
                 else
                 {
                     // find a random free site
-                    while (sites_shuffled_index < ctx.grid.sites && T[sites_shuffled[sites_shuffled_index]].t_age != 0.0)
+                    while (sites_shuffled_index < ctx.grid.sites && ctx.T[sites_shuffled[sites_shuffled_index]].t_age != 0.0)
                         sites_shuffled_index++;
 
                     if (sites_shuffled_index < ctx.grid.sites)
                     {
                         // as long as the search has stopped and the index has not run outside the range, the tree can be initialized
                         int site = sites_shuffled[sites_shuffled_index];
-                        int success = T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
+                        int success = ctx.T[site].BirthFromInventory(ctx, site, parameter_names, parameter_values, nb_speciesrandom);
                         if (success == 1)
                         {
                             nb_individuals++;
@@ -819,7 +819,7 @@ void ReadInputInventory(Context &ctx)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
+        ctx.T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
         for (int site = 0; site < ctx.grid.sites; site++)
@@ -842,8 +842,8 @@ void ReadInputInventory(Context &ctx)
     //
     //     for(int site = 0; site < ctx.grid.sites; site++){
     //        // Only consider non-initialized trees (i.e. t_LA < 0.0)
-    //        if(T[site].t_age > 0.0 & T[site].t_LA < 0.0){
-    //            float height = T[site].t_height;
+    //        if(ctx.T[site].t_age > 0.0 & ctx.T[site].t_LA < 0.0){
+    //            float height = ctx.T[site].t_height;
     //            heights_trees.push_back(height);
     //            sites_trees.push_back(site);
     //
@@ -868,8 +868,8 @@ void ReadInputInventory(Context &ctx)
     //     // allocate and compute leaf area
     //     for(int index_site = 0; index_site < sites_trees.size(); index_site++){
     //        int site = sites_trees[index_site];
-    //        //cout << site << " Site of tree: " << T[site].t_site << " Height: " << T[site].t_height << " Height from index: " << heights_trees[index_site] << endl;
-    //        T[site].CalcLAinitial();
+    //        //cout << site << " Site of tree: " << ctx.T[site].t_site << " Height: " << ctx.T[site].t_height << " Height from index: " << heights_trees[index_site] << endl;
+    //        ctx.T[site].CalcLAinitial();
     //     }
 }
 
@@ -882,7 +882,7 @@ void AllocMem(Context &ctx)
     float d = 0.0; // maximum diameter possible
     for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
     {
-        d = fmaxf(d, S[spp].s_dbhmax * 1.5);
+        d = fmaxf(d, ctx.S[spp].s_dbhmax * 1.5);
     }
     float r = 25.0; // simply set to maximum crown radius possible in simulations
 
@@ -961,7 +961,7 @@ void AllocMem(Context &ctx)
 
     for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
     {
-        double prob_species = double(S[spp].s_nbext);
+        double prob_species = double(ctx.S[spp].s_nbext);
         // cout << "prob_species: " << prob_species << endl;
         ctx.species.p_species[spp - 1] = prob_species;
     }

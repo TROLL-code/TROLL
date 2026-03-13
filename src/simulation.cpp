@@ -37,7 +37,7 @@ void Evolution(Context &ctx)
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         //**** Tree evolution: Growth or death ****
-        T[site].Update(ctx);
+        ctx.T[site].Update(ctx);
     }
 
     for (int d = 0; d < ctx.grid.nbdcells; d++)
@@ -49,7 +49,7 @@ void Evolution(Context &ctx)
     }
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        T[site].Water_uptake(ctx);
+        ctx.T[site].Water_uptake(ctx);
     }
 
     // Update trees
@@ -74,7 +74,7 @@ void UpdateSeeds(Context &ctx)
         int seedsadded = 0;
         for (int s = 0; s < ctx.grid.sites; s++)
         {
-            // if(T[s].t_age == 0){
+            // if(ctx.T[s].t_age == 0){
             int nbseeds = ctx.species.n_seed[s];
             // cout << "Site: " << s << " nbseeds: " << nbseeds << " ctx.grid.nbspp: " << ctx.grid.nbspp << endl;
             gsl_ran_multinomial(ctx.rng.gslrand, ctx.grid.nbspp, nbseeds, ctx.species.p_species, ctx.species.n_species);
@@ -98,11 +98,11 @@ void UpdateSeeds(Context &ctx)
         int trees_mature = 0;
         for (int site = 0; site < ctx.grid.sites; site++)
         { // disperse seeds produced by mature trees
-            if (T[site].t_age)
+            if (ctx.T[site].t_age)
             {
-                if (T[site].t_dbh >= T[site].t_dbhmature)
+                if (ctx.T[site].t_dbh >= ctx.T[site].t_dbhmature)
                     trees_mature++;
-                T[site].DisperseSeed(ctx);
+                ctx.T[site].DisperseSeed(ctx);
             }
         }
 
@@ -162,13 +162,13 @@ void UpdateField(Context &ctx)
 
             for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
             {
-                // if ((ctx.time.iter == int(ctx.time.nbiter-1))&&(site>80000)&&(site<85000))  { sor[142]<< T[site].t_NDDfield[spp] << "\t" ;}
-                T[site].t_NDDfield[spp] = 0;
+                // if ((ctx.time.iter == int(ctx.time.nbiter-1))&&(site>80000)&&(site<85000))  { sor[142]<< ctx.T[site].t_NDDfield[spp] << "\t" ;}
+                ctx.T[site].t_NDDfield[spp] = 0;
             }
             // if (ctx.time.iter == int(ctx.time.nbiter-1))  sor[142]<< "\n";
 
-            int row0 = T[site].t_site / ctx.grid.cols;
-            int col0 = T[site].t_site % ctx.grid.cols;
+            int row0 = ctx.T[site].t_site / ctx.grid.cols;
+            int col0 = ctx.T[site].t_site % ctx.grid.cols;
             for (int col = max(0, int(col0 - ctx.crown.Rndd)); col <= min(ctx.grid.cols - 1, int(col0 + ctx.crown.Rndd)); col++)
             {
                 for (int row = max(0, int(row0 - ctx.crown.Rndd)); row <= min(ctx.grid.rows - 1, int(row0 + ctx.crown.Rndd)); row++)
@@ -179,8 +179,8 @@ void UpdateField(Context &ctx)
                     if ((d <= ctx.crown.Rndd) && (d > 0))
                     { // is the voxel within the neighbourhood?
                         int j = ctx.grid.cols * row + col;
-                        if (T[j].t_age)
-                            T[site].t_NDDfield[T[j].t_sp_lab] += PI * T[j].t_dbh * T[j].t_dbh * 0.25 * normBA;
+                        if (ctx.T[j].t_age)
+                            ctx.T[site].t_NDDfield[ctx.T[j].t_sp_lab] += PI * ctx.T[j].t_dbh * ctx.T[j].t_dbh * 0.25 * normBA;
                     }
                 }
             }
@@ -202,7 +202,7 @@ void UpdateField(Context &ctx)
         for (int sbsite = 0; sbsite < ctx.grid.sites + 2 * ctx.grid.SBORD; sbsite++)
             ctx.field.LAI3D[h][sbsite] = 0.0;
     for (int site = 0; site < ctx.grid.sites; site++)
-        T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
+        ctx.T[site].CalcLAI(ctx); // Each tree contribues to ctx.field.LAI3D
 
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
     { // LAI is computed by summing LAI from the canopy top to the ground
@@ -321,7 +321,7 @@ void UpdateField(Context &ctx)
 #ifdef WATER
     //**  Evolution of belowground hydraulic fields: Soil bucket model
 
-    // for(int site=0;site<ctx.grid.sites;site++) T[site].Water_uptake(); // Update of ctx.soil.Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one ctx.time.timestep)
+    // for(int site=0;site<ctx.grid.sites;site++) ctx.T[site].Water_uptake(); // Update of ctx.soil.Transpiration: tree water uptake, each tree will deplete soil water content through its transpiration. Now made ate the end of the evolution loop so that the outputs for water uptake match the others (otherwise lag of one ctx.time.timestep)
 
     for (int d = 0; d < ctx.grid.nbdcells; d++)
     {
@@ -517,7 +517,7 @@ void FillSeed(Context &ctx, int col, int row, int spp)
         if ((row >= 0) && (row < ctx.grid.rows))
         {
             int site = col + ctx.grid.cols * row;
-            // if(T[site].t_age == 0){
+            // if(ctx.T[site].t_age == 0){
             if (ctx.opt._SEEDTRADEOFF)
                 ctx.species.SPECIES_SEEDS[site][spp]++; // ifdef SEEDTRADEOFF, ctx.species.SPECIES_SEEDS[site][spp] is the number of seeds of this species at that site
             else
@@ -535,7 +535,7 @@ void RecruitTree(Context &ctx)
 {
     for (int site = 0; site < ctx.grid.sites; site++)
     { //**** Local germination ****
-        if (T[site].t_age == 0)
+        if (ctx.T[site].t_age == 0)
         {
             int spp_withseeds = 0;
             for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
@@ -558,13 +558,13 @@ void RecruitTree(Context &ctx)
 #ifdef LCP_alternative
 
 #ifdef WATER
-                if (ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
+                if (ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * ctx.S[spp].s_tlp)
                 {
-                    T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
+                    ctx.T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
                 }
 
 #else
-                T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
+                ctx.T[site].Birth(ctx, spp, site); // in this version, the light environment is checked within Birth() function
 
 #endif
 
@@ -572,18 +572,18 @@ void RecruitTree(Context &ctx)
 
                 float flux = ctx.climate.WDailyMean * exp(-fmaxf(ctx.field.LAI3D[0][site + ctx.grid.SBORD], 0.0) * ctx.params.kpar);
 #ifdef WATER
-                if (flux > (S[spp].s_LCP) && ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * S[spp].s_tlp)
+                if (flux > (ctx.S[spp].s_LCP) && ctx.soil.soil_phi3D[0][ctx.grid.site_DCELL[site]] > 0.5 * ctx.S[spp].s_tlp)
                 {
-                    T[site].Birth(ctx, spp, site);
+                    ctx.T[site].Birth(ctx, spp, site);
                     ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
                 // in addition to a condition of light availability- hence light demanding species may not be able to grow in deep sahde conditions in understorey -, a condition on water availability is added - hence drought-intolerant species may not be recruited in water-stressd conditions
 #else
                 // If enough light, germination, initialization of NPP (LCP is the species light compensation point
                 // here, light is the sole environmental resources tested as a limiting factor for germination, but we should think about adding nutrients (N,P) and water conditions...
-                if (flux > (S[spp].s_LCP))
+                if (flux > (ctx.S[spp].s_LCP))
                 {
-                    T[site].Birth(ctx, spp, site);
+                    ctx.T[site].Birth(ctx, spp, site);
                     ctx.species.SPECIES_SEEDS[site][spp] = 0; // newIM nov2021, to adjust to the yearly update of Species_seeds
                 }
 #endif // WATER
@@ -600,20 +600,20 @@ void RecruitTree(Context &ctx)
 void TriggerTreefall(Context &ctx)
 {
     for (int site = 0; site < ctx.grid.sites; site++)
-        if (T[site].t_age)
+        if (ctx.T[site].t_age)
         {
             // treefall is triggered given a certain flexural force
             // ctx.opt._BASICTREEFALL: just dependent on height threshold + random uniform distribution
             float angle = 0.0, c_forceflex = 0.0;
             if (ctx.opt._BASICTREEFALL)
             {
-                c_forceflex = (1 - (1 - gsl_rng_uniform(ctx.rng.gslrand)) / (12 * ctx.time.timestep)) * T[site].t_height; // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if ctx.time.timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
+                c_forceflex = (1 - (1 - gsl_rng_uniform(ctx.rng.gslrand)) / (12 * ctx.time.timestep)) * ctx.T[site].t_height; // probability of treefall per month = 1-t_Ct/t_height , compare to genrand2(), if ctx.time.timestep=1/12: genrand2() < 1 - t_Ct/t_height, or: genrand2() > t_Ct/t_height
                 angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand));                                         // random angle
             }
             // above a given stress threshold the tree falls
-            if (c_forceflex > T[site].t_Ct)
+            if (c_forceflex > ctx.T[site].t_Ct)
             {
-                T[site].Treefall(ctx, angle);
+                ctx.T[site].Treefall(ctx, angle);
             }
         }
 #ifdef MPI
@@ -623,14 +623,14 @@ void TriggerTreefall(Context &ctx)
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         // Update of Field hurt
-        if (T[site].t_age)
+        if (ctx.T[site].t_age)
         {
-            T[site].t_hurt = max(ctx.field.Thurt[0][site + ctx.grid.sites], T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
+            ctx.T[site].t_hurt = max(ctx.field.Thurt[0][site + ctx.grid.sites], ctx.T[site].t_hurt); // NEW in v.2.4: addition of damages, alternative: max()
 #ifdef MPI
             if (mpi_rank)
-                T[site].t_hurt = max(T[site].t_hurt, ctx.field.Thurt[1][site]); // ? v.2.4: Update needed, ctx.field.Thurt[1], why max?
+                ctx.T[site].t_hurt = max(ctx.T[site].t_hurt, ctx.field.Thurt[1][site]); // ? v.2.4: Update needed, ctx.field.Thurt[1], why max?
             if (mpi_rank < mpi_size - 1)
-                T[site].t_hurt = max(T[site].t_hurt, ctx.field.Thurt[2][site]);
+                ctx.T[site].t_hurt = max(ctx.T[site].t_hurt, ctx.field.Thurt[2][site]);
 #endif
         }
     }
@@ -657,24 +657,24 @@ void TriggerTreefallSecondary(Context &ctx)
     }
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        if (T[site].t_age)
+        if (ctx.T[site].t_age)
         {
-            float height_threshold = T[site].t_height / T[site].t_mult_height; // since 2.5: a tree's stability is defined by its species' average height, i.e. we divide by the intraspecific height multiplier to account for lower stability in quickly growing trees; otherwise slender, faster growing trees would be treated preferentially and experience less secondary treefall than more heavily built trees
-            if (2.0 * T[site].t_hurt * (1 - (1 - gsl_rng_uniform(ctx.rng.gslrand)) / (12 * ctx.time.timestep)) > height_threshold)
+            float height_threshold = ctx.T[site].t_height / ctx.T[site].t_mult_height; // since 2.5: a tree's stability is defined by its species' average height, i.e. we divide by the intraspecific height multiplier to account for lower stability in quickly growing trees; otherwise slender, faster growing trees would be treated preferentially and experience less secondary treefall than more heavily built trees
+            if (2.0 * ctx.T[site].t_hurt * (1 - (1 - gsl_rng_uniform(ctx.rng.gslrand)) / (12 * ctx.time.timestep)) > height_threshold)
             { // check whether tree dies: probability of death per month is 1.0-0.5*t_height/t_hurt, so, when ctx.time.timestep=1/12, ctx.rng.gslrand <= 1.0 - 0.5 * t_height/t_hurt, or ctx.rng.gslrand > 0.5 * t_height/t_hurt; modified in v.2.5: probability of death is 1.0 - 0.5*t_height/(t_mult_height * t_hurt), so the larger the height deviation (more slender), the higher the risk of being thrown by another tree
                 if (ctx.params.p_tfsecondary > gsl_rng_uniform(ctx.rng.gslrand))
                 {                                                          // check whether tree falls or dies otherwise
                     float angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // random angle
-                    T[site].Treefall(ctx, angle);
+                    ctx.T[site].Treefall(ctx, angle);
                 }
                 else
                 {
-                    T[site].Death(ctx);
+                    ctx.T[site].Death(ctx);
                 }
             }
             else
             {
-                T[site].t_hurt = short(ctx.params.hurt_decay * float(T[site].t_hurt)); // reduction of t_hurt according to ctx.params.hurt_decay, could be moved to Tree::Growth() function and made dependent on the tree's carbon gain
+                ctx.T[site].t_hurt = short(ctx.params.hurt_decay * float(ctx.T[site].t_hurt)); // reduction of t_hurt according to ctx.params.hurt_decay, could be moved to Tree::Growth() function and made dependent on the tree's carbon gain
             }
         }
     }

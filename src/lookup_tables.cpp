@@ -147,13 +147,13 @@ void InitialiseLookUpLAImax(Context &ctx)
             Tree pseudotree(ctx);
             pseudotree.t_sp_lab = spp;
 
-            pseudotree.t_Pmass = S[spp].s_Pmass * ctx.intra.d_intraspecific_P[dev];
-            pseudotree.t_Nmass = S[spp].s_Nmass * ctx.intra.d_intraspecific_N[dev];
-            pseudotree.t_LMA = S[spp].s_LMA * ctx.intra.d_intraspecific_LMA[dev];
+            pseudotree.t_Pmass = ctx.S[spp].s_Pmass * ctx.intra.d_intraspecific_P[dev];
+            pseudotree.t_Nmass = ctx.S[spp].s_Nmass * ctx.intra.d_intraspecific_N[dev];
+            pseudotree.t_LMA = ctx.S[spp].s_LMA * ctx.intra.d_intraspecific_LMA[dev];
 
 #ifdef WATER
-            pseudotree.t_leafarea = S[spp].s_leafarea * ctx.intra.d_intraspecific_leafarea[dev];
-            pseudotree.t_wsg = fmaxf(S[spp].s_wsg + ctx.intra.d_intraspecific_wsg[dev], 0.05);
+            pseudotree.t_leafarea = ctx.S[spp].s_leafarea * ctx.intra.d_intraspecific_leafarea[dev];
+            pseudotree.t_wsg = fmaxf(ctx.S[spp].s_wsg + ctx.intra.d_intraspecific_wsg[dev], 0.05);
             pseudotree.t_wleaf = sqrt(pseudotree.t_leafarea * 0.0001);
             pseudotree.t_WSF = 1;
             pseudotree.t_WSF_A = 1;

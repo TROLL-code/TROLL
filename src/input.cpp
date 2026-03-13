@@ -263,7 +263,7 @@ void ReadInputSpecies(Context &ctx)
 
         int nb_parameterlines = 0;
         Species species_dummy; // !!!: currently, species at 0 is not initialized, for legacy reasons, maybe to change
-        S.push_back(species_dummy);
+        ctx.S.push_back(species_dummy);
 
         // we go through all lines in the input file
         while (getline(InSpecies, line))
@@ -291,7 +291,7 @@ void ReadInputSpecies(Context &ctx)
             {
                 AssignSpeciesParam(species_new, parameter_names[i], parameter_values[i]);
             }
-            S.push_back(species_new);
+            ctx.S.push_back(species_new);
             nb_parameterlines++;
         }
 
@@ -310,14 +310,14 @@ void ReadInputSpecies(Context &ctx)
             {
                 AssignSpeciesParam(species_default, parameter_names[i], parameter_values[i]);
             }
-            S.push_back(species_default);
+            ctx.S.push_back(species_default);
         }
 
         for (int sp = 1; sp <= ctx.grid.nbspp; sp++)
         {
 
-            S[sp].Init(ctx);
-            // cout << S[sp].s_name << " LCP: " << S[sp].s_LCP << endl;
+            ctx.S[sp].Init(ctx);
+            // cout << ctx.S[sp].s_name << " LCP: " << ctx.S[sp].s_LCP << endl;
         }
         cout << "Successfully read in species file." << endl;
     }

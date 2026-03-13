@@ -8,9 +8,8 @@
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 
-// Forward declaration
-struct Species;
-struct Tree;
+#include "species.hpp"
+#include "tree.hpp"
 
 struct FileIO
 {
@@ -395,6 +394,8 @@ struct Context
     CrownGeometry crown;
     SimParams params;
     SimFields field;
+    std::vector<Species> S; //!< All species
+    std::vector<Tree> T;    //!< All tree sites
     OutputConfig out;   // last: large fstream objects, accessed rarely
 };
 

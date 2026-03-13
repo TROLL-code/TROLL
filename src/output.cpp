@@ -32,41 +32,41 @@ void Average(Context &ctx)
     if (!mpi_rank)
     {
         for (spp = 1; spp <= ctx.grid.nbspp; spp++)
-            S[spp].s_sum10 = S[spp].s_sum30 = S[spp].s_ba = S[spp].s_ba10 = S[spp].s_agb = S[spp].s_gpp = S[spp].s_npp = S[spp].s_rday = S[spp].s_rnight = S[spp].s_rstem = S[spp].s_litterfall = 0;
+            ctx.S[spp].s_sum10 = ctx.S[spp].s_sum30 = ctx.S[spp].s_ba = ctx.S[spp].s_ba10 = ctx.S[spp].s_agb = ctx.S[spp].s_gpp = ctx.S[spp].s_npp = ctx.S[spp].s_rday = ctx.S[spp].s_rnight = ctx.S[spp].s_rstem = ctx.S[spp].s_litterfall = 0;
 
         for (site = 0; site < ctx.grid.sites; site++)
-            T[site].Average(ctx);
+            ctx.T[site].Average(ctx);
 
         for (spp = 1; spp <= ctx.grid.nbspp; spp++)
         {
-            float s_sum1 = float(S[spp].s_nbind) * inbhectares;
-            S[spp].s_sum10 *= inbhectares;
-            S[spp].s_sum30 *= inbhectares;
-            S[spp].s_ba *= inbhectares;
-            S[spp].s_ba10 *= inbhectares;
-            S[spp].s_agb *= inbhectares;
-            S[spp].s_gpp *= inbhectares;
-            S[spp].s_npp *= inbhectares;
-            S[spp].s_rday *= inbhectares;
-            S[spp].s_rnight *= inbhectares;
-            S[spp].s_rstem *= inbhectares;
-            S[spp].s_litterfall *= inbhectares;
+            float s_sum1 = float(ctx.S[spp].s_nbind) * inbhectares;
+            ctx.S[spp].s_sum10 *= inbhectares;
+            ctx.S[spp].s_sum30 *= inbhectares;
+            ctx.S[spp].s_ba *= inbhectares;
+            ctx.S[spp].s_ba10 *= inbhectares;
+            ctx.S[spp].s_agb *= inbhectares;
+            ctx.S[spp].s_gpp *= inbhectares;
+            ctx.S[spp].s_npp *= inbhectares;
+            ctx.S[spp].s_rday *= inbhectares;
+            ctx.S[spp].s_rnight *= inbhectares;
+            ctx.S[spp].s_rstem *= inbhectares;
+            ctx.S[spp].s_litterfall *= inbhectares;
 
-            sum1 += float(S[spp].s_nbind) * inbhectares;
-            sum10 += S[spp].s_sum10;
-            sum30 += S[spp].s_sum30;
-            ba += S[spp].s_ba;
-            ba10 += S[spp].s_ba10;
-            agb += S[spp].s_agb;
-            gpp += S[spp].s_gpp;
-            npp += S[spp].s_npp;
-            rday += S[spp].s_rday;
-            rnight += S[spp].s_rnight;
-            rstem += S[spp].s_rstem;
-            litterfall += S[spp].s_litterfall;
+            sum1 += float(ctx.S[spp].s_nbind) * inbhectares;
+            sum10 += ctx.S[spp].s_sum10;
+            sum30 += ctx.S[spp].s_sum30;
+            ba += ctx.S[spp].s_ba;
+            ba10 += ctx.S[spp].s_ba10;
+            agb += ctx.S[spp].s_agb;
+            gpp += ctx.S[spp].s_gpp;
+            npp += ctx.S[spp].s_npp;
+            rday += ctx.S[spp].s_rday;
+            rnight += ctx.S[spp].s_rnight;
+            rstem += ctx.S[spp].s_rstem;
+            litterfall += ctx.S[spp].s_litterfall;
 
             // if(ctx.opt._OUTPUT_extended){
-            ctx.out.output_extended[0] << ctx.time.iter << "\t" << S[spp].s_name << "\t" << s_sum1 << "\t" << S[spp].s_sum10 << "\t" << S[spp].s_sum30 << "\t" << S[spp].s_ba << "\t" << S[spp].s_ba10 << "\t" << S[spp].s_agb << "\t" << S[spp].s_gpp << "\t" << S[spp].s_npp << "\t" << S[spp].s_rday << "\t" << S[spp].s_rnight << "\t" << S[spp].s_rstem << "\t" << S[spp].s_litterfall << endl;
+            ctx.out.output_extended[0] << ctx.time.iter << "\t" << ctx.S[spp].s_name << "\t" << s_sum1 << "\t" << ctx.S[spp].s_sum10 << "\t" << ctx.S[spp].s_sum30 << "\t" << ctx.S[spp].s_ba << "\t" << ctx.S[spp].s_ba10 << "\t" << ctx.S[spp].s_agb << "\t" << ctx.S[spp].s_gpp << "\t" << ctx.S[spp].s_npp << "\t" << ctx.S[spp].s_rday << "\t" << ctx.S[spp].s_rnight << "\t" << ctx.S[spp].s_rstem << "\t" << ctx.S[spp].s_litterfall << endl;
             //}
         }
 
@@ -115,14 +115,14 @@ void Average(Context &ctx)
 
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        if (T[site].t_age > 0)
+        if (ctx.T[site].t_age > 0)
         {
-            if (T[site].t_NPP <= 0.0)
+            if (ctx.T[site].t_NPP <= 0.0)
             {
                 ctx.diag.nbtrees_carbstarv_n1++;
-                if (T[site].t_dbh >= 0.1)
+                if (ctx.T[site].t_dbh >= 0.1)
                     ctx.diag.nbtrees_carbstarv_n10++;
-                if (T[site].t_dbh >= 0.3)
+                if (ctx.T[site].t_dbh >= 0.3)
                     ctx.diag.nbtrees_carbstarv_n30++;
             }
         }
@@ -148,16 +148,16 @@ void Average(Context &ctx)
     carbon_stored_free = 0.0;
     for (int s = 0; s < ctx.grid.sites; s++)
     {
-        if (T[s].t_age > 0)
+        if (ctx.T[s].t_age > 0)
         {
-            float agb = 1000.0 * T[s].CalcAGB(); // convert to g
+            float agb = 1000.0 * ctx.T[s].CalcAGB(); // convert to g
             float carbon_trunk = agb * 0.5;
             carbon_stored_trunk += carbon_trunk;
 
-            float carbon_free = T[s].t_carbon_storage;
+            float carbon_free = ctx.T[s].t_carbon_storage;
             carbon_stored_free += carbon_free;
 
-            float carbon_leaves = T[s].t_LA * T[s].t_LMA * 0.5;
+            float carbon_leaves = ctx.T[s].t_LA * ctx.T[s].t_LMA * 0.5;
             carbon_stored_leaves += carbon_leaves;
         }
     }
@@ -400,13 +400,13 @@ void Average(Context &ctx)
 #ifdef MPI
     // This section corresponds to the parallel version of the reporting of the global diagnostic variables. Since much work has been done on routine Average over the past years, this would need a full rewrite, !!!!Action 20/01/2016: rework the parallel version of function Average!!!!
 
-    //     MPI_Reduce(&(S[spp].s_nbind),&sind,1,
+    //     MPI_Reduce(&(ctx.S[spp].s_nbind),&sind,1,
     //     MPI_INT,MPI_SUM,0,MPI_COMM_WORLD);
-    //     MPI_Reduce(S[spp].s_output_field,S[spp].s_output_field,5,
+    //     MPI_Reduce(ctx.S[spp].s_output_field,ctx.S[spp].s_output_field,5,
     //     MPI_FLOAT,MPI_SUM,0,MPI_COMM_WORLD);
     //     MPI_Reduce(Mortality,Mortality,4,
     //     MPI_FLOAT,MPI_SUM,0,MPI_COMM_WORLD);
-    //     MPI_Reduce(&S[spp].s_output_field[6],&S[spp].s_output_field[6],5,
+    //     MPI_Reduce(&ctx.S[spp].s_output_field[6],&ctx.S[spp].s_output_field[6],5,
     //     MPI_FLOAT,MPI_MAX,0,MPI_COMM_WORLD);
 #endif
     cout.flush();
@@ -425,7 +425,7 @@ void OutputField(Context &ctx)
         for (d = 0; d < ctx.grid.dbhmaxincm; d++)
             ctx.diag.nbdbh[d] = 0;
         for (site = 0; site < ctx.grid.sites; site++)
-            T[site].histdbh(ctx);
+            ctx.T[site].histdbh(ctx);
 
         for (h = 0; h < (ctx.grid.HEIGHT + 1); h++)
         {
@@ -498,7 +498,7 @@ void OutputSnapshot(Context &ctx, fstream &output, bool header, float dbh_limit)
 
     for (int site = 0; site < ctx.grid.sites; site++)
     { // Each tree contribues to ctx.field.LAI3D
-        T[site].CalcLAI(ctx);
+        ctx.T[site].CalcLAI(ctx);
     }
 
     for (int h = ctx.grid.HEIGHT; h > 0; h--)
@@ -524,43 +524,43 @@ void OutputSnapshot(Context &ctx, fstream &output, bool header, float dbh_limit)
         for (int col = 0; col < ctx.grid.cols; col++)
         {
             int site = col + ctx.grid.cols * row;
-            if (T[site].t_age > 0 && T[site].t_dbh >= dbh_limit)
+            if (ctx.T[site].t_age > 0 && ctx.T[site].t_dbh >= dbh_limit)
             {
                 // recalculate photosynthesis and respiration
-                // T[site].CalcRespGPP();
-                // T[site].CalcNPP();
+                // ctx.T[site].CalcRespGPP();
+                // ctx.T[site].CalcNPP();
                 // output all tree variables, this is potentially a very large file
                 // we currently do not output the t_NDDfield vector, as it is too large
 
 #ifdef WATER
-                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_leafarea << "\t" << T[site].t_tlp << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_mult_leafarea << "\t" << T[site].t_mult_tlp << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
+                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << ctx.T[site].t_from_Data << "\t" << ctx.T[site].t_sp_lab << "\t" << site << "\t" << ctx.T[site].t_CrownDisplacement << "\t" << ctx.T[site].t_Pmass << "\t" << ctx.T[site].t_Nmass << "\t" << ctx.T[site].t_LMA << "\t" << ctx.T[site].t_leafarea << "\t" << ctx.T[site].t_tlp << "\t" << ctx.T[site].t_wsg << "\t" << ctx.T[site].t_Rdark << "\t" << ctx.T[site].t_Vcmax << "\t" << ctx.T[site].t_Jmax << "\t" << ctx.T[site].t_leaflifespan << "\t" << ctx.T[site].t_lambda_young << "\t" << ctx.T[site].t_lambda_mature << "\t" << ctx.T[site].t_lambda_old << "\t" << ctx.T[site].t_dbhmature << "\t" << ctx.T[site].t_dbhmax << "\t" << ctx.T[site].t_hmax << "\t" << ctx.T[site].t_ah << "\t" << ctx.T[site].t_Ct << "\t" << ctx.T[site].t_LAImax << "\t" << ctx.T[site].t_fraction_filled << "\t" << ctx.T[site].t_mult_height << "\t" << ctx.T[site].t_mult_CR << "\t" << ctx.T[site].t_mult_CD << "\t" << ctx.T[site].t_mult_P << "\t" << ctx.T[site].t_mult_N << "\t" << ctx.T[site].t_mult_LMA << "\t" << ctx.T[site].t_mult_dbhmax << "\t" << ctx.T[site].t_mult_leafarea << "\t" << ctx.T[site].t_mult_tlp << "\t" << ctx.T[site].t_dev_wsg << "\t" << ctx.T[site].t_age << "\t" << ctx.T[site].t_dbh << "\t" << ctx.T[site].t_sapwood_area << "\t" << ctx.T[site].t_height << "\t" << ctx.T[site].t_CD << "\t" << ctx.T[site].t_CR << "\t" << ctx.T[site].t_GPP << "\t" << ctx.T[site].t_NPP << "\t" << ctx.T[site].t_Rday << "\t" << ctx.T[site].t_Rnight << "\t" << ctx.T[site].t_Rstem << "\t" << ctx.T[site].t_LAmax << "\t" << ctx.T[site].t_LA << "\t" << ctx.T[site].t_youngLA << "\t" << ctx.T[site].t_matureLA << "\t" << ctx.T[site].t_oldLA << "\t" << ctx.T[site].t_LAI << "\t" << ctx.T[site].t_litter << "\t" << ctx.T[site].t_carbon_storage << "\t" << ctx.T[site].t_carbon_biometry << "\t" << ctx.T[site].t_multiplier_seed << "\t" << ctx.T[site].t_hurt << "\t" << ctx.T[site].t_NPPneg;
 
-                output << "\t" << T[site].t_root_depth << "\t" << T[site].t_phi_root << "\t" << T[site].t_WSF << "\t" << T[site].t_WSF_A << "\t" << T[site].t_transpiration << "\t" << T[site].t_g1 << "\t" << T[site].t_g1_0;
+                output << "\t" << ctx.T[site].t_root_depth << "\t" << ctx.T[site].t_phi_root << "\t" << ctx.T[site].t_WSF << "\t" << ctx.T[site].t_WSF_A << "\t" << ctx.T[site].t_transpiration << "\t" << ctx.T[site].t_g1 << "\t" << ctx.T[site].t_g1_0;
 #ifdef PHENO_DROUGHT
-                output << "\t" << T[site].t_Ndays_dry << "\t" << T[site].t_Ndays_wet << "\t" << T[site].t_pheno_factor;
+                output << "\t" << ctx.T[site].t_Ndays_dry << "\t" << ctx.T[site].t_Ndays_wet << "\t" << ctx.T[site].t_pheno_factor;
 
 #endif
                 for (int l = 0; l < ctx.soil.nblayers_soil; l++)
                 {
-                    output << "\t" << T[site].t_root_biomass[l];
+                    output << "\t" << ctx.T[site].t_root_biomass[l];
                 }
                 for (int l = 0; l < ctx.soil.nblayers_soil; l++)
                 {
-                    output << "\t" << T[site].t_soil_layer_weight[l];
+                    output << "\t" << ctx.T[site].t_soil_layer_weight[l];
                 }
 
 #else
-                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << T[site].t_from_Data << "\t" << T[site].t_sp_lab << "\t" << site << "\t" << T[site].t_CrownDisplacement << "\t" << T[site].t_Pmass << "\t" << T[site].t_Nmass << "\t" << T[site].t_LMA << "\t" << T[site].t_wsg << "\t" << T[site].t_Rdark << "\t" << T[site].t_Vcmax << "\t" << T[site].t_Jmax << "\t" << T[site].t_leaflifespan << "\t" << T[site].t_lambda_young << "\t" << T[site].t_lambda_mature << "\t" << T[site].t_lambda_old << "\t" << T[site].t_dbhmature << "\t" << T[site].t_dbhmax << "\t" << T[site].t_hmax << "\t" << T[site].t_ah << "\t" << T[site].t_Ct << "\t" << T[site].t_LAImax << "\t" << T[site].t_fraction_filled << "\t" << T[site].t_mult_height << "\t" << T[site].t_mult_CR << "\t" << T[site].t_mult_CD << "\t" << T[site].t_mult_P << "\t" << T[site].t_mult_N << "\t" << T[site].t_mult_LMA << "\t" << T[site].t_mult_dbhmax << "\t" << T[site].t_dev_wsg << "\t" << T[site].t_age << "\t" << T[site].t_dbh << "\t" << T[site].t_sapwood_area << "\t" << T[site].t_height << "\t" << T[site].t_CD << "\t" << T[site].t_CR << "\t" << T[site].t_GPP << "\t" << T[site].t_NPP << "\t" << T[site].t_Rday << "\t" << T[site].t_Rnight << "\t" << T[site].t_Rstem << "\t" << T[site].t_LAmax << "\t" << T[site].t_LA << "\t" << T[site].t_youngLA << "\t" << T[site].t_matureLA << "\t" << T[site].t_oldLA << "\t" << T[site].t_LAI << "\t" << T[site].t_litter << "\t" << T[site].t_carbon_storage << "\t" << T[site].t_carbon_biometry << "\t" << T[site].t_multiplier_seed << "\t" << T[site].t_hurt << "\t" << T[site].t_NPPneg;
+                output << ctx.time.iter << "\t" << col << "\t" << row << "\t" << ctx.T[site].t_from_Data << "\t" << ctx.T[site].t_sp_lab << "\t" << site << "\t" << ctx.T[site].t_CrownDisplacement << "\t" << ctx.T[site].t_Pmass << "\t" << ctx.T[site].t_Nmass << "\t" << ctx.T[site].t_LMA << "\t" << ctx.T[site].t_wsg << "\t" << ctx.T[site].t_Rdark << "\t" << ctx.T[site].t_Vcmax << "\t" << ctx.T[site].t_Jmax << "\t" << ctx.T[site].t_leaflifespan << "\t" << ctx.T[site].t_lambda_young << "\t" << ctx.T[site].t_lambda_mature << "\t" << ctx.T[site].t_lambda_old << "\t" << ctx.T[site].t_dbhmature << "\t" << ctx.T[site].t_dbhmax << "\t" << ctx.T[site].t_hmax << "\t" << ctx.T[site].t_ah << "\t" << ctx.T[site].t_Ct << "\t" << ctx.T[site].t_LAImax << "\t" << ctx.T[site].t_fraction_filled << "\t" << ctx.T[site].t_mult_height << "\t" << ctx.T[site].t_mult_CR << "\t" << ctx.T[site].t_mult_CD << "\t" << ctx.T[site].t_mult_P << "\t" << ctx.T[site].t_mult_N << "\t" << ctx.T[site].t_mult_LMA << "\t" << ctx.T[site].t_mult_dbhmax << "\t" << ctx.T[site].t_dev_wsg << "\t" << ctx.T[site].t_age << "\t" << ctx.T[site].t_dbh << "\t" << ctx.T[site].t_sapwood_area << "\t" << ctx.T[site].t_height << "\t" << ctx.T[site].t_CD << "\t" << ctx.T[site].t_CR << "\t" << ctx.T[site].t_GPP << "\t" << ctx.T[site].t_NPP << "\t" << ctx.T[site].t_Rday << "\t" << ctx.T[site].t_Rnight << "\t" << ctx.T[site].t_Rstem << "\t" << ctx.T[site].t_LAmax << "\t" << ctx.T[site].t_LA << "\t" << ctx.T[site].t_youngLA << "\t" << ctx.T[site].t_matureLA << "\t" << ctx.T[site].t_oldLA << "\t" << ctx.T[site].t_LAI << "\t" << ctx.T[site].t_litter << "\t" << ctx.T[site].t_carbon_storage << "\t" << ctx.T[site].t_carbon_biometry << "\t" << ctx.T[site].t_multiplier_seed << "\t" << ctx.T[site].t_hurt << "\t" << ctx.T[site].t_NPPneg;
 #endif
 
 #ifdef Output_ABC
-                output << "\t" << T[site].t_dbh_previous;
+                output << "\t" << ctx.T[site].t_dbh_previous;
 #endif
 
                 // we add a few tree-based variables that are derived or environment-related, but not directly kept track of
-                float AGB = T[site].CalcAGB(ctx);
+                float AGB = ctx.T[site].CalcAGB(ctx);
 
-                output << "\t" << AGB << "\t" << S[T[site].t_sp_lab].s_name << endl;
+                output << "\t" << AGB << "\t" << ctx.S[ctx.T[site].t_sp_lab].s_name << endl;
             }
         }
     }
@@ -584,20 +584,20 @@ void MakeCHMspikefree(Context &ctx, vector<int> &chm_spikefree)
         for (int c = col_start; c < col_end; c++)
         {
             int s = c + r * ctx.grid.cols;
-            if (T[s].t_age > 0)
+            if (ctx.T[s].t_age > 0)
             {
 #ifdef CROWN_UMBRELLA
-                float height = T[s].t_height;
-                float CR = T[s].t_CR;
-                float CD = T[s].t_CD;
+                float height = ctx.T[s].t_height;
+                float CR = ctx.T[s].t_CR;
+                float CD = ctx.T[s].t_CD;
                 float fraction_filled_target = 1.0; // to remove spikes, we assume a fully filled crown for all trees
                 int shell_fromtop = 0;              // toplayer
                 float noinput = 0.0;
 
                 LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [&ctx](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_spikefree, KeepFloatAsIs, UpdateCHMvector);
 #else
-                int crown_top = int(T[s].t_height);
-                int crown_intarea = GetCrownIntarea(T[s].t_CR);
+                int crown_top = int(ctx.T[s].t_height);
+                int crown_intarea = GetCrownIntarea(ctx.T[s].t_CR);
 
                 int row_crowncenter = s / ctx.grid.cols;
                 int col_crowncenter = s % ctx.grid.cols;
@@ -670,30 +670,30 @@ void OutputVisual(Context &ctx)
         for (int col = 0; col < ctx.grid.cols; col++)
         {
             int s = col + row * ctx.grid.cols;
-            if (T[s].t_age > 0)
+            if (ctx.T[s].t_age > 0)
             {
                 int row_slice = row;
 
-                float height = T[s].t_height;
-                float CD = T[s].t_CD;
+                float height = ctx.T[s].t_height;
+                float CD = ctx.T[s].t_CD;
                 int crown_top = int(height);
-                float CR = T[s].t_CR;
+                float CR = ctx.T[s].t_CR;
                 int crown_base = int(height - CD);
 
                 vector<float> output_statistics;
                 output_statistics.reserve(4);
-                output_statistics.push_back(T[s].t_sp_lab);
+                output_statistics.push_back(ctx.T[s].t_sp_lab);
 
                 float ratio_height_Ct;
-                if (T[s].t_Ct > 0.0)
-                    ratio_height_Ct = T[s].t_height / T[s].t_Ct;
+                if (ctx.T[s].t_Ct > 0.0)
+                    ratio_height_Ct = ctx.T[s].t_height / ctx.T[s].t_Ct;
                 else
                     ratio_height_Ct = 0.0;
                 output_statistics.push_back(ratio_height_Ct);
 
                 float ratio_NPP_GPP;
-                if (T[s].t_GPP > 0.0)
-                    ratio_NPP_GPP = T[s].t_NPP / T[s].t_GPP;
+                if (ctx.T[s].t_GPP > 0.0)
+                    ratio_NPP_GPP = ctx.T[s].t_NPP / ctx.T[s].t_GPP;
                 else
                     ratio_NPP_GPP = 0.0;
                 output_statistics.push_back(ratio_NPP_GPP);
@@ -1161,54 +1161,54 @@ void TrackingData_andOutput(Context &ctx)
     for (int site = 0; site < ctx.grid.sites; site++)
     {
         // we start the accounting the year after the trees have been born
-        if (T[site].t_age > 0)
+        if (ctx.T[site].t_age > 0)
         {
-            int timeofyear_born = T[site].t_timeofyear_born;
+            int timeofyear_born = ctx.T[site].t_timeofyear_born;
 
             if (timeofyear_born >= 0)
             {
                 // these are the yearly figures, reset to zero every year
-                T[site].t_GPP_sumyear += T[site].t_GPP;
-                T[site].t_GPPsquared_sumyear += T[site].t_GPP * T[site].t_GPP;
-                T[site].t_NPP_sumyear += T[site].t_NPP;
-                T[site].t_NPPsquared_sumyear += T[site].t_NPP * T[site].t_NPP;
-                T[site].t_Rday_sumyear += T[site].t_Rday;
-                T[site].t_Rnight_sumyear += T[site].t_Rnight;
-                T[site].t_Rstem_sumyear += T[site].t_Rstem;
-                T[site].t_carbon_storage_avgyear += T[site].t_carbon_storage * ctx.time.timestep;
+                ctx.T[site].t_GPP_sumyear += ctx.T[site].t_GPP;
+                ctx.T[site].t_GPPsquared_sumyear += ctx.T[site].t_GPP * ctx.T[site].t_GPP;
+                ctx.T[site].t_NPP_sumyear += ctx.T[site].t_NPP;
+                ctx.T[site].t_NPPsquared_sumyear += ctx.T[site].t_NPP * ctx.T[site].t_NPP;
+                ctx.T[site].t_Rday_sumyear += ctx.T[site].t_Rday;
+                ctx.T[site].t_Rnight_sumyear += ctx.T[site].t_Rnight;
+                ctx.T[site].t_Rstem_sumyear += ctx.T[site].t_Rstem;
+                ctx.T[site].t_carbon_storage_avgyear += ctx.T[site].t_carbon_storage * ctx.time.timestep;
                 // these are the whole lifetime cumulated figures, never reset to zero and put out at tree death
-                T[site].t_GPPcum += T[site].t_GPP;
-                T[site].t_NPPcum += T[site].t_NPP;
-                T[site].t_GPPsquared_cum += T[site].t_GPP * T[site].t_GPP;
-                T[site].t_NPPsquared_cum += T[site].t_NPP * T[site].t_NPP;
+                ctx.T[site].t_GPPcum += ctx.T[site].t_GPP;
+                ctx.T[site].t_NPPcum += ctx.T[site].t_NPP;
+                ctx.T[site].t_GPPsquared_cum += ctx.T[site].t_GPP * ctx.T[site].t_GPP;
+                ctx.T[site].t_NPPsquared_cum += ctx.T[site].t_NPP * ctx.T[site].t_NPP;
 
-                float agb = 1000.0 * T[site].CalcAGB(ctx);
+                float agb = 1000.0 * ctx.T[site].CalcAGB(ctx);
 
                 // write to output every year and then reset to zero
                 int timeofyear = GetTimeofyear(ctx);
                 if (timeofyear == timeofyear_born)
                 {
                     // write to output
-                    if (T[site].t_dbh >= 0.1)
+                    if (ctx.T[site].t_dbh >= 0.1)
                     {
-                        ctx.out.output_track[1] << T[site].t_site << "\t" << timeofyear_born << "\t" << ctx.time.iter << "\t" << T[site].t_age << "\t" << T[site].t_seedsproduced_sumyear << "\t" << T[site].t_seedsproduced << "\t" << T[site].t_time_carbonstarvation_year << "\t" << T[site].t_time_carbonstarvation << "\t" << T[site].t_dbh << "\t" << T[site].t_dbh - T[site].t_dbh_tracked << "\t" << T[site].t_height << "\t" << T[site].t_height - T[site].t_height_tracked << "\t" << T[site].t_CR << "\t" << T[site].t_CR - T[site].t_CR_tracked << "\t" << agb << "\t" << agb - T[site].t_agb_tracked << "\t" << T[site].t_GPP_sumyear << "\t" << T[site].t_GPPsquared_sumyear << "\t" << T[site].t_NPP_sumyear << "\t" << T[site].t_NPPsquared_sumyear << "\t" << T[site].t_Rday_sumyear << "\t" << T[site].t_Rnight_sumyear << "\t" << T[site].t_Rstem_sumyear << "\t" << T[site].t_LAIabove_effavgyear << "\t" << T[site].t_carbon_storage_avgyear << endl;
+                        ctx.out.output_track[1] << ctx.T[site].t_site << "\t" << timeofyear_born << "\t" << ctx.time.iter << "\t" << ctx.T[site].t_age << "\t" << ctx.T[site].t_seedsproduced_sumyear << "\t" << ctx.T[site].t_seedsproduced << "\t" << ctx.T[site].t_time_carbonstarvation_year << "\t" << ctx.T[site].t_time_carbonstarvation << "\t" << ctx.T[site].t_dbh << "\t" << ctx.T[site].t_dbh - ctx.T[site].t_dbh_tracked << "\t" << ctx.T[site].t_height << "\t" << ctx.T[site].t_height - ctx.T[site].t_height_tracked << "\t" << ctx.T[site].t_CR << "\t" << ctx.T[site].t_CR - ctx.T[site].t_CR_tracked << "\t" << agb << "\t" << agb - ctx.T[site].t_agb_tracked << "\t" << ctx.T[site].t_GPP_sumyear << "\t" << ctx.T[site].t_GPPsquared_sumyear << "\t" << ctx.T[site].t_NPP_sumyear << "\t" << ctx.T[site].t_NPPsquared_sumyear << "\t" << ctx.T[site].t_Rday_sumyear << "\t" << ctx.T[site].t_Rnight_sumyear << "\t" << ctx.T[site].t_Rstem_sumyear << "\t" << ctx.T[site].t_LAIabove_effavgyear << "\t" << ctx.T[site].t_carbon_storage_avgyear << endl;
                     }
                     // reset
-                    T[site].t_time_carbonstarvation_year = 0;
-                    T[site].t_seedsproduced_sumyear = 0;
-                    T[site].t_GPP_sumyear = 0.0;
-                    T[site].t_GPPsquared_sumyear = 0.0;
-                    T[site].t_NPP_sumyear = 0.0;
-                    T[site].t_NPPsquared_sumyear = 0.0;
-                    T[site].t_Rday_sumyear = 0.0;
-                    T[site].t_Rnight_sumyear = 0.0;
-                    T[site].t_Rstem_sumyear = 0.0;
-                    T[site].t_LAIabove_effavgyear = 0.0;
-                    T[site].t_carbon_storage_avgyear = 0.0;
-                    T[site].t_dbh_tracked = T[site].t_dbh;
-                    T[site].t_height_tracked = T[site].t_height;
-                    T[site].t_CR_tracked = T[site].t_CR;
-                    T[site].t_agb_tracked = agb;
+                    ctx.T[site].t_time_carbonstarvation_year = 0;
+                    ctx.T[site].t_seedsproduced_sumyear = 0;
+                    ctx.T[site].t_GPP_sumyear = 0.0;
+                    ctx.T[site].t_GPPsquared_sumyear = 0.0;
+                    ctx.T[site].t_NPP_sumyear = 0.0;
+                    ctx.T[site].t_NPPsquared_sumyear = 0.0;
+                    ctx.T[site].t_Rday_sumyear = 0.0;
+                    ctx.T[site].t_Rnight_sumyear = 0.0;
+                    ctx.T[site].t_Rstem_sumyear = 0.0;
+                    ctx.T[site].t_LAIabove_effavgyear = 0.0;
+                    ctx.T[site].t_carbon_storage_avgyear = 0.0;
+                    ctx.T[site].t_dbh_tracked = ctx.T[site].t_dbh;
+                    ctx.T[site].t_height_tracked = ctx.T[site].t_height;
+                    ctx.T[site].t_CR_tracked = ctx.T[site].t_CR;
+                    ctx.T[site].t_agb_tracked = agb;
                 }
             }
         }
@@ -1234,9 +1234,9 @@ void UpdateMovingAveragesABC(Context &ctx)
         for (int col = col_start; col < col_end; col++)
         {
             int site = col + row * ctx.grid.cols;
-            GPP_abc += T[site].t_GPP * 1.0e-6;
-            litter_abc += T[site].t_litter * 1.0e-6;
-            if (T[site].t_dbh >= 0.1)
+            GPP_abc += ctx.T[site].t_GPP * 1.0e-6;
+            litter_abc += ctx.T[site].t_litter * 1.0e-6;
+            if (ctx.T[site].t_dbh >= 0.1)
                 nbtrees_abc++;
         }
     }
@@ -1291,8 +1291,8 @@ void UpdateDBHtrackingABC(Context &ctx)
         for (int c = col_start; c < col_end; c++)
         {
             int s = c + r * ctx.grid.cols;
-            if (T[s].t_age > 0)
-                T[s].t_dbh_previous = T[s].t_dbh;
+            if (ctx.T[s].t_age > 0)
+                ctx.T[s].t_dbh_previous = ctx.T[s].t_dbh;
         }
     }
 }
@@ -1420,21 +1420,21 @@ void UpdateTransmittanceCHM_ABC(float mean_beam, float sd_beam, float klaser, fl
         for (int c = col_start; c < col_end; c++)
         {
             int s = c + r * ctx.grid.cols;
-            if (T[s].t_age > 0)
+            if (ctx.T[s].t_age > 0)
             {
 #ifdef CROWN_UMBRELLA
-                float height = T[s].t_height;
-                float CR = T[s].t_CR;
-                float CD = T[s].t_CD;
+                float height = ctx.T[s].t_height;
+                float CR = ctx.T[s].t_CR;
+                float CD = ctx.T[s].t_CD;
                 float fraction_filled_target = 1.0; // to remove spikes, we assume a fully filled crown for all trees
                 int shell_fromtop = 0;              // toplayer
                 float noinput = 0.0;
 
                 LoopLayerUpdateCrownStatistic_template(ctx, r, c, height, CR, CD, fraction_filled_target, shell_fromtop, [](float CR, float e, float p){ return GetRadiusSlope(ctx, CR, e, p); }, noinput, chm_field_current, KeepFloatAsIs, UpdateCHM);
 #else
-                int crown_top = int(T[s].t_height);
+                int crown_top = int(ctx.T[s].t_height);
 
-                float crown_area = PI * T[s].t_CR * T[s].t_CR; // floor of crown_area to bound area accumulation
+                float crown_area = PI * ctx.T[s].t_CR * ctx.T[s].t_CR; // floor of crown_area to bound area accumulation
                 int crown_intarea = int(crown_area);           // floor of crown_area to bound area accumulation
                 crown_intarea = max(crown_intarea, 1);         // minimum area of crown (1)
                 crown_intarea = min(crown_intarea, 1963);      // maximum area of crown (radius 25), int(3.14*25*25)
@@ -1702,11 +1702,11 @@ void OutputABCWriteHeaders(fstream &output_traitconservation, fstream &output_fi
 
     for (int spp = 1; spp < ctx.grid.nbspp + 1; spp++)
     {
-        output_species << "\t" << S[spp].s_name;
-        output_species10 << "\t" << S[spp].s_name;
-        //        output_traits << "\t" << S[spp].s_name;
-        //        output_traits10 << "\t" << S[spp].s_name;
-        output_biomass << "\t" << S[spp].s_name;
+        output_species << "\t" << ctx.S[spp].s_name;
+        output_species10 << "\t" << ctx.S[spp].s_name;
+        //        output_traits << "\t" << ctx.S[spp].s_name;
+        //        output_traits10 << "\t" << ctx.S[spp].s_name;
+        output_biomass << "\t" << ctx.S[spp].s_name;
     }
 
     output_species << endl;
@@ -1739,7 +1739,7 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
     // Means and 2nd moment for calculation of sd later on
     for (int s = 0; s < ctx.grid.sites; s++)
     {
-        if (T[s].t_age > 0 && T[s].t_dbh >= 0.1)
+        if (ctx.T[s].t_age > 0 && ctx.T[s].t_dbh >= 0.1)
         {
             int dev_rand = int(gsl_rng_uniform_int(gslrng, 10000)); // modified FF, v.3.1.5
 
@@ -1755,14 +1755,14 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
             mu_dbhmax_varinput += log(ctx.intra.d_intraspecific_dbhmax[dev_rand]);
             mu_wsg_varinput += log(ctx.intra.d_intraspecific_wsg[dev_rand]);
 
-            mu_height_varoutput += log(T[s].t_mult_height);
-            mu_CR_varoutput += log(T[s].t_mult_CR);
-            mu_CD_varoutput += log(T[s].t_mult_CD);
-            mu_P_varoutput += log(T[s].t_mult_P);
-            mu_N_varoutput += log(T[s].t_mult_N);
-            mu_LMA_varoutput += log(T[s].t_mult_LMA);
-            mu_dbhmax_varoutput += log(T[s].t_mult_dbhmax);
-            mu_wsg_varoutput += log(T[s].t_dev_wsg);
+            mu_height_varoutput += log(ctx.T[s].t_mult_height);
+            mu_CR_varoutput += log(ctx.T[s].t_mult_CR);
+            mu_CD_varoutput += log(ctx.T[s].t_mult_CD);
+            mu_P_varoutput += log(ctx.T[s].t_mult_P);
+            mu_N_varoutput += log(ctx.T[s].t_mult_N);
+            mu_LMA_varoutput += log(ctx.T[s].t_mult_LMA);
+            mu_dbhmax_varoutput += log(ctx.T[s].t_mult_dbhmax);
+            mu_wsg_varoutput += log(ctx.T[s].t_dev_wsg);
 
             moment2_random += dev_rand;
             moment2_height_varinput += log(ctx.intra.d_intraspecific_height[dev_rand]) * log(ctx.intra.d_intraspecific_height[dev_rand]);
@@ -1774,14 +1774,14 @@ void OutputABCConservationTraits(fstream &output_traitconservation)
             moment2_dbhmax_varinput += log(ctx.intra.d_intraspecific_dbhmax[dev_rand]) * log(ctx.intra.d_intraspecific_dbhmax[dev_rand]);
             moment2_wsg_varinput += log(ctx.intra.d_intraspecific_wsg[dev_rand]) * log(ctx.intra.d_intraspecific_wsg[dev_rand]);
 
-            moment2_height_varoutput += log(T[s].t_mult_height) * log(T[s].t_mult_height);
-            moment2_CR_varoutput += log(T[s].t_mult_CR) * log(T[s].t_mult_CR);
-            moment2_CD_varoutput += log(T[s].t_mult_CD) * log(T[s].t_mult_CD);
-            moment2_P_varoutput += log(T[s].t_mult_P) * log(T[s].t_mult_P);
-            moment2_N_varoutput += log(T[s].t_mult_N) * log(T[s].t_mult_N);
-            moment2_LMA_varoutput += log(T[s].t_mult_LMA) * log(T[s].t_mult_LMA);
-            moment2_dbhmax_varoutput += log(T[s].t_mult_dbhmax) * log(T[s].t_mult_dbhmax);
-            moment2_wsg_varoutput += log(T[s].t_dev_wsg) * log(T[s].t_dev_wsg);
+            moment2_height_varoutput += log(ctx.T[s].t_mult_height) * log(ctx.T[s].t_mult_height);
+            moment2_CR_varoutput += log(ctx.T[s].t_mult_CR) * log(ctx.T[s].t_mult_CR);
+            moment2_CD_varoutput += log(ctx.T[s].t_mult_CD) * log(ctx.T[s].t_mult_CD);
+            moment2_P_varoutput += log(ctx.T[s].t_mult_P) * log(ctx.T[s].t_mult_P);
+            moment2_N_varoutput += log(ctx.T[s].t_mult_N) * log(ctx.T[s].t_mult_N);
+            moment2_LMA_varoutput += log(ctx.T[s].t_mult_LMA) * log(ctx.T[s].t_mult_LMA);
+            moment2_dbhmax_varoutput += log(ctx.T[s].t_mult_dbhmax) * log(ctx.T[s].t_mult_dbhmax);
+            moment2_wsg_varoutput += log(ctx.T[s].t_dev_wsg) * log(ctx.T[s].t_dev_wsg);
         }
     }
 
@@ -1860,7 +1860,7 @@ void OutputABC_ground(fstream &output_field)
 
     // This is just a check whether the initialized species are preserved in the model
     for (int spp = 1; spp <= ctx.grid.nbspp; spp++)
-        if (S[spp].s_dbhmax_realized > 0.1)
+        if (ctx.S[spp].s_dbhmax_realized > 0.1)
             NBspecies_realized10++;
     // and calculate the number of species
     for (int spp = 0; spp < ctx.grid.nbspp + 1; spp++)
@@ -1874,25 +1874,25 @@ void OutputABC_ground(fstream &output_field)
         for (int c = col_start; c < col_end; c++)
         {
             int s = c + r * ctx.grid.cols;
-            if (T[s].t_age > 0)
+            if (ctx.T[s].t_age > 0)
             {
                 Abu++;
-                float dbh_tree = T[s].t_dbh;
-                float dbh_track = T[s].t_dbh_previous;
-                float height_tree = T[s].t_height;
+                float dbh_tree = ctx.T[s].t_dbh;
+                float dbh_track = ctx.T[s].t_dbh_previous;
+                float height_tree = ctx.T[s].t_height;
                 float ba_tree = dbh_tree * dbh_tree * 0.25 * PI;
                 float AGBtree;
-                AGBtree = 0.001 * T[s].CalcAGB(); // convert from kg to tons
+                AGBtree = 0.001 * ctx.T[s].CalcAGB(); // convert from kg to tons
                 AGB += AGBtree;
                 LoreyH += ba_tree * height_tree;
                 ba += ba_tree;
-                mean_LMA += T[s].t_LMA;
-                mean_Nmass += T[s].t_Nmass;
-                mean_Pmass += T[s].t_Pmass;
-                mean_wsg += T[s].t_wsg;
-                mean_CR += T[s].t_CR;
+                mean_LMA += ctx.T[s].t_LMA;
+                mean_Nmass += ctx.T[s].t_Nmass;
+                mean_Pmass += ctx.T[s].t_Pmass;
+                mean_wsg += ctx.T[s].t_wsg;
+                mean_CR += ctx.T[s].t_CR;
 
-                int sp_lab = T[s].t_sp_lab;
+                int sp_lab = ctx.T[s].t_sp_lab;
                 abundances_species[sp_lab]++;
 
                 if (dbh_tree >= 0.1)
@@ -1903,11 +1903,11 @@ void OutputABC_ground(fstream &output_field)
                     ba10 += ba_tree;
                     AGB10 += AGBtree;
 
-                    mean_LMA10 += T[s].t_LMA;
-                    mean_Nmass10 += T[s].t_Nmass;
-                    mean_Pmass10 += T[s].t_Pmass;
-                    mean_wsg10 += T[s].t_wsg;
-                    mean_CR10 += T[s].t_CR;
+                    mean_LMA10 += ctx.T[s].t_LMA;
+                    mean_Nmass10 += ctx.T[s].t_Nmass;
+                    mean_Pmass10 += ctx.T[s].t_Pmass;
+                    mean_wsg10 += ctx.T[s].t_wsg;
+                    mean_CR10 += ctx.T[s].t_CR;
 
                     if (dbh_tree >= 0.3)
                         Abu30++;
@@ -2024,8 +2024,8 @@ void OutputABC_ground(fstream &output_field)
             for (int c = col_start; c < col_end; c++)
             {
                 int s = c + r * ctx.grid.cols;
-                float dbh_tree = T[s].t_dbh;
-                if (T[s].t_age > 0 && dbh_tree >= 0.1)
+                float dbh_tree = ctx.T[s].t_dbh;
+                if (ctx.T[s].t_age > 0 && dbh_tree >= 0.1)
                 {
                     mean_dbh += dbh_tree;
                     int dbh_bin = int(dbh_tree * 20.0);
@@ -2041,8 +2041,8 @@ void OutputABC_ground(fstream &output_field)
             for (int c = col_start; c < col_end; c++)
             {
                 int s = c + r * ctx.grid.cols;
-                float dbh_tree = T[s].t_dbh;
-                if (T[s].t_age > 0 && dbh_tree >= 0.1)
+                float dbh_tree = ctx.T[s].t_dbh;
+                if (ctx.T[s].t_age > 0 && dbh_tree >= 0.1)
                 {
                     sd_dbh += (dbh_tree - mean_dbh) * (dbh_tree - mean_dbh);
                 }
@@ -2081,7 +2081,7 @@ void OutputABC_ground(fstream &output_field)
             for (int c = col_start; c < col_end; c++)
             {
                 int s = c + r * ctx.grid.cols;
-                float dbh_previous = T[s].t_dbh_previous;
+                float dbh_previous = ctx.T[s].t_dbh_previous;
                 // Errors taken from Chave et al. 2004 (all given in cm). See also Réjou-Méchain 2017
                 //  slight modification by assuming that measurement errors cannot go beyond a third of the diameter, e.g. for a stem of 10cm not be above or below 3.3 cm, and for a stem of 100cm not be below or above 33cm), also prevents negative diameters
                 float sd1 = (0.0062 * dbh_previous * 100.0 + 0.0904) * 0.01;
@@ -2099,7 +2099,7 @@ void OutputABC_ground(fstream &output_field)
 
                 if (dbh_previous >= 0.1)
                 {
-                    float dbh = T[s].t_dbh;
+                    float dbh = ctx.T[s].t_dbh;
                     float dbh_growth = dbh - dbh_previous;
                     float dbh_growth_yearly = dbh_growth * 12.0 / float(chmchange_iter);
 
@@ -2119,7 +2119,7 @@ void OutputABC_ground(fstream &output_field)
                 if (dbh_previous_witherror >= 0.1)
                 {
                     count_dbhgrowth_witherror++;
-                    float dbh = T[s].t_dbh;
+                    float dbh = ctx.T[s].t_dbh;
                     // Errors taken from Chave et al. 2004 (all given in cm). See also Réjou-Méchain 2017
                     //  slight modification by assuming that measurement errors cannot go beyond a third of the diameter, e.g. for a stem of 10cm not be above or below 3.3 cm, and for a stem of 100cm not be below or above 33cm), also prevents negative diameters
                     float sd1 = (0.0062 * dbh_previous * 100.0 + 0.0904) * 0.01;
@@ -2184,11 +2184,11 @@ void OutputABC_ground(fstream &output_field)
             {
                 int s = c + r * ctx.grid.cols;
 
-                float dbh_previous = T[s].t_dbh_previous;
+                float dbh_previous = ctx.T[s].t_dbh_previous;
 
                 if (dbh_previous >= 0.1)
                 {
-                    float dbh_growth = T[s].t_dbh - dbh_previous;
+                    float dbh_growth = ctx.T[s].t_dbh - dbh_previous;
                     float dbh_growth_yearly = dbh_growth * 12.0 / float(chmchange_iter);
 
                     sd_dbhgrowth += (dbh_growth - mean_dbhgrowth) * (dbh_growth - mean_dbhgrowth);
@@ -2216,13 +2216,13 @@ void OutputABC_ground(fstream &output_field)
     //        for(int r=row_start;r<row_end;r++){
     //            for(int c=col_start;c<col_end;c++){
     //                int site = c + r*ctx.grid.cols;
-    //                if(T[site].t_age > 0 && T[site].t_dbh > 0.1){
+    //                if(ctx.T[site].t_age > 0 && ctx.T[site].t_dbh > 0.1){
     //
     //                    for(int r = 0; r < 25; r++){
     //                        int t = r + 1;
     //                        int t_squared = t * t;
     //                        for(int site_compare = 0; site_compare < ctx.grid.sites; site_compare++){
-    //                            if(T[site_compare].t_age > 0 && T[site_compare].t_dbh > 0.1 && site != site_compare){
+    //                            if(ctx.T[site_compare].t_age > 0 && ctx.T[site_compare].t_dbh > 0.1 && site != site_compare){
     //                                int row = site/ctx.grid.cols;
     //                                int col = site%ctx.grid.cols;
     //                                int row_compare = site_compare/ctx.grid.cols;
@@ -2323,24 +2323,24 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
         for (int c = col_start; c < col_end; c++)
         {
             int s = c + r * ctx.grid.cols;
-            if (T[s].t_age > 0)
+            if (ctx.T[s].t_age > 0)
             {
                 // First abundance, then mean and standard deviation of the variation in the 5 traits (leaf level traits, wood density, crown radius), mean and standard deviation are calculated in one pass from sum of traits and sum of squares of traits
-                int sp_lab = T[s].t_sp_lab;
+                int sp_lab = ctx.T[s].t_sp_lab;
                 abundances_species[sp_lab]++;
 
-                float agb_tree = 0.001 * T[s].CalcAGB(); // convert from kg to tons
+                float agb_tree = 0.001 * ctx.T[s].CalcAGB(); // convert from kg to tons
                 biomass_species[sp_lab] += agb_tree;
 
-                float LMA = log(T[s].t_mult_LMA);
+                float LMA = log(ctx.T[s].t_mult_LMA);
                 float LMA2 = LMA * LMA;
-                float Nmass = log(T[s].t_mult_N);
+                float Nmass = log(ctx.T[s].t_mult_N);
                 float Nmass2 = Nmass * Nmass;
-                float Pmass = log(T[s].t_mult_P);
+                float Pmass = log(ctx.T[s].t_mult_P);
                 float Pmass2 = Pmass * Pmass;
-                float wsg = T[s].t_dev_wsg;
+                float wsg = ctx.T[s].t_dev_wsg;
                 float wsg2 = wsg * wsg;
-                float crown = log(T[s].t_mult_CR);
+                float crown = log(ctx.T[s].t_mult_CR);
                 float crown2 = crown * crown;
 
                 traits_species[sp_lab][0] += LMA;
@@ -2354,7 +2354,7 @@ void OutputABC_species(fstream &output_species, fstream &output_species10, fstre
                 traits_species[sp_lab][8] += crown;
                 traits_species[sp_lab][9] += crown2;
 
-                if (T[s].t_dbh >= 0.1)
+                if (ctx.T[s].t_dbh >= 0.1)
                 {
                     abundances_species10[sp_lab]++;
 
@@ -2642,12 +2642,12 @@ void OutputABC_transmittance(fstream &output_transmittance, fstream &output_tran
     //  to be consistent with other estimates, we do not only use leaf-filled area, but the whole area used up by the crown (even when overlapping)
     for (int site = 0; site < ctx.grid.sites; site++)
     {
-        if (T[site].t_age > 0)
+        if (ctx.T[site].t_age > 0)
         {
             int row_center = site / ctx.grid.cols;
             int col_center = site % ctx.grid.cols;
 
-            AddCrownVolumeLayer(ctx, row_center, col_center, T[site].t_height, T[site].t_CR, T[site].t_CD, voxcrown);
+            AddCrownVolumeLayer(ctx, row_center, col_center, ctx.T[site].t_height, ctx.T[site].t_CR, ctx.T[site].t_CD, voxcrown);
         }
     }
 

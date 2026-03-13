@@ -4,9 +4,7 @@
 #include "context.hpp"
 #include "params/param_registry.hpp"
 
-// File-scope globals — defined here once.
-vector<Species> S;
-vector<Tree> T;
+// S and T migrated to ctx.S and ctx.T (Context in context.hpp)
 int mpi_rank = 0;
 int mpi_size = 0;
 int easympi_rank = 0;

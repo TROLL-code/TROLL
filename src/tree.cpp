@@ -71,7 +71,7 @@ void Tree::Birth(Context &ctx, int nume, int site0)
         ctx.diag.nblivetrees++;
         t_site = site0;
         t_sp_lab = nume;
-        S[t_sp_lab].s_nbind++;
+        ctx.S[t_sp_lab].s_nbind++;
         t_multiplier_seed = 1;
         t_age = 1;
         t_hurt = 0;
@@ -101,13 +101,13 @@ void Tree::Birth(Context &ctx, int nume, int site0)
         // #####################
         // # leaf/wood traits ##
         // #####################
-        t_Pmass = S[t_sp_lab].s_Pmass * t_mult_P;
-        t_Nmass = S[t_sp_lab].s_Nmass * t_mult_N;
-        t_LMA = S[t_sp_lab].s_LMA * t_mult_LMA;
-        t_wsg = fmaxf(S[t_sp_lab].s_wsg + t_dev_wsg, 0.05); // updated in v.3.1: Lower cutoff for normal distribution set to 0.05 instead of 0.1 (some wsg measurements in Global Wood Density Database go below 0.1)
+        t_Pmass = ctx.S[t_sp_lab].s_Pmass * t_mult_P;
+        t_Nmass = ctx.S[t_sp_lab].s_Nmass * t_mult_N;
+        t_LMA = ctx.S[t_sp_lab].s_LMA * t_mult_LMA;
+        t_wsg = fmaxf(ctx.S[t_sp_lab].s_wsg + t_dev_wsg, 0.05); // updated in v.3.1: Lower cutoff for normal distribution set to 0.05 instead of 0.1 (some wsg measurements in Global Wood Density Database go below 0.1)
 #ifdef WATER
-        t_leafarea = S[t_sp_lab].s_leafarea * t_mult_leafarea;
-        t_tlp = S[t_sp_lab].s_tlp * t_mult_tlp;
+        t_leafarea = ctx.S[t_sp_lab].s_leafarea * t_mult_leafarea;
+        t_tlp = ctx.S[t_sp_lab].s_tlp * t_mult_tlp;
         t_wleaf = sqrt(t_leafarea * 0.0001);
         t_phi_lethal = -0.9842 + 3.1795 * t_tlp; // Inferred from data provided in Bartlett et al. 2016 PNAS
         t_itlp = 1 / t_tlp;
@@ -123,7 +123,7 @@ void Tree::Birth(Context &ctx, int nume, int site0)
         t_g1 = t_g1_0;
         if (t_g1 < 0)
         {
-            cout << "Warning: t_g1 <0 in Tree::Birth ! t_LMA=" << t_LMA << "; s_LMA=" << S[t_sp_lab].s_LMA << "; multiplierLMA=" << t_mult_LMA << endl;
+            cout << "Warning: t_g1 <0 in Tree::Birth ! t_LMA=" << t_LMA << "; s_LMA=" << ctx.S[t_sp_lab].s_LMA << "; multiplierLMA=" << t_mult_LMA << endl;
         }
 #endif
 
@@ -131,11 +131,11 @@ void Tree::Birth(Context &ctx, int nume, int site0)
         // # biometry/allometry ##
         // ##################$###
 
-        t_hmax = S[t_sp_lab].s_hmax;
-        t_ah = S[t_sp_lab].s_ah;
+        t_hmax = ctx.S[t_sp_lab].s_hmax;
+        t_ah = ctx.S[t_sp_lab].s_ah;
 
         t_dbh = ctx.params.DBH0;
-        t_dbhmax = S[t_sp_lab].s_dbhmax;
+        t_dbhmax = ctx.S[t_sp_lab].s_dbhmax;
         t_dbhmax *= t_mult_dbhmax;
         t_dbhmax = fmaxf(t_dbhmax, ctx.params.DBH0 * 2.0);
         t_dbhmature = t_dbhmax * 0.5; // Mean threshold of tree size to maturity - see Visser et al. 2016 Functional Ecology (suited to both understory and top-canopy species). NOTE that if we decide to keep it as a fixed species-specific value, this could be defined as a Species calss variable, and computed once in Species::Init. -- v230
@@ -279,7 +279,7 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         // species run from 1 to ctx.grid.nbspp!
         for (int s = 1; s <= ctx.grid.nbspp; s++)
         {
-            if (parameter_value == S[s].s_name)
+            if (parameter_value == ctx.S[s].s_name)
             {
                 t_sp_lab = s;
                 species_exists = 1;
@@ -289,11 +289,11 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         {
             t_sp_lab = int(gsl_rng_uniform_int(ctx.rng.gslrand, ctx.grid.nbspp)) + 1;
             nb_speciesrandom++;
-            // cout << "Species: " << parameter_value << " not found. Initializing as random species: " << S[t_sp_lab].s_name << endl;
+            // cout << "Species: " << parameter_value << " not found. Initializing as random species: " << ctx.S[t_sp_lab].s_name << endl;
         }
 
         // update species counter
-        S[t_sp_lab].s_nbind++;
+        ctx.S[t_sp_lab].s_nbind++;
 
         // CrownDisplacement
         parameter_name = "CrownDisplacement";
@@ -313,12 +313,12 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         {
             // draw random trait
             t_mult_P = ctx.intra.d_intraspecific_P[dev_rand];
-            t_Pmass = S[t_sp_lab].s_Pmass * t_mult_P;
+            t_Pmass = ctx.S[t_sp_lab].s_Pmass * t_mult_P;
         }
         else
         {
             // infer multiplier trait and check against supplied values if available
-            // t_mult_P = t_Pmass/S[t_sp_lab].s_Pmass;
+            // t_mult_P = t_Pmass/ctx.S[t_sp_lab].s_Pmass;
             parameter_name = "mult_P";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_mult_P, 0.0f, 2.0f, 1.0f, quiet);
@@ -335,12 +335,12 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         {
             // draw random trait
             t_mult_N = ctx.intra.d_intraspecific_N[dev_rand];
-            t_Nmass = S[t_sp_lab].s_Nmass * t_mult_N;
+            t_Nmass = ctx.S[t_sp_lab].s_Nmass * t_mult_N;
         }
         else
         {
             // infer multiplier trait and check against supplied values if available
-            // t_mult_N = t_Nmass/S[t_sp_lab].s_Nmass;
+            // t_mult_N = t_Nmass/ctx.S[t_sp_lab].s_Nmass;
             parameter_name = "mult_N";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_mult_N, 0.0f, 2.0f, 1.0f, quiet);
@@ -354,12 +354,12 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         {
             // draw random trait
             t_mult_LMA = ctx.intra.d_intraspecific_LMA[dev_rand];
-            t_LMA = S[t_sp_lab].s_LMA * t_mult_LMA;
+            t_LMA = ctx.S[t_sp_lab].s_LMA * t_mult_LMA;
         }
         else
         {
             // infer multiplier trait and check against supplied values if available
-            // t_mult_LMA = t_LMA/S[t_sp_lab].s_LMA;
+            // t_mult_LMA = t_LMA/ctx.S[t_sp_lab].s_LMA;
             parameter_name = "mult_LMA";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_mult_LMA, 0.0f, 2.0f, 1.0f, quiet);
@@ -373,7 +373,7 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         if (t_leafarea == 0.0)
         {
             t_mult_leafarea = ctx.intra.d_intraspecific_leafarea[dev_rand];
-            t_leafarea = S[t_sp_lab].s_leafarea * t_mult_leafarea;
+            t_leafarea = ctx.S[t_sp_lab].s_leafarea * t_mult_leafarea;
         }
         else
         {
@@ -389,7 +389,7 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         if (t_leafarea == 0.0)
         {
             t_mult_tlp = ctx.intra.d_intraspecific_tlp[dev_rand];
-            t_tlp = S[t_sp_lab].s_tlp * t_mult_tlp;
+            t_tlp = ctx.S[t_sp_lab].s_tlp * t_mult_tlp;
         }
         else
         {
@@ -408,12 +408,12 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
         {
             // draw random trait
             t_dev_wsg = ctx.intra.d_intraspecific_wsg[dev_rand];
-            t_wsg = fmaxf(S[t_sp_lab].s_wsg + t_dev_wsg, 0.05);
+            t_wsg = fmaxf(ctx.S[t_sp_lab].s_wsg + t_dev_wsg, 0.05);
         }
         else
         {
             // infer deviation trait and check against supplied values if available
-            // t_dev_wsg = t_wsg - S[t_sp_lab].s_wsg;
+            // t_dev_wsg = t_wsg - ctx.S[t_sp_lab].s_wsg;
             parameter_name = "dev_wsg";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_dev_wsg, -1.0f, 1.0f, 0.0f, quiet); //
@@ -425,19 +425,19 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
 
         if (t_dbhmax == 0.0)
         {
-            t_dbhmax = S[t_sp_lab].s_dbhmax;
+            t_dbhmax = ctx.S[t_sp_lab].s_dbhmax;
             t_mult_dbhmax = ctx.intra.d_intraspecific_dbhmax[dev_rand];
             t_dbhmax *= t_mult_dbhmax;
             if (t_dbhmax < t_dbh * 1.5)
             {
                 t_dbhmax = t_dbh * 1.5;
-                t_mult_dbhmax = t_dbhmax / S[t_sp_lab].s_dbhmax;
+                t_mult_dbhmax = t_dbhmax / ctx.S[t_sp_lab].s_dbhmax;
             }
         }
         else
         {
             // infer multiplier trait and check against supplied values if available
-            // t_mult_dbhmax = t_dbhmax/S[t_sp_lab].s_dbhmax;
+            // t_mult_dbhmax = t_dbhmax/ctx.S[t_sp_lab].s_dbhmax;
             parameter_name = "mult_dbhmax";
             parameter_value = GetParameter(parameter_name, parameter_names, parameter_values);
             SetParameter(parameter_name, parameter_value, t_mult_dbhmax, 0.0f, 2.0f, 1.0f, quiet);
@@ -473,8 +473,8 @@ int Tree::BirthFromInventory(Context &ctx, int site, vector<string> &parameter_n
 #endif
 
         // height allometry
-        t_hmax = S[t_sp_lab].s_hmax;
-        t_ah = S[t_sp_lab].s_ah;
+        t_hmax = ctx.S[t_sp_lab].s_hmax;
+        t_ah = ctx.S[t_sp_lab].s_ah;
 
         // leaf related traits
 
@@ -1383,7 +1383,7 @@ float Tree::DeathRate(Context &ctx, float dbh, float carbon_starv, float phi_roo
         ctx.out.output[26] << t_wsg << "\t" << basal << "\t" << dbh << "\t" << dr << "\n";
 
     /*if (ctx.time.iter>=622 && dr*ctx.time.timestep>=0.8) {
-        cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*ctx.time.timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; S[t_sp_lab].s_phi_lethal=" << S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
+        cout<< "high deathrate: wsg=" << t_wsg << "; basal=" << basal << "; dbh="  << dbh << "; dr="  << dr*ctx.time.timestep   << "; carbon_starv="  << carbon_starv   << "; NPP="  << t_NPP   << "; phi_root="  << phi_root   << "; ctx.S[t_sp_lab].s_phi_lethal=" << ctx.S[t_sp_lab].s_phi_lethal << "; t_WSF=" << t_WSF << "; t_WSF_A=" << t_WSF_A << "; t_LA=" << t_LA << endl;
     }*/
 
     return dr * ctx.time.timestep;
@@ -1540,7 +1540,7 @@ leafFluxes Tree::FluxesLeaf(Context &ctx, float PPFD, float VPDa, float Ta, floa
 
         /*if(DS < 0 ) {
 
-            cout << "Warning in FluxesLeaf: " << " DS= " << DS << ", VPDa= "<< VPDa << ", ITER=" << ITER << ", GSV=" << GSV << ", GSC=" << GSC << ", ALEAF=" << ALEAF << ", ET= " << ET << ", GV=" << GV << ", initial lambdaET=" << (SLOPE*Rnetiso+1000.0*VPDa*HDIVT)/(SLOPE+GAMMA*GH/GV) << ", Rnetiso=" << Rnetiso << "; PPFD=" << PPFD << "; Vcmax=" << t_Vcmax << "; Jmax=" << t_Jmax << "; t_Pmass=" << t_Pmass << "; S[spp].s_Pmass=" << S[t_sp_lab].s_Pmass << endl ;
+            cout << "Warning in FluxesLeaf: " << " DS= " << DS << ", VPDa= "<< VPDa << ", ITER=" << ITER << ", GSV=" << GSV << ", GSC=" << GSC << ", ALEAF=" << ALEAF << ", ET= " << ET << ", GV=" << GV << ", initial lambdaET=" << (SLOPE*Rnetiso+1000.0*VPDa*HDIVT)/(SLOPE+GAMMA*GH/GV) << ", Rnetiso=" << Rnetiso << "; PPFD=" << PPFD << "; Vcmax=" << t_Vcmax << "; Jmax=" << t_Jmax << "; t_Pmass=" << t_Pmass << "; ctx.S[spp].s_Pmass=" << ctx.S[t_sp_lab].s_Pmass << endl ;
         }*/
 
         // float TLEAF1 = Ta + (Rnetiso - lambdaET)/HDIVT; // Leaf temperature inferred from Jones (2013) equation (9.7), p.225. Note : in Vezy et al. 2018 they accounted for the rate of evaporation of water at the leaf sufarce when the leaf is wet in addition to the one of tranpiration. To do so they use Penman-Monteith with an "infinitly" large stomatal conductance to water vapor and use a weighted mean of both PM values...
@@ -1567,7 +1567,7 @@ leafFluxes Tree::FluxesLeaf(Context &ctx, float PPFD, float VPDa, float Ta, floa
     ET = ET * 1e6;
 
     // if (ctx.time.iter > 4000 && t_height> 10.0) {
-    //     cout << " species:" << S[t_sp_lab].s_name << " Tree height=" << t_height << " ET=" << ET << " SLOPE=" << SLOPE << " Rnetiso=" << Rnetiso << " SLOPE*Rnetiso=" << SLOPE*Rnetiso <<  " 1000*VPDa*HDIVT=" << 1000.0*VPDa*HDIVT << " VPDa=" << VPDa << " HDIVT=" << HDIVT << " GAMMA*GH/GV=" << GAMMA*GH/GV << endl;
+    //     cout << " species:" << ctx.S[t_sp_lab].s_name << " Tree height=" << t_height << " ET=" << ET << " SLOPE=" << SLOPE << " Rnetiso=" << Rnetiso << " SLOPE*Rnetiso=" << SLOPE*Rnetiso <<  " 1000*VPDa*HDIVT=" << 1000.0*VPDa*HDIVT << " VPDa=" << VPDa << " HDIVT=" << HDIVT << " GAMMA*GH/GV=" << GAMMA*GH/GV << endl;
     // }
 
     leafFluxes outFluxes;
@@ -2734,9 +2734,9 @@ void Tree::UpdateLeafDynamics(Context &ctx)
 #ifdef PHENO_DROUGHT
 
         /* version where the multiplier modifies leafarea_max, similarly to Xu et al. 2016: drawbacks: no possibilities for simultaneous increase of leaf production and old leaves litterfal.
-         if (t_phi_root < S[t_sp_lab].s_tlp) t_Ndays_dry++;
+         if (t_phi_root < ctx.S[t_sp_lab].s_tlp) t_Ndays_dry++;
          else t_Ndays_dry=0;
-         if (t_phi_root > 0.5*S[t_sp_lab].s_tlp) t_Ndays_wet++;
+         if (t_phi_root > 0.5*ctx.S[t_sp_lab].s_tlp) t_Ndays_wet++;
          else t_Ndays_wet=0;
          if (t_Ndays_dry >=5) t_pheno_factor -=0.05;
          if (t_Ndays_wet >=5) t_pheno_factor +=0.05;
@@ -2927,9 +2927,9 @@ void Tree::UpdateTreeBiometry(Context &ctx)
     // With V=pi*r^2*h, increment of volume = dV = 2*pi*r*h*dr + pi*r^2*dh
     // With isometric growth assumption (ddbh/dbh=dh/h)and dbh=2*r: dV=3/4*pi*dbh*h*ddbh, ddbh in ctx.params.m, it follows: ddbh = 4/3 * V = 4/3 * 1/(pi*dbh*h)
     if (t_dbh + ddbh > 0.1 && t_dbh < 0.1)
-        S[t_sp_lab].s_nbind10++;
+        ctx.S[t_sp_lab].s_nbind10++;
     if (t_dbh + ddbh > 0.3 && t_dbh < 0.3)
-        S[t_sp_lab].s_nbind30++;
+        ctx.S[t_sp_lab].s_nbind30++;
 
     t_dbh += ddbh;
     UpdateSapwoodArea(ctx, ddbh);
@@ -2939,7 +2939,7 @@ void Tree::UpdateTreeBiometry(Context &ctx)
     UpdateCD(ctx);
 
 #ifdef Output_ABC
-    S[t_sp_lab].s_dbhmax_realized = fmaxf(S[t_sp_lab].s_dbhmax_realized, t_dbh);
+    ctx.S[t_sp_lab].s_dbhmax_realized = fmaxf(ctx.S[t_sp_lab].s_dbhmax_realized, t_dbh);
 #endif
 }
 
@@ -2977,7 +2977,7 @@ void Tree::Death(Context &ctx)
         if (t_dbh * ctx.grid.LH >= 0.01 && t_inInventory == 1)
         {
             float agb = 0.5 * CalcAGB(ctx); // in kg C
-            ctx.out.output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+            ctx.out.output_MIP_ind << ctx.time.iter << "\t" << ctx.S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 0.0 << "\t" << 1.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             t_inInventory = 0;
         }
     }
@@ -2987,13 +2987,13 @@ void Tree::Death(Context &ctx)
     // tree death statistics
     ctx.diag.nbdead_n1++;
     ctx.diag.nblivetrees--;
-    if ((S[t_sp_lab].s_nbind) > 0)
-        (S[t_sp_lab].s_nbind)--;
+    if ((ctx.S[t_sp_lab].s_nbind) > 0)
+        (ctx.S[t_sp_lab].s_nbind)--;
     if (t_dbh * ctx.grid.LH > 0.1)
     {
         ctx.diag.nbdead_n10++;
-        if ((S[t_sp_lab].s_nbind10) > 0)
-            (S[t_sp_lab].s_nbind10)--;
+        if ((ctx.S[t_sp_lab].s_nbind10) > 0)
+            (ctx.S[t_sp_lab].s_nbind10)--;
 #ifdef Output_ABC
         int row = t_site / ctx.grid.cols;
         int col = t_site % ctx.grid.cols;
@@ -3004,8 +3004,8 @@ void Tree::Death(Context &ctx)
     if (t_dbh * ctx.grid.LH > 0.3)
     {
         ctx.diag.nbdead_n30++;
-        if ((S[t_sp_lab].s_nbind30) > 0)
-            (S[t_sp_lab].s_nbind30)--;
+        if ((ctx.S[t_sp_lab].s_nbind30) > 0)
+            (ctx.S[t_sp_lab].s_nbind30)--;
     }
     // New v.2.2. new outputs
     if (ctx.opt._OUTPUT_extended)
@@ -3046,7 +3046,7 @@ void Tree::DisperseSeed(Context &ctx)
     {
         int nbs;
         if (ctx.opt._SEEDTRADEOFF)
-            nbs = int(t_NPP * 2.0 * ctx.params.falloccanopy * 0.08 * 0.5 * (S[t_sp_lab].s_iseedmass)); // some multiplications could be avoided in this line.
+            nbs = int(t_NPP * 2.0 * ctx.params.falloccanopy * 0.08 * 0.5 * (ctx.S[t_sp_lab].s_iseedmass)); // some multiplications could be avoided in this line.
         else
             nbs = ctx.params.nbs0 * t_multiplier_seed;
         // else nbs=int(t_NPP*2*ctx.params.falloccanopy*0.08*0.5); // test 17/01/2017: use a factor to translate NPP into seeds produced, but not species specific, not linked to mass of grains
@@ -3057,7 +3057,7 @@ void Tree::DisperseSeed(Context &ctx)
             // update 2.5: rho does not seem to correspond to original 1999 paper anymore and in previous version predicted dispersal with a lower cutoff instead of the Rayleigh distribution
             // here we restore the previous formulation by using the Rayleigh implementation from the gsl library
             // for the moment, we do not use the crown radius as an additional dispersal kernel. This would lead to a loss of large tree species locally, because they will have much less seeds within the plot
-            float rho = gsl_ran_rayleigh(ctx.rng.gslrand, S[t_sp_lab].s_ds);
+            float rho = gsl_ran_rayleigh(ctx.rng.gslrand, ctx.S[t_sp_lab].s_ds);
             float theta_angle = float(twoPi * gsl_rng_uniform(ctx.rng.gslrand)); // Dispersal angle ctx.params.theta
             int col_tree = t_site % ctx.grid.cols;
             int row_tree = t_site / ctx.grid.cols;
@@ -3193,20 +3193,20 @@ void Tree::Average(Context &ctx)
     {
         if (t_dbh * ctx.grid.LH >= 0.1)
         {
-            (S[t_sp_lab].s_sum10)++;
-            S[t_sp_lab].s_ba10 += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
+            (ctx.S[t_sp_lab].s_sum10)++;
+            ctx.S[t_sp_lab].s_ba10 += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
         }
         if (t_dbh * ctx.grid.LH >= 0.3)
-            (S[t_sp_lab].s_sum30)++;
-        S[t_sp_lab].s_ba += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
-        S[t_sp_lab].s_npp += t_NPP * 1.0e-6;
-        S[t_sp_lab].s_gpp += t_GPP * 1.0e-6;
+            (ctx.S[t_sp_lab].s_sum30)++;
+        ctx.S[t_sp_lab].s_ba += t_dbh * ctx.grid.LH * t_dbh * ctx.grid.LH * 3.1415 * 0.25;
+        ctx.S[t_sp_lab].s_npp += t_NPP * 1.0e-6;
+        ctx.S[t_sp_lab].s_gpp += t_GPP * 1.0e-6;
         float agb = CalcAGB(ctx);
-        S[t_sp_lab].s_agb += agb;
-        S[t_sp_lab].s_rday += t_Rday * 1.0e-6;
-        S[t_sp_lab].s_rnight += t_Rnight * 1.0e-6;
-        S[t_sp_lab].s_rstem += t_Rstem * 1.0e-6;
-        S[t_sp_lab].s_litterfall += t_litter * 1.0e-6;
+        ctx.S[t_sp_lab].s_agb += agb;
+        ctx.S[t_sp_lab].s_rday += t_Rday * 1.0e-6;
+        ctx.S[t_sp_lab].s_rnight += t_Rnight * 1.0e-6;
+        ctx.S[t_sp_lab].s_rstem += t_Rstem * 1.0e-6;
+        ctx.S[t_sp_lab].s_litterfall += t_litter * 1.0e-6;
 
 #ifdef WATER
         int crown_top = int(t_height);
@@ -3231,7 +3231,7 @@ void Tree::Average(Context &ctx)
             if (t_dbh * ctx.grid.LH >= 0.01)
             {
                 t_inInventory = 1;
-                ctx.out.output_MIP_ind << ctx.time.iter << "\t" << S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
+                ctx.out.output_MIP_ind << ctx.time.iter << "\t" << ctx.S[t_sp_lab].s_name << "\t" << -9999 << "\t" << 1.0 << "\t" << 0.0 << "\t" << t_dbh * 100 << "\t" << t_height << "\t" << -9999 << "\t" << 0.5 * agb << "\t" << 1000 * t_wsg << "\t" << 1000 / t_LMA << "\t" << t_Nmass << "\t" << t_Pmass << "\t" << t_dbhmax << "\t" << t_tlp << "\t" << t_leafarea << endl;
             }
         }
 #endif
