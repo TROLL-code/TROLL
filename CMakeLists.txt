@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME}
     src/species.cpp
     src/crown.cpp
     src/tree.cpp
+    src/lookup_tables.cpp
     src/lookUpTables_cache.cpp
     src/params/param_registry.cpp
 )

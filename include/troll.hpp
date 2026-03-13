@@ -359,6 +359,9 @@ float QUAD(float A, float B, float C, int ROOT); //!< Returns solution of quadra
 // GLOBAL FUNCTIONS
 void ReadInputGeneral(Context &ctx);                                //!< Global function: read in global parameter sheet
 void Initialise(Context &ctx);                                      //!< Global function: initialisation with bare ground conditions
+void InitialiseIntraspecific(void);                                 //!< Global function: initialise intraspecific variables
+void InitialiseLookUpLAImax(void);                                  //!< Global function: initialise lookup table for LAImax
+void InitialiseLookUpTables(void);                                  //!< Global function: initialise lookup tables
 void InitialiseOutputStreams(void);                                 //!< Global function: initialisation of output streams
 void ReadInputInventory(void);                                      //!< Global function: updated in v.3.1: initialisation from inventories
 void ReadInputPointcloud(void);                                     //!< Global function: introduced in v.3.1.6: reads the parameter sheet for the point cloud simulation
