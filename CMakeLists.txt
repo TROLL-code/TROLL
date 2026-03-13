@@ -27,6 +27,7 @@ add_executable(${PROJECT_NAME}
     src/input.cpp
     src/memory.cpp
     src/output.cpp
+    src/simulation.cpp
     src/lookUpTables_cache.cpp
     src/params/param_registry.cpp
 )
