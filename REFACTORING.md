@@ -65,7 +65,7 @@ The grouping also controls scope. A function that only queries the grid does not
 
 **A note on performance**
 
-`OutputConfig` is placed **last** in `Context`. `fstream` are accessed during the simulation. Placing them last keeps the frequently-accessed fields (`grid`, `time`, `params`, `field`) at low offsets for better caching, otherwise it was observably slower.
+`OutputConfig` is placed **last** in `Context`. `fstream` are rarely accessed during the simulation. Placing them last keeps the frequently-accessed fields (`grid`, `time`, `params`, `field`) at low offsets for better caching, otherwise it was observably slower.
 
 ---
 
