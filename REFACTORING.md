@@ -18,7 +18,7 @@ Lookup tables were cached for repeated checks to speed things up.
 
 This quick-check (20 iterations) was run after every commit to ensure nothing "broke". 
 
-In the end 1000 iterations were tried to successfully. 
+In the end 1000 iterations were tried too successfully. 
 
 ---
 
@@ -59,13 +59,13 @@ A single `Context` struct was introduced in `include/context.hpp`, grouping all 
 
 **Grouping?**
 
-Being unaware of the scientific contest, quite some huessing took place here: variables that are always read and written together, or that form a concept, belong together. Hope it makes sense...
+Being unaware of the scientific context, quite some guessing took place here: variables that are always read and written together, or that form a concept, belong together. Hope it makes sense...
 
 The grouping also controls scope. A function that only queries the grid does not need to know that `Soil` or `RNGState` exist.
 
 **A note on performance**
 
-`OutputConfig` is placed **last** in `Context`. `fstream` are rarely accessed during the simulation. Placing them last keeps the frequently-accessed fields (`grid`, `time`, `params`, `field`) at low offsets for better caching, otherwise it was observably slower.
+`OutputConfig` is placed **last** in `Context`. `fstream` objects are big and rarely accessed during the simulation. Placing them last keeps the frequently-accessed fields (`grid`, `time`, `params`, `field`) at low offsets for better caching, otherwise it was observably slower.
 
 ---
 
@@ -93,7 +93,7 @@ Again, fingers crossed for my splitting decisions.
 
 ## Phase 4 — Threading `Context` by reference
 
-`Context ctx` was made a local variable in `main()`. Every function that previously touched a global was updated to accept `Context &ctx` as its first argument and access state through it. No file-scope `ctx` remains.
+`Context ctx` was made a local variable in `main()`. Every function that previously touched a global was updated to accept `Context &ctx` as its first argument and access state through it.
 
 
 This threading was done, function-group by function-group (`crown`, `lookup`, `species`, then `input`, then `memory`/`output`/`simulation`). Each was independently sanity-tested.
@@ -112,9 +112,16 @@ This threading was done, function-group by function-group (`crown`, `lookup`, `s
 
 ## The parameter registry
 
-The 300-line `AssignValueGlobal` if/else chain (which assigned values to globals after reading `global_inputs.txt`) was replaced by a registry in `src/params/param_registry.cpp`. Each parameter is registered once with its name, target pointer, min value, max value, and default value. A single `SetParameter<T>` template validates and assigns. The same pattern was later applied to species parameters (`BuildSpeciesRegistry` / `AssignSpeciesParam` in `src/input.cpp`).
+The 300-line `AssignValueGlobal` if/else chain (which assigned values to globals after reading `global_inputs.txt`) was replaced by a registry in `src/params/param_registry.cpp`. 
+
+Each parameter is registered once with its name, target pointer, min value, max value, and default value. 
+
+A single `SetParameter<T>` template validates and assigns. 
+
+The same pattern was later applied to species parameters (`BuildSpeciesRegistry` / `AssignSpeciesParam` in `src/input.cpp`).
 
 **A note: Context before input**
+
 The registry binds directly to `ctx.*` fields via pointers, so it requires a `Context &ctx` at registration time. `RegisterParameters(ctx)` must be called early in `main()`, before any file is read.
 
 ## Summary
@@ -154,21 +161,29 @@ The affected names are:
 | `dens` | `dens_layer` | `src/crown.cpp` (params + locals) | Per-layer crown density; was shadowing `ctx.params.dens` |
 | `dens` | `dens_lowerlayer` | `src/crown.cpp` (locals) | Base-layer density from `GetDensitiesGradient`; distinct from the `dens_layer` output parameter |
 
-**We can probably revert back if needed** after threading `Context`, the former globals are accessed as e.g. `ctx.params.alpha`. A local `alpha` can no longer shadow them. 
+**We can probably revert back if needed** 
+
+After threading `Context`, the former globals are accessed as e.g. `ctx.params.alpha`, a local `alpha` can no longer shadow them. 
 
 ---
 
 ### Confidence ###
 
 ### The scientist's validation ###
-So far the only test that I haven't broken anything is the sanity check described above. It does compare row by row, so per-step divergenceis are checked as well as final values. I tried at 20 iterations while developing and at 1000 when I finished. Perhaps more should be tried? Not sure how the model is behaving in time, or with different inputs/initial params etc. Most probably, you, if you are reading this, will have more ideas than me on how to better test the "science-correctness" of this refactoring.
+
+So far the only test that I haven't broken anything is the sanity check described above. It does compare row by row, so per-step divergencies are checked, as well as final values. I tried it at 20 iterations while developing and at 1000 once when I finished. Perhaps a bigger number should be tried? Not sure how the model is behaving in time. Or with different inputs/initial params etc. 
+
+Most certainly, you, if you are reading this, will have more ideas than me on how to better test the "science-correctness" of this refactoring.
 
 
 ### The developer's validation ###
-Compile warnings are not worrying (one could fix/remove them though). So in combination with the sanity check and the knowledge that I mostly "moved things around" I am quite confident this is sound. 
+
+Compilation warnings are not worrying (one could fix/remove them though). So, in combination with the sanity checks performed and the knowledge that I mostly "moved things around" I am quite confident this is sound. 
 
 
 ### A note on a tricky bug (hope there's no more of these that just didn't come up) ###
-During the refactoring, one bug was very tricky to find: CloseOutputs only looped i < 10, leaving output[11], output[31], output[32] (and others) never closed. Those were flushed automatically when `exit(0)` triggered global destructor cleanup — because `ctx` was global. With `ctx` local, `exit(0)` skiped local destructors, so those buffers were silently lost. Perhaps we should check if similar things exist elsewhere.
+
+During the refactoring, one bug was very tricky to find: 
+CloseOutputs only looped i < 10, leaving output[11], output[31], output[32] (and others) never closed. Those were flushed automatically when `exit(0)` triggered global destructor cleanup — because `ctx` was global. With `ctx` local, `exit(0)` skiped local destructors, so those buffers were silently lost. Perhaps we should check if similar things exist elsewhere.
 
 
