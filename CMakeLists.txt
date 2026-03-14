@@ -17,7 +17,7 @@ MESSAGE(STATUS "   - version ${GSL_VERSION}")
 MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 
 
-add_compile_options(-w) 
+add_compile_options(-w)
 add_executable(${PROJECT_NAME}
     src/troll.cpp
     src/species.cpp
@@ -45,6 +45,13 @@ add_custom_target(sanity
     COMMAND ${CMAKE_SOURCE_DIR}/sanity/check.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sanity
     COMMENT "Running sanity check (bit-by-bit comparison)"
+)
+
+# sanity check — 1000 iterations
+add_custom_target(sanity1000
+    COMMAND ${CMAKE_SOURCE_DIR}/sanity/check_1000.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sanity
+    COMMENT "Running sanity check — 1000 iterations (bit-by-bit comparison)"
 )
 
 # Make 'test' depend on 'sanity' (and any other tests in the future)
