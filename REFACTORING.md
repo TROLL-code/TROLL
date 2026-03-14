@@ -160,12 +160,12 @@ The affected names are:
 
 ### Confidence ###
 
-### The "scientist's" validation ###
-So far the only test that I haven't broken anything is the sanity check described above. It does compare row by row, so per-step divergenceis are checked as well as final values. I tried at 20 iterations while developing and at 1000 when I finished. Perhaps more should be tried? Not sure how the model is behaving in time, or with different inputs/initial params etc. Most probably, you, if you are reading this, will have more ideas than me in how to better test the "science-correctness" of this refactoring.
+### The scientist's validation ###
+So far the only test that I haven't broken anything is the sanity check described above. It does compare row by row, so per-step divergenceis are checked as well as final values. I tried at 20 iterations while developing and at 1000 when I finished. Perhaps more should be tried? Not sure how the model is behaving in time, or with different inputs/initial params etc. Most probably, you, if you are reading this, will have more ideas than me on how to better test the "science-correctness" of this refactoring.
 
 
 ### The developer's validation ###
-Compile warnings are not worrying (one could fix/remove them though). So in combination with the sanity check and the knowledge that I mostly "moved things around" I am quite confident this sound. 
+Compile warnings are not worrying (one could fix/remove them though). So in combination with the sanity check and the knowledge that I mostly "moved things around" I am quite confident this is sound. 
 
 
 ### A note on a tricky bug (hope there's no more of these that just didn't come up) ###
