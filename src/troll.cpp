@@ -4,14 +4,9 @@
 #include "context.hpp"
 #include "params/param_registry.hpp"
 
-// S and T migrated to ctx.S and ctx.T (Context in context.hpp)
 int mpi_rank = 0;
 int mpi_size = 0;
 int easympi_rank = 0;
-
-// Output file streams → moved to ctx.out (OutputConfig in context.hpp)
-
-// Species constructor and Species::Init() → moved to src/species.cpp
 
 // ###########################################
 // ###########################################
@@ -127,7 +122,7 @@ int main(int argc, char *argv[])
     Initialise(ctx); // Read global parameters
 
     InitialiseOutputStreams(ctx); // Initialise Output streams, taken outside of Initialise() function in v.3.1 to mirror AllocMem()
-    AllocMem(ctx);             // Memory allocation
+    AllocMem(ctx);                // Memory allocation
 
 #ifdef Output_ABC
     InitialiseABC(ctx);
@@ -182,7 +177,7 @@ int main(int argc, char *argv[])
     {
         ctx.out.output_info << "\nTROLL simulator\n\n";
         ctx.out.output_info << "\n   2D discrete network: horizontal step = " << ctx.grid.LH
-                    << " m, one tree per " << ctx.grid.LH * ctx.grid.LH << " m^2 \n\n";
+                            << " m, one tree per " << ctx.grid.LH * ctx.grid.LH << " m^2 \n\n";
         ctx.out.output_info << "\n   Tree : (t_dbh,t_height,t_CR,t_CD) \n\n";
         ctx.out.output_info << "\n            + one species label \n\n";
         ctx.out.output_info << " Number of sites      : " << ctx.grid.rows << "x" << ctx.grid.cols << "\n";
@@ -295,24 +290,9 @@ int main(int argc, char *argv[])
     }
 
     CloseOutputs(ctx); // new in v.3.1: Close and clear outputs, maybe not necessary as main function terminates shortly after, but maybe it ensures a cleaner communication with file system/within Rcpp
-    FreeMem(ctx);   // Free dynamic memory  //! added in oct2013
+    FreeMem(ctx);      // Free dynamic memory  //! added in oct2013
 #ifdef easyMPI
     MPI::Finalize();
 #endif
     exit(0);
 }
-
-// ##########################################
-// ###########################################
-// ######  Initialisation routines    ########
-// ###########################################
-// ###########################################
-
-
-
-
-// ##############################################
-// ######        Output routines         ########
-// ##############################################
-
-
