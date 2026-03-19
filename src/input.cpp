@@ -2,6 +2,7 @@
 #include "constants.hpp"
 #include "context.hpp"
 #include "params/param_registry.hpp"
+#include <functional>
 
 //! Global function: This function provides limits and defaults for species-specific parameters
 // ============================================================================
