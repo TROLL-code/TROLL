@@ -45,6 +45,7 @@
 #include <iostream>
 #include <sstream>
 #include <typeinfo>
+#include <climits>
 #include "../../include/troll_defines.hpp"
 
 // NOTE (Temporary Forward Declarations):
