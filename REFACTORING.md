@@ -144,6 +144,8 @@ The registry binds directly to `ctx.*` fields via pointers, so it requires a `Co
 
 `mpi_rank`, `mpi_size`, and `easympi_rank` remain as file-scope globals in `troll.cpp`. MPI support is disabled by default (`#undef MPI`). Moving these into `Context` would require threading them through functions that are not currently MPI-aware.
 
+In a conversation here [https://github.com/troll-model/TROLL/pull/22#issuecomment-3580696619] I saw that maybe it should be removed? TBD
+
 ### Conditional-compilation diagnostics
 
 `#ifdef Output_ABC` and `#ifdef CHECK_CARBON` blocks remain conditional. The ABC functions were updated to accept `Context &ctx`, but the ABC globals (`chm_field_*`, `transmittance_*`, moving averages) are **not** in `Context` yet
