@@ -1,0 +1,179 @@
+---
+title: "Generate climate data"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Generate climate data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+TROLL forest simulator relies on climate tables with half-hourly variations 
+(temperature, vapour pressure deficit, wind speed and net shortwave radiations)
+and daily variations (night temperature and precipitations).
+Initially, TROLL climate tables were computed from the Guyaflux dataset.
+The purpose of climate generation functions is to compute equivalent climate 
+tables from the ERA5 land reanalysis dataset. 
+With these functions, rcontroll users only need inventories and associated 
+functional traits to run TROLL simulations.
+
+```{r, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 6
+)
+library(tidyverse)
+library(rcontroll) # to generate TROLL climate inputs
+library(ecmwfr) # to request data from Copernicus
+```
+
+# Download ERA5-land data
+
+Before you will be able to download any data you need to get a free personal 
+account and accept the licence to use both ECMWF and Copernicus data.
+
+First ECMWF:
+
+* [Register yourself for ECMWF services](https://accounts.ecmwf.int/auth/realms/ecmwf/protocol/openid-connect/registrations?client_id=apps&response_type=code&scope=openid%20email&redirect_uri=https://www.ecmwf.int)
+
+Then Copernicus:
+
+* [Register yourself for CDS services](https://cds.climate.copernicus.eu/user/register)
+* [Terms and conditions](https://cds.climate.copernicus.eu/cdsapp/#!/terms/licence-to-use-copernicus-products)
+
+Next you can see your used id (UID) and API key on your account: https://cds.climate.copernicus.eu/user/ .
+You need to manually set your account information in R using `wf_set_key` from the `ecmwfr` package with the service `'cds'`.
+Beware, you will need the **ECMWF password** to connect to Copernicus services with `wf_set_key`.
+Replace the user ID and API key in the following chunk and run it.
+
+```{r, eval=FALSE}
+wf_set_key(
+  user = "******",
+  key = "********-****-****-****-************",
+  service = "cds"
+)
+```
+
+You then define the location to retrieve climate data.
+Thanks to the function `getbb` from the package `osmdata` you can directly use the name of the entity.
+
+```{r, eval=FALSE}
+geo_lite_sf("5.267241344232334, -52.92436802555797") %>%
+  leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = getbb("French Guiana",
+    format_out = "sf_polygon",
+    limit = 1
+  )$multipolygon) %>%
+  addCircleMarkers(col = "red")
+```
+
+You can use the `rcontroll`function `request_era` to build your request
+with needed variable from ERA5-Land data. **Beware, the download limit of**
+**Copernicus is pretty small so you may need to download one month at a time.**
+Finally you can use `wf_request_batch` from `ecmwfr` to download locally 
+the requested data with the registered user id (UID):
+
+```{r, eval=FALSE}
+ncfile <- ecmwfr::wf_request_batch(
+  user = "XXXXXX",
+  request = request_era(
+    years = 2004,
+    months = 1:12
+  ),
+  workers = 5,
+  path = "era5",
+  time_out = 60 * 60
+)
+```
+
+You can follow your request here : https://cds.climate.copernicus.eu/cdsapp#!/yourrequests .
+
+Next you can take advantage from `prepare_era_batch` to format all the
+downloaded data for TROLL. We recommend saving the results in a table as
+shown in the example:
+
+```{r, eval=FALSE}
+era5 <- prepare_era_batch(list.files("era5",
+  pattern = "2004",
+  full.names = TRUE
+), cores = 1)
+readr::write_tsv(era5, "ERA5land_Paracou_2004.tsv")
+```
+
+# Prepare TROLL inputs
+
+An example of obtained data for year 2004 has been included in `rcontroll`:
+
+```{r erafile}
+era_file <- system.file("extdata",
+  "ERA5land_Paracou_2004.tsv",
+  package = "rcontroll"
+)
+era <- vroom::vroom(era_file)
+```
+
+You can use the `generate_cliamte` function inside TROLL 
+to prepare `TROLL` climatic data:
+
+```{r }
+generate_climate(hourly_data = era) %>% head()
+```
+
+You can use the `generate_dailyvar` function inside TROLL 
+to prepare `TROLL` dailyvar data:
+
+```{r }
+generate_dailyvar(hourly_data = era) %>% head()
+```
+
+Finally, we can compare obtained climatic data from ERA5-land 
+with included data in the package from the Guyaflux eddy tower:
+
+```{r }
+list(
+  Guyaflux = TROLLv4_dailyvar,
+  ERA5 = generate_dailyvar(hourly_data = era)
+) %>%
+  bind_rows(.id = "origin") %>%
+  mutate(time = as_date("2004/01/01") + (DayJulian - 1)) %>%
+  mutate(time = as_datetime(time) + time_numeric * 60 * 60) %>%
+  filter(time < as_datetime("2005/01/01")) %>%
+  gather(variable, value, -DayJulian, -time_numeric, -origin, -time) %>%
+  ggplot(aes(x = time, y = value)) +
+  geom_line() +
+  facet_grid(variable ~ origin, scales = "free") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  xlab("") +
+  ylab("")
+```
+
+```{r }
+list(
+  Guyaflux = mutate(TROLLv4_climate,
+    DayJulian = seq_len(n())
+  ) %>%
+    filter(DayJulian < 366),
+  ERA5 = mutate(generate_climate(hourly_data = era),
+    DayJulian = seq_len(n())
+  )
+) %>%
+  bind_rows(.id = "origin") %>%
+  mutate(day = as_date("2004/01/01") + (DayJulian - 1)) %>%
+  gather(variable, value, -DayJulian, -day, -origin) %>%
+  ggplot(aes(x = day, y = value)) +
+  geom_line() +
+  facet_grid(variable ~ origin, scales = "free") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  xlab("") +
+  ylab("")
+```
+
+# Download CORDEX data
+
+If you want to simulate climate forcing, you can take advantage of 
+CORDEX data (Coordinated Regional Climate Downscaling Experiment) with 
+the `snakemake` and `singularity` workflow
+[`getCordex`](https://github.com/sylvainschmitt/getCordex).
