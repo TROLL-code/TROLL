@@ -16,7 +16,21 @@ MESSAGE(STATUS "GSL found")
 MESSAGE(STATUS "   - version ${GSL_VERSION}")
 MESSAGE(STATUS "   - included files located in ${GSL_INCLUDE_DIRS}")
 
-add_executable(${PROJECT_NAME} src/troll.cpp src/lookUpTables_cache.cpp)
+
+add_compile_options(-w)
+add_executable(${PROJECT_NAME}
+    src/troll.cpp
+    src/species.cpp
+    src/crown.cpp
+    src/tree.cpp
+    src/lookup_tables.cpp
+    src/input.cpp
+    src/memory.cpp
+    src/output.cpp
+    src/simulation.cpp
+    src/lookUpTables_cache.cpp
+    src/params/param_registry.cpp
+)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -31,6 +45,13 @@ add_custom_target(sanity
     COMMAND ${CMAKE_SOURCE_DIR}/sanity/check.sh
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sanity
     COMMENT "Running sanity check (bit-by-bit comparison)"
+)
+
+# sanity check — 1000 iterations
+add_custom_target(sanity1000
+    COMMAND ${CMAKE_SOURCE_DIR}/sanity/check_1000.sh
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/sanity
+    COMMENT "Running sanity check — 1000 iterations (bit-by-bit comparison)"
 )
 
 # Make 'test' depend on 'sanity' (and any other tests in the future)

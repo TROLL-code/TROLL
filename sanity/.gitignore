@@ -1,6 +1,6 @@
 # Ignore everything ...
 *
-
+*/
 # ... but these files.
 !.gitignore
 !check.sh
