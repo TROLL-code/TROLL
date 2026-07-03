@@ -17,4 +17,4 @@
 #undef MIP_Lichstein //!< includes specific developments and outputs needed for the MIP experiment led by Jeremy Lichstein.
 #undef CACHE_LUT //!< cache Look Up Tables (LUT) calculations
 
-#endif
+#endif // TROLL_DEFINES_HPP

@@ -1,5 +1,5 @@
-#include "lookUpTables.hpp"
-#include "lookUpTables_cache.hpp"
+#include "lookup_tables.hpp"
+#include "internal/lookup_tables_cache.hpp"
 
 #include <fstream>
 #include <iostream>

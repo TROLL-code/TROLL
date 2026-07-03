@@ -1,8 +1,8 @@
 #include "troll.hpp"
 #include "constants.hpp"
-#include "lookUpTables_cache.hpp"
 #include "context.hpp"
-#include "params/param_registry.hpp"
+#include "internal/lookup_tables_cache.hpp"
+#include "internal/param_registry.hpp"
 
 int mpi_rank = 0;
 int mpi_size = 0;

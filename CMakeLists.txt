@@ -28,13 +28,14 @@ add_executable(${PROJECT_NAME}
     src/memory.cpp
     src/output.cpp
     src/simulation.cpp
-    src/lookUpTables_cache.cpp
-    src/params/param_registry.cpp
+    src/internal/lookup_tables_cache.cpp
+    src/internal/param_registry.cpp
 )
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include  # Public headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/internal  # Internal headers
 )
 
 target_compile_options(${PROJECT_NAME} PRIVATE -O3 -Wall)
